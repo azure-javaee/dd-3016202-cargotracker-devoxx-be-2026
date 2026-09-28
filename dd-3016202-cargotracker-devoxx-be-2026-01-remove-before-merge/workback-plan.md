@@ -5,7 +5,7 @@
       - ✅ **Completed** linux-x64
       - ✅ **Completed**win32-x64
       
-   2. All CI is repeatably green.
+   2. ✅ **Completed** All CI is repeatably green.
    
       - https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36183229399
       
@@ -18,3 +18,4 @@
    2. `edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment`
 3. Non-demo related preparation iterates on `edburns/dd-3016202-cargotracker-devoxx-be-2026-01`.
 4. Demo related preparation iterates on `edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment`.
+5. No changes on `edburns/dd-3016202-cargotracker-devoxx-be-2026-control`.
