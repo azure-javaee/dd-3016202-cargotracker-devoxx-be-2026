@@ -12,7 +12,7 @@
       - https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36182474700
       
 
-2. Create two topic branches from `edburns/dd-3016202-cargotracker-devoxx-be-2026-01`:
+2. Create two topic branches from `edburns/dd-3016202-cargotracker-devoxx-be-2026-00`:
 
    1. `edburns/dd-3016202-cargotracker-devoxx-be-2026-control`
    2. `edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment`
