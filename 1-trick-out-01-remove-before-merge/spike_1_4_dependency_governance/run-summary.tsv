@@ -1,0 +1,16 @@
+case	rule	profile	expected	exit_status	outcome	log	pom
+java-version	requireJavaVersion	default	pass	0	as-expected	logs/20260929-1737-01-java-version-job-logs.txt	generated-poms/require-java-version.xml
+java-version-negative-control	requireJavaVersion	default	fail	1	as-expected	logs/20260929-1737-02-java-version-negative-control-job-logs.txt	generated-poms/reject-java-version.xml
+maven-version	requireMavenVersion	default	pass	0	as-expected	logs/20260929-1737-03-maven-version-job-logs.txt	generated-poms/require-maven-version.xml
+maven-version-negative-control	requireMavenVersion	default	fail	1	as-expected	logs/20260929-1737-04-maven-version-negative-control-job-logs.txt	generated-poms/reject-maven-version.xml
+plugin-versions-baseline	requirePluginVersions	default	fail	1	as-expected	logs/20260929-1737-05-plugin-versions-baseline-job-logs.txt	generated-poms/require-plugin-versions.xml
+plugin-versions-selected-policy	requirePluginVersions	default	pass	0	as-expected	logs/20260929-1737-06-plugin-versions-selected-policy-job-logs.txt	generated-poms/selected-plugin-version-policy.xml
+plugin-versions-negative-control	requirePluginVersions	default	fail	1	as-expected	logs/20260929-1737-07-plugin-versions-negative-control-job-logs.txt	generated-poms/reject-unversioned-plugin.xml
+convergence-openliberty	dependencyConvergence	default	pass	0	as-expected	logs/20260929-1737-08-convergence-openliberty-job-logs.txt	generated-poms/dependency-convergence.xml
+upper-bound-openliberty	requireUpperBoundDeps	default	pass	0	as-expected	logs/20260929-1737-09-upper-bound-openliberty-job-logs.txt	generated-poms/require-upper-bound-deps.xml
+duplicate-declarations	banDuplicatePomDependencyVersions	default	pass	0	as-expected	logs/20260929-1737-10-duplicate-declarations-job-logs.txt	generated-poms/no-duplicate-declarations.xml
+duplicate-declarations-negative-control	banDuplicatePomDependencyVersions	default	fail	1	as-expected	logs/20260929-1738-11-duplicate-declarations-negative-control-job-logs.txt	generated-poms/reject-duplicate-declaration.xml
+banned-dependencies	bannedDependencies	default	pass	0	as-expected	logs/20260929-1738-12-banned-dependencies-job-logs.txt	generated-poms/banned-dependencies.xml
+banned-dependencies-negative-control	bannedDependencies	default	fail	1	as-expected	logs/20260929-1738-13-banned-dependencies-negative-control-job-logs.txt	generated-poms/reject-banned-dependency.xml
+project-repositories	requireNoRepositories	default	pass	0	as-expected	logs/20260929-1738-14-project-repositories-job-logs.txt	generated-poms/no-project-repositories.xml
+project-repositories-negative-control	requireNoRepositories	default	fail	1	as-expected	logs/20260929-1738-15-project-repositories-negative-control-job-logs.txt	generated-poms/reject-project-repository.xml

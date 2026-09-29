@@ -1,0 +1,18 @@
+command=./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+exit_status=0
+elapsed_seconds=14
+liberty_directory=no
+liberty_started=no
+war_exists=yes
+war_bytes=8233001
+3ecb8ad2aceacfed2467d8868cdf6ec24d6f242d26f69b8c78e535d7a074e383  /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/cargo-tracker.war
+        0  2026-09-29 17:31   WEB-INF/lib/
+   643778  2020-04-24 06:01   WEB-INF/lib/joda-time-2.10.6.jar
+    32376  2019-09-21 21:00   WEB-INF/lib/jackson-jaxrs-base-2.9.10.jar
+   325636  2019-09-21 13:52   WEB-INF/lib/jackson-core-2.9.10.jar
+    66894  2019-09-21 13:39   WEB-INF/lib/jackson-annotations-2.9.10.jar
+  5142954  2020-03-05 03:01   WEB-INF/lib/primefaces-8.0.jar
+    33597  2019-09-21 14:48   WEB-INF/lib/jackson-module-jaxb-annotations-2.9.10.jar
+  1348567  2019-09-21 14:02   WEB-INF/lib/jackson-databind-2.9.10.jar
+   434678  2015-04-03 08:31   WEB-INF/lib/commons-lang3-3.4.jar
+    15864  2019-09-21 21:09   WEB-INF/lib/jackson-jaxrs-json-provider-2.9.10.jar

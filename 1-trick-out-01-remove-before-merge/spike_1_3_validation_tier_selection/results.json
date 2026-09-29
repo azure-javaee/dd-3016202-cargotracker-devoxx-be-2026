@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-29",
+  "environment": {
+    "command": "./mvnw -version",
+    "maven": "3.9.9",
+    "java": "Microsoft OpenJDK 17.0.18",
+    "downloads": false,
+    "createsLiberty": false,
+    "startsLiberty": false
+  },
+  "formatting": {
+    "command": "./mvnw spotless:check",
+    "coldSeconds": 6,
+    "warmSeconds": 3,
+    "coldRepositoryDeltaBytes": 12592985,
+    "exitStatus": 1,
+    "failure": "Cannot find git repository in any parent directory",
+    "linkedWorktreeDefect": true,
+    "createsLiberty": false,
+    "startsLiberty": false
+  },
+  "buildContract": {
+    "command": "./mvnw '-P!openliberty' -DskipTests clean compile",
+    "coldSeconds": 21,
+    "warmSeconds": 13,
+    "coldRepositoryDeltaBytes": 22322735,
+    "tests": 0,
+    "createsLiberty": false,
+    "startsLiberty": false,
+    "limitation": "No Maven Enforcer or compatibility rules exist yet; currently proves compilation only."
+  },
+  "unit": {
+    "command": "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test",
+    "coldSeconds": 21,
+    "warmSeconds": 14,
+    "coldRepositoryDeltaBytes": 16828275,
+    "tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "createsLiberty": false,
+    "startsLiberty": false
+  },
+  "integration": {
+    "command": "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test",
+    "coldSeconds": 89,
+    "warmSeconds": 79,
+    "coldRepositoryDeltaBytes": 396702594,
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "downloadsOpenLibertyRuntime": true,
+    "createsLiberty": true,
+    "generatedLibertyBytesApproximate": 487927352,
+    "startsLiberty": true
+  },
+  "package": {
+    "command": "./mvnw -Popenliberty -Dskip=true -DskipTests clean package",
+    "coldSeconds": 34,
+    "warmSeconds": 14,
+    "coldRepositoryBytes": 66605044,
+    "downloadsOpenLibertyRuntime": false,
+    "createsLiberty": false,
+    "startsLiberty": false,
+    "warExists": true,
+    "warBytes": 8233001
+  },
+  "originalCommands": {
+    "cleanTest": {
+      "coldSequenceSeconds": 70,
+      "warmSeconds": 40,
+      "tests": 28,
+      "createsLiberty": true,
+      "startsLiberty": true
+    },
+    "cleanPackage": {
+      "coldSequenceSeconds": 50,
+      "warmSeconds": 49,
+      "tests": 28,
+      "createsLiberty": true,
+      "startsLiberty": true
+    },
+    "openlibertyVerify": {
+      "coldSequenceSeconds": 30,
+      "warmSeconds": 34,
+      "tests": 28,
+      "createsLiberty": true,
+      "startsLiberty": true,
+      "distinctVerification": false
+    }
+  }
+}

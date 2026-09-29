@@ -208,9 +208,11 @@ known green runs and estimate the critical path before fixing the topology.
 
 **Resolution:**
 
+For simplicity keep the workflows as fully serial.
+
 ### 1.3 — Canonical local and CI Maven commands
 
-**Question:** What exact command set defines the green baseline for each cost
+**Question:** What exact command set defines the green baseline for each validation
 tier, given that the `openliberty` profile is active by default and binds
 Liberty creation and feature installation to `compile`?
 
@@ -248,6 +250,40 @@ output as proof of a clean build.
 
 **Resolution:**
 
+Completed spike 1.3 in:
+
+```
+1-trick-out-01-remove-before-merge/spike_1_3_validation_tier_selection/
+```
+
+Selected commands:
+
+┌──────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────┐
+│ Tier             │ Command                                                                                     │ Liberty behavior                                        │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Environment      │ ./mvnw -version                                                                             │ None                                                    │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Formatting       │ ./mvnw spotless:check                                                                       │ None, but currently fails in linked worktrees because   │
+│                  │                                                                                             │ Spotless cannot locate the Git ratchet repository       │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Build            │ ./mvnw '-P!openliberty' -DskipTests clean compile                                           │ No download, creation, or startup                       │
+│ contract/compile │                                                                                             │                                                         │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Unit tests       │ ./mvnw '-P!openliberty'                                                                     │ Runs 24 tests without Liberty                           │
+│                  │ -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest │                                                         │
+│                  │ clean test                                                                                  │                                                         │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Integration      │ ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test                                   │ Downloads, creates, and starts Liberty; runs four tests │
+│ tests            │                                                                                             │                                                         │
+├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+│ Packaging        │ ./mvnw -Popenliberty -Dskip=true -DskipTests clean package                                  │ Produces the canonical WAR without downloading,         │
+│                  │                                                                                             │ creating, or starting Liberty                           │
+└──────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────┘
+
+The default `clean test`, `clean package`, and `-Popenliberty verify` commands all start Liberty and run the same 28 tests; `verify` adds no distinct verification. The package command above preserves the Open Liberty profile’s Jackson dependencies and produced the canonical 8,233,001-byte WAR.
+
+Detailed results, cold/warm measurements, Maven logs, inventories, scripts, proposed resolution text, and machine-readable results are in `README.md` and `results.json`.
+
 ### 1.4 — Maven and dependency-governance rules
 
 **Question:** Which Maven Enforcer and dependency checks provide strong,
@@ -282,6 +318,29 @@ an unversioned plugin and verify the resolved rule fails with an actionable
 message.
 
 **Resolution:**
+
+The spike tells us to adopt a small, Open Liberty-only governance policy—not every candidate rule.
+
+Select:
+
+- `requireJavaVersion` → `[17,18)`
+- `requireMavenVersion` → `[3.9.9,4.0.0)`
+- strict `requirePluginVersions`
+- pin only `maven-clean-plugin` `3.2.0`
+- pin only `maven-resources-plugin` `3.3.1`
+- exempt unused Maven defaults for `install`, `deploy`, and `site`
+- `dependencyConvergence`
+- `banDuplicatePomDependencyVersions`
+- direct-dependency bans for Jakarta, Spring, Payara, WildFly/JBoss, and Tomcat
+- `requireNoRepositories`, allowing Maven Central
+
+Reject:
+
+- `requireUpperBoundDeps`: it passes, but adds no useful evidence once `dependencyConvergence` is enforced.
+- `banMavenDefaults=false`: it also allowed a deliberately unversioned custom plugin, making it too permissive. Apache documents that this option delegates standard plugin versions to Maven; the spike demonstrated that it weakens this project’s desired guard. 
+- Any Payara or alternate-server validation.
+
+The practical conclusion is that the Open Liberty dependency graph is already clean. No dependency changes, modernization, or Enforcer exclusions are needed. The only POM correction is pinning the two implicit plugins actually used by the demo. The selected policy then passes, while all negative controls fail with actionable messages. The corrected decision and paste-ready Resolution text are now in `spike_1_4_dependency_governance/README.md`; the final harness has 15/15 expected outcomes.
 
 ### 1.5 — Reproducibility and dependency-security evidence
 
