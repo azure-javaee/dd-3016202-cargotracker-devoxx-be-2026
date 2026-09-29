@@ -106,20 +106,9 @@ yet have separate work items.
 
 ### Evidence matrix and talk narrative
 
-Maintain a single matrix with one row per boring reason and these columns:
+- [ ] this is incorporated into ignorance reduction plan.
 
-| Field | Meaning |
-|---|---|
-| Reason | The ordered reason from the abstract |
-| Agentic failure mode | The weakness it is meant to constrain |
-| Repository mechanism | Compiler, Maven, test, analyzer, workflow, telemetry, or deployment control |
-| Implementation task | The trick-out issue that introduces or verifies it |
-| Observed campaign event | A concrete success, failure, correction, or non-event |
-| Artifact | CI run, log, PR, review, trace, JFR, screenshot, or post-mortem |
-| Confidence | Strong, moderate, weak, unsupported, or not exercised |
-| Slide implication | Main slide, brief mention, appendix, or cut |
-
-This matrix is the bridge between the engineering work and the slide deck.
+See `dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/evidence-matrix.md`.
 
 ### Azure deployment for reason 10
 
@@ -135,7 +124,7 @@ deployment commands, runtime configuration, successful health check, and
 cleanup procedure. Do not allow this workstream to destabilize the main
 experiment branch or block completion of the first full slide draft.
 
-### Feature campaign and evidence collection
+### Feature campaign and evidence collection https://devdiv.visualstudio.com/DevDiv/_workitems/edit/3070726
 
 After the tricked-out baseline is green and tagged, run the resolved Change
 Arrival Deadline campaign against that baseline. Preserve:
@@ -167,89 +156,7 @@ long-running agentic operation is unavailable during the talk.
 
 ## Implementation Ordering for the Trick-Out Campaign
 
-The ignorance-reduction plan should validate this ordering rather than blindly
-copy it. Each implementation issue must be independently useful and must end
-with green CI.
-
-### 1. Make experiment-branch CI authoritative
-
-- Ensure pushes or PRs for
-  `edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment` receive the
-  required workflow.
-- Preserve the existing Microsoft Build of OpenJDK 17 formatting and build
-  jobs.
-- Establish exact green baseline commands and artifacts.
-- Ensure failure in any required job blocks progression.
-
-This is the prerequisite for all later trick-out issues.
-
-### 2. Strengthen build, dependency, and compatibility governance
-
-- Introduce Maven and dependency rules incrementally.
-- Preserve Java 17, Java EE 7, `javax.*`, WAR packaging, Open Liberty, and
-  existing behavior.
-- Prevent accidental migration to Jakarta namespaces, Spring, a different UI
-  stack, or an unrelated runtime.
-- Add each rule with a green baseline or a narrowly documented suppression.
-
-This covers the foundation for reasons 5 and 3.
-
-### 3. Preserve and expand fast deterministic source gates
-
-- Preserve Spotless as the first fast gate.
-- Make compiler/type failures prominent and attributable.
-- Add static analysis one tool or rule family at a time.
-- Separate new-code enforcement from unavoidable legacy debt where necessary.
-- Include security-oriented source and dependency checks in the relevant
-  build/static-analysis surfaces rather than creating a disconnected
-  "security" bucket.
-
-This covers reasons 6, 1, and 4.
-
-### 4. Build the behavioral safety net
-
-- Add or strengthen focused domain and application-service tests.
-- Add architecture tests where they protect the layered design.
-- Add Open Liberty integration and HTTP acceptance checks.
-- Add the smallest practical browser/UI validation for the eventual deadline
-  feature.
-- Ensure tests produce useful failure evidence for agents and reviewers.
-
-This covers reason 2 and is the most important guardrail before the feature
-campaign begins.
-
-### 5. Add runtime observability
-
-- Produce useful structured application/runtime logs.
-- Capture metrics and traces with stable correlation.
-- Preserve telemetry artifacts from CI runs.
-- Make agent-created runtime failures diagnosable without requiring manual
-  guesswork.
-- Add Azure Monitor/Application Insights only where it strengthens the
-  evidence without making local and CI validation depend on Azure.
-
-This covers reason 8.
-
-### 6. Add measured JVM performance evidence
-
-- Establish a repeatable workload and resource limits.
-- Capture startup, memory, GC, and JFR evidence.
-- Evaluate `java` versus `jaz` in a constrained Linux/container environment.
-- Avoid brittle performance gates; use broad regression checks and preserved
-  diagnostic artifacts unless repeatability supports stricter thresholds.
-
-This covers reason 9 and depends on the observability and workload work.
-
-### 7. Isolate the Java 21 concurrency capability spike
-
-- Do not migrate the primary Cargo Tracker baseline away from Java 17 merely
-  to demonstrate reason 7.
-- Evaluate a separate Java 21-or-later test, module, branch, or documented
-  experiment for virtual threads and structured concurrency.
-- Accept "not applicable to this Java 17 campaign" as an honest outcome if no
-  credible, bounded experiment fits the schedule.
-
-This covers reason 7 without breaking the backwards-compatibility story.
+See `dd-3016202-cargotracker-devoxx-be-2026-00/dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/suggested-implementation-order-from-workback-plan.md`.
 
 ## Day-by-Day Workback
 
@@ -539,17 +446,17 @@ Do not cut:
 
 ## Known Risks and Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Shepherd Task issues take longer than expected | Start Stage 25 Tuesday; use explicit Wednesday cut lines; reduce issue scope without bypassing green CI |
-| Legacy code produces overwhelming analyzer debt | Ratchet against new changes, baseline known findings, introduce one analyzer at a time |
-| Performance results are noisy in hosted CI | Preserve JFR/GC/startup artifacts; use broad comparisons rather than brittle thresholds |
-| Java 17 blocks virtual-thread demonstration | Use an isolated Java 21 spike or report the compatibility boundary honestly |
-| Azure deployment becomes a migration project | Use the existing WAR/container with the least disruptive Azure target; limit this week to one credible deployment |
-| Live agentic campaign is too slow for a talk | Present preserved issues, PRs, CI, reviews, telemetry, and post-mortem; do not run the full campaign live |
-| Network, GitHub, or Azure is unavailable during delivery | Maintain a complete fallback path using durable captured artifacts |
-| Slide work waits for engineering completion | Draft the entire deck Tuesday and replace evidence placeholders continuously |
-| The talk becomes a Shepherd Task presentation | Keep lifecycle mechanics in backup slides and organize the main story around Java guardrails and observed agent behavior |
+| Risk | Mitigation | Tracker | Notes |
+|---|---|---|---|
+| Shepherd Task issues take longer than expected | Start Stage 25 Tuesday; use explicit Wednesday cut lines; reduce issue scope without bypassing green CI | | |
+| Legacy code produces overwhelming analyzer debt | Ratchet against new changes, baseline known findings, introduce one analyzer at a time | | |
+| Performance results are noisy in hosted CI | Preserve JFR/GC/startup artifacts; use broad comparisons rather than brittle thresholds | | |
+| Java 17 blocks virtual-thread demonstration | Use an isolated Java 21 spike or report the compatibility boundary honestly | | do not incorporate this in the demo. Stick with JDK 17 and just use slides to cover this reason. |
+| Azure deployment becomes a migration project | Use the existing WAR/container with the least disruptive Azure target; limit this week to one credible deployment | https://devdiv.visualstudio.com/DevDiv/_workitems/edit/3070761 | |
+| Live agentic campaign is too slow for a talk | Present preserved issues, PRs, CI, reviews, telemetry, and post-mortem; do not run the full campaign live | | |
+| Network, GitHub, or Azure is unavailable during delivery | Maintain a complete fallback path using durable captured artifacts | | |
+| Slide work waits for engineering completion | Draft the entire deck Tuesday and replace evidence placeholders continuously | | |
+| The talk becomes a Shepherd Task presentation | Keep lifecycle mechanics in backup slides and organize the main story around Java guardrails and observed agent behavior | | |
 
 ## Immediate Next Actions
 
