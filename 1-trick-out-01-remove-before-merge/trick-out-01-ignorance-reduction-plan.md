@@ -165,6 +165,18 @@ for the exact SHA. Do not manufacture a red commit on the campaign base branch.
 
 **Resolution:**
 
+Completed spike 1.1 and stored the results in:
+
+```
+1-trick-out-01-remove-before-merge/spike_1_1_authoritative_ci_path/
+   README.md
+   observed-state.json
+```
+
+Result: Select option D. Add automatic experiment-branch `push` validation, retain PR validation, and create a ruleset requiring `formatting` and `build`. PR runs validate GitHub’s synthetic merge ref, while push runs validate the exact merged campaign-base SHA, so the two paths are complementary. GitHub rulesets can require named status checks before merging. 
+
+The repository currently has no rulesets or branch protection and previously had no experiment-branch workflow runs. I manually dispatched `Main Build` against experiment SHA `3016bc265e6301edb591b2c352363ccf75b18b63`; run `36619468411` completed successfully with both `formatting` and `build` green.  The report includes proposed text for the plan’s human-owned `Resolution:` field, which remains unchanged.
+
 ### 1.2 — Required job topology and fail-fast order
 
 **Question:** Should the workflow remain a strictly serial chain, or should
