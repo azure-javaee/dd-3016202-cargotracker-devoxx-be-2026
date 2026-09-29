@@ -73,13 +73,3 @@ This covers reason 8.
 
 This covers reason 9 and depends on the observability and workload work.
 
-### 7. Isolate the Java 21 concurrency capability spike
-
-- Do not migrate the primary Cargo Tracker baseline away from Java 17 merely
-  to demonstrate reason 7.
-- Evaluate a separate Java 21-or-later test, module, branch, or documented
-  experiment for virtual threads and structured concurrency.
-- Accept "not applicable to this Java 17 campaign" as an honest outcome if no
-  credible, bounded experiment fits the schedule.
-
-This covers reason 7 without breaking the backwards-compatibility story.
