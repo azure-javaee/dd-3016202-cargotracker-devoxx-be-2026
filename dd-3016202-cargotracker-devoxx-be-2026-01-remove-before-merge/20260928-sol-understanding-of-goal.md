@@ -100,6 +100,44 @@ safety, and some may not be exercised meaningfully. The desired result is
 honest evidence about which Java safeguards helped, what failure modes they
 addressed, and where the abstract's hypothesis is or is not supported.
 
+## Continuous Green CI Invariant
+
+Every incremental change made on
+`edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment` must preserve a
+green CI state. Tricking out the demo is not a sequence in which several broken
+intermediate states are accumulated and repaired at the end. Each step must be
+small enough to validate, and its required GitHub Actions checks must succeed
+before work proceeds to the next step.
+
+Two successful `Main Build` runs provide known-green reference points:
+
+- [Run 36182474700](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36182474700),
+  for commit `c8e8ca7944ac7b25e169cdd2b07714b7326542c0`
+- [Run 36183229399](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36183229399),
+  for commit `c4ae1b9020214e64547f72d9da5f116c1983897a`
+
+Both runs completed the existing jobs successfully:
+
+1. `formatting`, which uses Microsoft Build of OpenJDK 17 and runs
+   `./mvnw spotless:check` in `demo`
+2. `build`, which uses Microsoft Build of OpenJDK 17 and runs
+   `./mvnw clean package --file pom.xml` in `demo`
+
+These runs are behavioral baselines for the current workflow, not proof that
+future experiment-branch commits are green. The current `push` trigger in
+`.github/workflows/main.yml` names only
+`edburns/dd-3016202-cargotracker-devoxx-be-2026-01`. Before relying on automatic
+push validation during demo iteration, the workflow or operating procedure
+must ensure that every experiment-branch increment receives an authoritative
+GitHub Actions run. Until the trigger is updated, this requires a pull-request
+run or an explicit `workflow_dispatch` run for the experiment commit.
+
+As the workflow is expanded, each new guardrail must be introduced without
+discarding or bypassing previously green checks. A failed required check stops
+the current preparation step: diagnose it, correct it, and restore green status
+before adding another change. The instrumented pre-campaign tag may be created
+only from a commit whose complete required workflow set is green.
+
 ## Evidence to Seek
 
 Useful evidence includes situations in which:
