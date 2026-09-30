@@ -233,6 +233,14 @@
 										<allowedPluginRepository>central</allowedPluginRepository>
 									</allowedPluginRepositories>
 								</requireNoRepositories>
+								<bannedRepositories>
+									<allowedRepositories>
+										<allowedRepository>https://repo.maven.apache.org/maven2*</allowedRepository>
+									</allowedRepositories>
+									<allowedPluginRepositories>
+										<allowedPluginRepository>https://repo.maven.apache.org/maven2*</allowedPluginRepository>
+									</allowedPluginRepositories>
+								</bannedRepositories>
 							</rules>
 						</configuration>
 					</execution>

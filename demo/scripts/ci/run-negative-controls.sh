@@ -33,6 +33,8 @@ elif expression == "banned":
     text = text.replace(marker, "\n\t\t" + addition + marker, 1)
 elif expression == "repository":
     text = text.replace("<dependencyManagement>", "<repositories><repository><id>evil</id><url>https://example.invalid</url></repository></repositories><dependencyManagement>", 1)
+elif expression == "repository-url":
+    text = text.replace("<dependencyManagement>", "<repositories><repository><id>central</id><url>https://example.invalid</url></repository></repositories><dependencyManagement>", 1)
 elif expression == "convergence":
     marker = "\n\t</dependencies>\n\n\t<build>"
     addition = "<dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpclient</artifactId><version>4.5.13</version></dependency><dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpcore</artifactId><version>4.4.1</version></dependency>"
@@ -62,6 +64,7 @@ run_case plugin plugin "requirePluginVersions"
 run_case duplicate duplicate "duplicate"
 run_case banned banned "BannedDependencies"
 run_case repository repository "RequireNoRepositories"
+run_case repository-url repository-url "BannedRepositories"
 run_case convergence convergence "Dependency convergence"
 fixture="$tmp/BadFormatting.java"
 mkdir -p "$root/src/main/java/org/eclipse/cargotracker/ci"
