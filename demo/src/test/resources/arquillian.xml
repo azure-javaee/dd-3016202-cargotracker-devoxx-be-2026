@@ -7,13 +7,6 @@
     <engine>
         <property name="deploymentExportPath">target/</property>
     </engine>
-    <container qualifier="payara">
-        <configuration>
-            <!-- <property name="outputToConsole">true</property> -->
-            <property name="adminUser">admin</property>
-            <property name="adminPassword"></property>
-        </configuration>
-    </container>
     <container qualifier="openliberty" default="true">
         <configuration>
             <property name="allowConnectingToRunningServer">true</property>
