@@ -29,13 +29,11 @@ if [[ ! -s "$report" ]]; then
 fi
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
-  mkdir -p "$tmp/baseline-data"
-  cp -a "$data_dir/." "$tmp/baseline-data"
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
   timeout --signal=TERM --kill-after=30s 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
-    -DdataDirectory="$tmp/baseline-data" -DautoUpdate=false
+    -DdataDirectory="$data_dir" -DautoUpdate=false
   if [[ ! -s "$tmp/baseline/dependency-check-report.json" ]]; then
     echo "ERROR: baseline vulnerability report is missing or empty" >&2
     exit 1
