@@ -9,7 +9,7 @@
 	<packaging>war</packaging>
 	<name>Eclipse Cargo Tracker</name>
 	<description>
-        The project demonstrates how you can develop applications with the Jakarta EE platform using widely
+        The project demonstrates how you can develop applications with the Java EE 7 platform using widely
         adopted architectural best practices like Domain-Driven Design (DDD).
     </description>
 	<url>https://projects.eclipse.org/projects/ee4j.cargotracker/</url>
@@ -36,20 +36,12 @@
 		<junit.version>5.14.4</junit.version>
 		<shrinkwrap.resolver.version>3.3.7</shrinkwrap.resolver.version>
 
-		<!-- Codehaus Cargo plugin properties -->
-		<cargo.version>1.8.1</cargo.version>
-		<cargo.payara.container_id>glassfish4x</cargo.payara.container_id>
-		<cargo.payara.download_uri>
-			https://repo1.maven.org/maven2/fish/payara/distributions/payara/4.1.2.181/payara-4.1.2.181.zip
-		</cargo.payara.download_uri>
-
 		<!-- Application properties -->
 		<webapp.databaseTempDir>/tmp</webapp.databaseTempDir>
 		<webapp.graphTraversalUrl>
 			http://localhost:8080/cargo-tracker/rest/graph-traversal/shortest-path
 		</webapp.graphTraversalUrl>
 
-		<!-- Open Liberty properties -->
 		<liberty.maven.version>3.12.1</liberty.maven.version>
 		<liberty.runtime.version>26.0.0.8</liberty.runtime.version>
 		<derby.version>10.14.2.0</derby.version>
@@ -87,7 +79,7 @@
 
 	<dependencies>
 
-		<!-- Jakarta EE API -->
+		<!-- Java EE API -->
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
@@ -188,46 +180,12 @@
 
 	<profiles>
 		<profile>
-			<id>payara</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>fish.payara.arquillian</groupId>
-					<artifactId>arquillian-payara-server-4-remote</artifactId>
-					<version>1.1</version>
-					<scope>test</scope>
-				</dependency>
-			</dependencies>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.cargo</groupId>
-						<artifactId>cargo-maven2-plugin</artifactId>
-						<version>${cargo.version}</version>
-						<configuration>
-							<container>
-								<containerId>${cargo.payara.container_id}</containerId>
-								<zipUrlInstaller>
-									<url>${cargo.payara.download_uri}</url>
-								</zipUrlInstaller>
-							</container>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
 			<id>openliberty</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
 				<webapp.databaseTempDir>${project.build.directory}/cargo-tracker-data</webapp.databaseTempDir>
-				<webapp.graphTraversalUrl>
-					http://localhost:8080/cargo-tracker/rest/graph-traversal/shortest-path
-				</webapp.graphTraversalUrl>
 				<jackson.scope>compile</jackson.scope>
 			</properties>
 			<dependencies>

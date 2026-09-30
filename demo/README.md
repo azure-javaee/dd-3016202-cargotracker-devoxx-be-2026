@@ -1,14 +1,14 @@
-# Eclipse Cargo Tracker - Applied Domain-Driven Design Blueprints for Jakarta EE
+# Eclipse Cargo Tracker - Applied Domain-Driven Design Blueprints for Java EE
 
 ## Overview
 
-The project demonstrates how you can develop applications with Jakarta EE using widely adopted architectural best practices like Domain-Driven 
+The project demonstrates how you can develop applications with Java EE 7 using widely adopted architectural best practices like Domain-Driven
 Design (DDD). The project is directly based on the well known 
 original [Java DDD sample application](http://dddsample.sourceforge.net) 
 developed by DDD pioneer Eric Evans' company Domain Language and the Swedish 
 software consulting company Citerus. The cargo example actually comes from 
 Eric Evans' seminal book on DDD. The original application is written in Spring,
-Hibernate and Jetty whereas the application is built on Jakarta EE.
+Hibernate and Jetty whereas the application is built on Java EE 7.
 
 The application is an end-to-end system for keeping track of shipping cargo. It 
 has several interfaces described in the following sections.
@@ -19,34 +19,18 @@ For further details on the project, please visit: https://github.com/eclipse-ee4
 
 The [project site](https://projects.eclipse.org/projects/ee4j.cargotracker/) has detailed information on how to get started.
 
-The simplest steps are the following (no IDE required):
+The simplest steps are the following:
 
 * Get the project source code.
 * To run on JDK 17 with Open Liberty, set `JAVA_HOME` to a JDK 17 installation
-  and run: `./mvnw clean package -Popenliberty liberty:run`
+  and run: `./mvnw clean package liberty:run`
 * Go to http://localhost:8080/cargo-tracker/
-
-The historical Payara path remains available:
-
-* Ensure you are running Java SE 8. The project by default uses Payara 4.1, which supports Java SE 8.
-* Make sure JAVA_HOME is set for Maven and Payara to function predictably.
-* As long as you have Maven set up properly, navigate to the project source root and 
-  type: `mvn package cargo:run`
-* Go to http://localhost:8080/cargo-tracker
-
-To set up in Eclipse, follow these steps:
-
-* Set up JDK 8+, Eclipse for Enterprise Java Developers and Payara 4+.
-* Import this code in Eclipse as a Maven project, 
-  Eclipse will do the rest for you. Proceed with clean/building the application.
-* After the project is built (which will take a while the very first time as 
-  Maven downloads dependencies), simply run it via Payara 4.
 
 ## Exploring the Application
 
 After the application runs, it will be available at: 
 http://localhost:8080/cargo-tracker/. Under the hood, the application uses a 
-number of Jakarta EE (Java EE 7) features including Faces 2.2, CDI, EJB 3.2, 
+number of Java EE 7 features including Faces 2.2, CDI, EJB 3.2,
 Persistence 2.1, REST 2, WebSocket, JSON Processing, Bean Validation 1.1 and Messaging 2.
 
 There are several web interfaces, REST interfaces and a file system scanning
@@ -101,7 +85,7 @@ generally.
 ## Exploring the Code
 
 As mentioned earlier, the real point of the application is demonstrating how to 
-create well architected, effective Jakarta EE applications. To that end, once you 
+create well architected, effective Java EE 7 applications. To that end, once you
 have gotten some familiarity with the application functionality the next thing 
 to do is to dig right into the code.
 
@@ -110,44 +94,17 @@ working understanding of DDD. As the name implies, Domain-Driven Design is an
 approach to software design and development that focuses on the core domain and 
 domain logic.
 
-For the most part, it's fine if you are new to Jakarta EE. As long as you have a
-basic understanding of server-side applications, the code should be good enough to get started. For learning Jakarta EE further,
+For the most part, it's fine if you are new to Java EE 7. As long as you have a
+basic understanding of server-side applications, the code should be good enough to get started. For learning Java EE further,
 we have recommended a few links in the resources section of the project site. Of 
 course, the ideal user of the project is someone who has a basic working 
-understanding both Jakarta EE and DDD. Though it's not our goal to become a kitchen 
-sink example for demonstrating the vast amount of APIs and features in Jakarta EE,
+understanding both Java EE and DDD. Though it's not our goal to become a kitchen
+sink example for demonstrating the vast amount of APIs and features in Java EE,
 we do use a very representative set. You'll find that you'll learn a fair amount
 by simply digging into the code to see how things are implemented.
 
 ## Exploring the Tests
 
-Cargo Tracker's testing is done using JUnit and Arquillian. The Arquillian configuration
-uses a [remote container](http://arquillian.org/arquillian-core/#_containers) (Payara 4.1). Therefore, to perform a test you will need to make sure
-to have a container running. 
-
-## Testing Locally with Payara
-For testing locally you will first need to run a Payara 4+ server.
-
-You can do that with the following script:
-```shell script
-wget https://repo1.maven.org/maven2/fish/payara/distributions/payara/4.1.2.181/payara-4.1.2.181.zip
-unzip payara-4.1.2.181.zip && cd payara41/bin
-./asadmin start-domain
-```
-
-Now for running the tests: 
-```shell script
-mvn -Ppayara -DskipTests=false test
-```
-
-## Known Issues
-* If you are running older versions of Payara, you will get a log message stating that SSL certificates have expired. This won't get in the way of functionality, but it will
-  stop log messages from being printed to the IDE console. You can solve this issue by manually removing the expired certificates from the Payara domain, as 
-  explained [here](https://github.com/payara/Payara/issues/3038).
-* If you restart the application a few times, you will run into a bug causing a spurious deployment failure. While the problem can be annoying, it's harmless.
-  Just re-run the application (make sure to completely shut down Payara first).
-* Sometimes when the server is not shut down correctly, the Derby database that 
-  the application uses get's corrupted, resulting is strange JDBC errors. If 
-  this occurs, you will need to stop the application and clean the database. You 
-  can do this by simply removing \temp\cargo-tracker-database from the file 
-  system and restarting the application.
+Cargo Tracker's tests use JUnit and Arquillian with the managed Open Liberty
+container. From the `demo/` directory, run `./mvnw clean package` to execute
+the tests and build the deployable WAR.
