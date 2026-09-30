@@ -152,10 +152,6 @@ SHA.
 | C | Use only `workflow_dispatch` and record the selected SHA | Flexible but human-dependent and easiest to forget |
 | D | Use A for continuous evidence and B for merge protection | Strongest coverage but produces more workflow activity |
 
-**Spike needed:** Inspect repository rulesets and branch protection with `gh`;
-confirm whether required checks can name the proposed jobs and whether a PR run
-and push run would be redundant or complementary.
-
 **Recommendation:** Use option D when repository rulesets permit it: add the
 experiment branch to `push`, retain PR validation, and make stable job names
 required. At minimum, use option A so every experiment-branch increment gets an
@@ -205,9 +201,6 @@ job. Make Open Liberty acceptance depend on unit tests, observability depend on
 acceptance, and performance depend on the stable runtime workload. Preserve
 stable job and check names for branch protection and slide evidence.
 
-**Spike needed:** Measure the current formatting and package durations from
-known green runs and estimate the critical path before fixing the topology.
-
 **Resolution:**
 
 For simplicity keep the workflows as fully serial.
@@ -229,21 +222,6 @@ The active Open Liberty profile means even apparently simple Maven phases may
 download and configure a Liberty runtime. The plan needs commands that are
 honest about what they exercise and avoid repeating expensive setup
 unnecessarily.
-
-**Spike needed:** From a clean Maven cache and from a warm cache, record the
-goals, duration, tests executed, generated runtime content, and network access
-for:
-
-```bash
-./mvnw -version
-./mvnw spotless:check
-./mvnw clean test
-./mvnw clean package
-./mvnw -Popenliberty verify
-```
-
-Determine whether a lightweight profile or property is needed for pure source
-checks without weakening the canonical package and integration paths.
 
 **Recommendation:** Define named command tiers in repository documentation and
 workflow steps: `format`, `contract`, `unit`, `integration`, and `package`.
@@ -307,11 +285,6 @@ Candidate rules include:
 | `bannedDependencies` | Prevents Jakarta/Spring/runtime migration | Patterns must avoid banning required test/runtime artifacts |
 | `externalRules` or repository checks | Restricts unapproved repositories | Must account for Maven Central and any Liberty-specific artifact source |
 
-**Spike needed:** Run candidate rules one at a time against the current POM.
-Record all baseline findings and classify them as defects, acceptable legacy
-debt, or tool false positives. Do not add broad exclusions before explaining
-each finding.
-
 **Recommendation:** Start with Java/Maven version, plugin version,
 duplicate-declaration, and narrowly scoped banned-dependency rules. Add
 convergence or upper-bound enforcement only if the baseline can be made green
@@ -367,11 +340,6 @@ PrimeFaces 8 and Joda-Time. A vulnerability scanner may report substantial
 legacy debt. Failing immediately on every historical finding would violate the
 incremental-green requirement and obscure whether later agents introduce new
 risk.
-
-**Spike needed:** Generate a dependency vulnerability report with the
-candidate scanner. Determine runtime versus provided/test findings, data-feed
-reliability, runtime duration, and whether the tool supports a checked-in
-suppression file with expiry and rationale.
 
 **Recommendation:** Preserve the dependency tree, effective POM, WAR checksum,
 and vulnerability report as artifacts. Enforce no newly introduced
@@ -543,11 +511,6 @@ which files are checked. Reformatting the whole legacy tree creates a large,
 low-value diff and may obscure subsequent agent changes. Moving the ratchet too
 early may silently grandfather files that should remain in scope.
 
-**Spike needed:** Run `spotless:check` and `spotless:apply` in a disposable
-worktree or temporary copy to enumerate exactly which files differ under the
-current ratchet and under a proposed baseline. Do not apply whole-tree changes
-to the campaign branch during the spike.
-
 **Recommendation:** Preserve the current ratchet through the trick-out issues
 unless it fails to cover later modified Java files. Document its semantics and
 keep `formatting` as the first required job. Reconsider the ratchet only when
@@ -558,13 +521,13 @@ tagging the completed pre-feature baseline.
 
 **Resolution:**
 
+The repeatable six-case spike, logs, inventories, summary, are in `1-trick-out-01-remove-before-merge/spike_1_8_spotless/`. The campaign worktree’s Java sources were not modified.
+
 Keep `ratchetFrom` pinned to `1fd1c340fa56c6c77a601d2fbba20294afa46dd9` throughout the trick-out implementation issues, with `formatting` remaining the first required CI job.
 
 Do not adopt whole-tree formatting: it rewrote 95 of 106 Java files, with 5,245 added and 5,184 deleted lines. The historical ratchet and a simulated ratchet at current HEAD behaved identically because no tracked Java files currently differ between them. Both detected and repaired a modified legacy file and a newly added Java file.
 
 Do not advance the ratchet early. The spike committed malformed Java and moved the ratchet to that commit; both `spotless:check` and `spotless:apply` then passed without touching the malformed files. Advance it only after the complete feature-absent trick-out baseline passes all gates and is tagged. Validate that commit using the old ratchet, then update `ratchetFrom` in a following POM-only commit to the tag’s immutable full commit SHA.
-
-The repeatable six-case spike, logs, inventories, summary, and paste-ready Resolution text are in `1-trick-out-01-remove-before-merge/spike_1_8_spotless/`. The campaign worktree’s Java sources were not modified.
 
 ### 1.9 — Compiler diagnostics and type-system evidence
 
@@ -576,10 +539,6 @@ Candidates include `-Xlint:all`, selected `-Xlint` categories, deprecation
 reporting, parameter metadata, and `-Werror`. The project uses Java EE 7 APIs,
 older libraries, reflection, and serialization patterns that may produce
 warnings unrelated to agent-created errors.
-
-**Spike needed:** Compile with `-Xlint:all` and record warning categories and
-locations. Determine which categories can be corrected or enforced within one
-small issue and which require a documented baseline.
 
 **Recommendation:** Keep compilation as its own named step and enable the
 largest actionable warning subset that is clean. Do not use Error Prone,
@@ -622,11 +581,6 @@ this Cargo Tracker codebase with acceptable runtime and baseline complexity?
 | Checkstyle | Precise source/style rules | Duplicates formatting and is weaker evidence for "deep" analysis |
 | ArchUnit | Enforces package/layer architecture in tests | Best treated as behavioral architecture verification rather than the sole general analyzer |
 
-**Spike needed:** Run SpotBugs and PMD separately with focused correctness and
-security-oriented rules. Record finding count, severity, runtime, false
-positives, report quality, and whether findings identify real defects relevant
-to later feature work.
-
 **Recommendation:** Prefer SpotBugs as the first general analyzer if its
 baseline is tractable. Keep style rules in Spotless, architecture rules in
 tests, and dependency vulnerability analysis in the build/dependency issue.
@@ -657,11 +611,6 @@ The current tree contains:
 
 It is unsafe to describe the project as having scenario or routing coverage
 until execution reports prove those tests run.
-
-**Spike needed:** Capture Surefire's discovered test count, executed test
-classes, skipped tests, duration, and reports for the canonical unit and
-Open Liberty commands. Verify whether Arquillian starts Open Liberty and
-whether dormant tests can be repaired with small, valid fixtures.
 
 **Recommendation:** Classify every existing test as active, intentionally
 dormant, or repairable. Repair only tests that can express stable behavior
@@ -702,10 +651,6 @@ lookup, and Administration startup is protected.
 - a stable Administration-page or REST interaction that proves the deployed
   application is usable.
 
-**Spike needed:** Identify a deterministic HTTP path and seeded cargo record
-that can be exercised without browser automation. Determine whether a small
-browser test adds enough value to justify its setup before the talk deadline.
-
 **Failure example:** Mutate an assertion or temporary fixture so a cargo route
 violates a known invariant; verify the intended test layer reports a concise
 failure.
@@ -733,10 +678,6 @@ fragile.
 bounded workflow job that packages the WAR, starts Open Liberty once, waits for
 a positive readiness signal, runs HTTP checks, captures logs, and always stops
 the server. Use explicit timeouts and print server logs on failure.
-
-**Spike needed:** Verify the reliable Maven goals for start, status/readiness,
-and stop with Liberty Maven Plugin 3.12.1 and runtime 26.0.0.8. Identify the
-startup log marker and HTTP readiness endpoint.
 
 **Resolution:**
 
@@ -775,11 +716,6 @@ Options include:
 | B | OpenTelemetry Java agent plus local collector | No application API migration; produces standard traces/metrics/log correlation |
 | C | Add MicroProfile Telemetry/Metrics features | Strong Liberty integration but may conflict with the Java EE 7 feature contract or require source changes |
 | D | Application Insights Java agent | Relevant to Azure but makes generic CI evidence depend on an Azure-oriented agent and possibly an external resource |
-
-**Spike needed:** Attach the OpenTelemetry Java agent to the current Liberty
-runtime, send OTLP to a collector in GitHub Actions or locally, exercise a
-stable request, and verify trace and metric export. Confirm compatibility with
-Java 17, Open Liberty 26.0.0.8, Java EE 7, and current logging.
 
 **Recommendation:** Prefer option B for this campaign. Preserve Liberty logs
 and use Azure Monitor/Application Insights only in the separate deployment
@@ -830,15 +766,6 @@ Each repetition must capture:
 - explicit GC logging;
 - a bounded JFR recording started dynamically after launch;
 - total repetition duration, exit status, and cleanup result.
-
-**Spike needed:** Build the WAR and Liberty runtime once, then execute the
-candidate workload directly on the same runner for at least five independent
-repetitions, using a fresh Liberty output/data directory each time. Preserve
-all measurements and report the minimum, median, maximum, range, and
-coefficient of variation for timing and resource observations. Adjust warm-up,
-request count, pacing, and timeouts until the workload completes reliably and
-produces useful GC, JFR, memory, and request evidence within a bounded CI
-duration.
 
 **Recommendation:** Use the direct Open Liberty lifecycle established in
 resolution 1.13 and the stable `/cargo-tracker/rest/cargo` acceptance path as
@@ -897,14 +824,6 @@ Required evidence:
 - confirmation that each mode used the same WAR, Liberty runtime, request data,
   readiness condition, workload, and artifact naming.
 
-**Spike needed:** Determine how to substitute `jaz` for the Java launcher used
-by the current Open Liberty scripts without changing application behavior.
-Install a pinned `jaz` release on the GitHub-hosted Linux runner, verify the
-three launch modes, and execute the section 1.15 workload repeatedly in one
-job. Confirm that diagnostics remain available without suppressing `jaz`
-tuning and that `jaz` relays Liberty output, signals, and exit status
-correctly.
-
 **Recommendation:** Compare the three modes on the same non-containerized
 runner and treat selected JVM flags and measured differences as observations.
 Fail on installation failure, inability to launch or stop Liberty, artifact or
@@ -937,29 +856,106 @@ feature campaign and slide author locate evidence without reading arbitrary
 workflow logs?
 
 **Recommendation:** Upload artifacts using names that include the concern but
-not a hard-coded run number:
+not a hard-coded run number, commit SHA, issue number, or timestamp:
 
 ```text
 build-contract
 dependency-reports
+source-gates
 test-reports-unit
 test-reports-liberty
 liberty-logs
 otel-telemetry
 performance-java
-performance-jaz
+performance-jaz-bypassed
+performance-jaz-tuned
+performance-comparison
 ```
 
-Each artifact should contain a small metadata file with commit SHA, branch,
-workflow run ID, job name, Java version, Maven version, start/end timestamps,
-and the command executed. Choose retention long enough to survive talk
-preparation and rehearsal.
-
-**Spike needed:** Confirm repository artifact-retention policy and expected
-size, especially for Liberty runtimes, JFR files, and Maven reports. Upload
-reports and diagnostics, not the entire Maven cache or Liberty installation.
+Set an explicit 90-day retention period. Each artifact should contain a
+machine-readable metadata file with the exact tested commit, workflow/run/job
+identity, tool versions, UTC timestamps, commands, and a checksummed file
+inventory. Record the upload action's artifact ID, URL, and digest in the job
+summary and evidence matrix. Upload bounded reports and diagnostics, not
+caches, installed runtimes, raw environment dumps, or unredacted data.
 
 **Resolution:**
+
+Use concern-based artifact names that remain stable across workflow runs. The
+workflow run is the namespace; do not put a run number, commit SHA, issue
+number, or timestamp in the artifact name. Use these names where the
+corresponding evidence exists:
+
+```text
+build-contract
+dependency-reports
+source-gates
+test-reports-unit
+test-reports-liberty
+liberty-logs
+otel-telemetry
+performance-java
+performance-jaz-bypassed
+performance-jaz-tuned
+performance-comparison
+```
+
+Use one immutable upload per artifact name in a workflow run. Do not append to
+or overwrite an artifact after upload. Set `if-no-files-found: error` for
+required evidence and `retention-days: 90` explicitly on every campaign
+artifact. Ninety days is the campaign retention contract even if repository
+settings permit a longer value. Treat workflow logs, check runs, and artifact
+URLs as expiring evidence; the evidence matrix is the durable index.
+
+Every artifact must contain `artifact-metadata.json` at its root with:
+
+- schema version `1`;
+- concern and artifact name;
+- repository, branch or ref, and exact commit SHA tested;
+- workflow name, run ID, run attempt, run URL, and job name;
+- triggering event and pull request number when applicable;
+- runner OS and architecture;
+- Java, Maven, Open Liberty, and relevant tool or instrumentation versions;
+- UTC start and end timestamps in ISO 8601 format;
+- the exact commands executed, represented as an ordered array;
+- an inventory of included files with relative path, byte size, and SHA-256
+  digest.
+
+Generate the metadata from the same job that creates the evidence. Fail the job
+if required identity fields, commands, or file inventory entries cannot be
+produced. Do not use placeholders such as `unknown` for required fields.
+
+Upload reports and bounded diagnostic evidence, not caches or installed
+runtimes. Never upload the Maven repository, the entire `target/` tree, the
+Open Liberty installation, raw environment dumps, credentials, or unredacted
+request data. Include only the WAR inventory and checksum rather than a second
+WAR copy unless a task explicitly requires the deployable WAR. Include bounded,
+redacted JFR recordings, GC logs, test reports, analyzer reports, telemetry,
+Liberty logs, command transcripts, and summaries required by the applicable
+issue. Run the issue's redaction and nonempty-file checks before upload.
+
+Give every upload step an `id`. Record its `artifact-id`, `artifact-url`, and
+`artifact-digest` outputs in the GitHub Actions job summary together with the
+artifact name and tested commit SHA. Because those values are produced only
+after the archive is created, do not attempt to embed them in that artifact's
+own metadata file.
+
+Before an implementation PR is merged, its evidence-matrix update must identify
+the issue and PR, the exact tested commit SHA, workflow run URL and ID, job or
+check name, artifact name, artifact URL or ID, artifact digest, and the
+specific file inside the artifact that supports the observation. It must also
+record the observed event, confidence, and slide implication required by the
+cross-cutting campaign gate. A citation to a successful implementation commit
+is valid even when a later documentation-only commit updates the matrix; do not
+pretend a pre-merge document can know the future merge commit SHA.
+
+After merge, verify that the evidence-matrix update is present on the campaign
+base branch and that the cited workflow run and artifacts are still available.
+Do not start the next serial issue until that verification succeeds. If an
+artifact would exceed practical upload limits, reduce it to the smallest
+diagnostic subset that preserves the finding and record the omitted material;
+do not silently drop required evidence or upload a cache/runtime archive as a
+substitute.
 
 ---
 
