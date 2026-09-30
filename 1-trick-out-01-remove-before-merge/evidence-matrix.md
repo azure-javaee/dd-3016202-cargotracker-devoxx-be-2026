@@ -89,3 +89,7 @@ Use this template:
 
 No implementation issue is complete until its subsection has been appended
 and the corresponding summary rows have been updated.
+
+## Appendix I: Human observations
+
+- While filling out the ignorance reduction plan, I was frequently guided toward narrowing the possible paths the agents could go. See "1.6 — Executable Java 17 and Java EE 7 compatibility contract". Without narrowing it down, the agents might want to upgrade the system forward: javax → jakarta for example. By explicitly disallowing that, we close down that possible wandering path.

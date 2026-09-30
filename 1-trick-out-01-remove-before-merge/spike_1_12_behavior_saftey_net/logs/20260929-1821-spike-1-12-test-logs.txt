@@ -1,0 +1,210 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< org.eclipse.ee4j:cargo-tracker >-------------------
+[INFO] Building Eclipse Cargo Tracker 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ cargo-tracker ---
+[INFO] Copying 5 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ cargo-tracker ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 95 source files with javac [debug release 17] to target/classes
+[INFO] 
+[INFO] --- liberty:3.12.1:create (install-liberty) @ cargo-tracker ---
+[INFO] The runtimeArtifact version 26.0.0.8 is overwritten by the liberty.runtime.version value 26.0.0.8.
+[INFO] CWWKM2102I: Using artifact based assembly archive : io.openliberty:openliberty-runtime:null:26.0.0.8:zip.
+[INFO] CWWKM2102I: Using installDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp.
+[INFO] CWWKM2102I: Using serverName : defaultServer.
+[INFO] CWWKM2102I: Using serverDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer.
+[INFO] Installing assembly...
+[INFO] Expanding: /home/edburns/.m2/repository/io/openliberty/openliberty-runtime/26.0.0.8/openliberty-runtime-26.0.0.8.zip into /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty
+[INFO] CWWKM2143I: Server defaultServer does not exist. Now creating...
+[INFO] CWWKM2001I: Invoke command is [/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/bin/server, create, defaultServer].
+[INFO] 
+[INFO] Server defaultServer created.
+[INFO] CWWKM2129I: Server defaultServer has been created at /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer.
+[INFO] Copying 2 files to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer
+[INFO] CWWKM2144I: Update server configuration file server.xml from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/server.xml.
+[INFO] CWWKM2144I: Update server configuration file bootstrap.properties from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/bootstrap.properties.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derby-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derby-10.14.2.0.jar.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derbytools-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derbytools-10.14.2.0.jar.
+[INFO] CWWKM2185I: The liberty-maven-plugin configuration parameter "appsDirectory" value defaults to "apps".
+[INFO] 
+[INFO] --- liberty:3.12.1:install-feature (install-liberty) @ cargo-tracker ---
+[INFO] Feature signature verify option: enforce
+[INFO] Parsing the server file for features and includes: defaultServer/server.xml
+[INFO] plugin listed esa: []
+
+[INFO] Resolving features: [javaee-7.0, localconnector-1.0]
+[INFO] The features are already installed, so no action is needed.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ cargo-tracker ---
+[INFO] Copying 3 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ cargo-tracker ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 11 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ cargo-tracker ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running org.eclipse.cargotracker.application.BookingServiceTest
+
+Picked up JAVA_TOOL_OPTIONS: -Dcom.ibm.ws.logging.console.log.level=INFO 
+Launching defaultServer (Open Liberty 26.0.0.8/wlp-1.0.116.cl260820260725-1102) on OpenJDK 64-Bit Server VM, version 17.0.18+8-LTS (en)
+[AUDIT   ] CWWKE0001I: The server defaultServer has been launched.
+[INFO    ] CWWKE0002I: The kernel started after 1.236 seconds
+[INFO    ] CWWKF0007I: Feature update started.
+[INFO    ] CWWKS0007I: The security service is starting...
+[AUDIT   ] CWWKZ0058I: Monitoring dropins for applications.
+[INFO    ] WELD-000900: 2.4.8 (Final)
+[INFO    ] DYNA1001I: WebSphere Dynamic Cache instance named baseCache initialized successfully.
+[INFO    ] DYNA1071I: The cache provider default is being used.
+[INFO    ] DYNA1056I: Dynamic Cache (object cache) initialized successfully.
+[AUDIT   ] CWPKI0820A: The default keystore has been created using the 'keystore_password' environment variable.
+[INFO    ] CWPKI0802I: Creating the SSL certificate. This may take a few seconds.
+[INFO    ] CWWKS4103I: Creating the LTPA keys. This may take a few seconds.
+[INFO    ] CWWKS1123I: The collective authentication plugin with class name NullCollectiveAuthenticationPlugin has been activated. 
+[AUDIT   ] CWWKS4104A: LTPA keys created in 0.827 seconds. LTPA key file: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/resources/security/ltpa.keys
+[INFO    ] CWWKS0008I: The security service is ready.
+[INFO    ] CWWKS4105I: LTPA configuration is ready after 0.834 seconds.
+[AUDIT   ] CWPKI0803A: SSL certificate created in 1.337 seconds. SSL key file: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/resources/security/key.p12
+[INFO    ] Successfully loaded default keystore: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/resources/security/key.p12 of type: PKCS12
+[INFO    ]  CWSIS1553I: The minimum reserved size in the configuration information of the permanent store file is 20,971,520 bytes. The maximum size is 209,715,200 bytes.
+[INFO    ]  CWSIS1557I: The minimum reserved size in the configuration information of the temporary store file is 20,971,520 bytes. The maximum size is 209,715,200 bytes.
+[INFO    ]  CWSID0108I: JMS server has started.  
+[INFO    ] CWWKS1655I: The default Java Authentication SPI for Containers (JASPIC) AuthConfigFactory class com.ibm.ws.security.jaspi.ProviderRegistry is being used because the Java security property authconfigprovider.factory is not set. 
+[INFO    ] CWWKS9120I: Authorization roles with id="com.ibm.ws.batch" have been successfully processed.
+[INFO    ] Aries Blueprint packages not available. So namespaces will not be registered
+[INFO    ] CXF message logging feature disabled
+[AUDIT   ] CWWKI0001I: The CORBA name server is now available at corbaloc:iiop:localhost:2809/NameService.
+[WARNING ] CWWKZ0014W: The application cargo-tracker could not be started as it could not be found at location cargo-tracker.war.
+[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint has been started and is now listening for requests on host *  (IPv6) port 8080.
+[INFO    ] CWWKO0219I: TCP Channel wasJmsEndpoint555 has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 7276.
+[INFO    ] CWWKO0219I: TCP Channel defaultHttpEndpoint-ssl has been started and is now listening for requests on host *  (IPv6) port 8081.
+[INFO    ] CWWKO0219I: TCP Channel wasJmsEndpoint555-ssl has been started and is now listening for requests on host localhost  (IPv4: 127.0.0.1) port 7286.
+[AUDIT   ] CWWKF0012I: The server installed the following features: [appClientSupport-1.0, appSecurity-2.0, batch-1.0, beanValidation-1.1, cdi-1.2, concurrent-1.0, distributedMap-1.0, ejb-3.2, ejbHome-3.2, ejbLite-3.2, ejbPersistentTimer-3.2, ejbRemote-3.2, el-3.0, j2eeManagement-1.1, jacc-1.5, jaspic-1.1, javaMail-1.5, javaee-7.0, jaxb-2.2, jaxrs-2.0, jaxrsClient-2.0, jaxws-2.2, jca-1.7, jcaInboundSecurity-1.0, jdbc-4.1, jms-2.0, jndi-1.0, jpa-2.1, jpaContainer-2.1, jsf-2.2, json-1.0, jsonp-1.0, jsp-2.3, localConnector-1.0, managedBeans-1.0, mdb-3.2, servlet-3.1, ssl-1.0, wasJmsClient-2.0, wasJmsSecurity-1.0, wasJmsServer-1.0, webProfile-7.0, websocket-1.1].
+[INFO    ] CWWKF0008I: Feature update completed in 9.028 seconds.
+[AUDIT   ] CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 10.265 seconds.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+[AUDIT   ] CWWKG0016I: Starting server configuration update.
+[AUDIT   ] CWWKG0017I: The server configuration was successfully updated in 0.033 seconds.
+[INFO    ] CWWKZ0018I: Starting application cargo-tracker-test.
+[INFO    ] CWWKZ0133I: The cargo-tracker-test application at the /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/apps/cargo-tracker-test.war location is being expanded to the /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/apps/expanded/cargo-tracker-test.war directory.
+[INFO    ] registering MBean org.apache.cxf:bus.id=cargo-tracker-test-Server-Bus,type=Bus,instance.id=98590435: org.apache.cxf.bus.ManagedBus@59b36eaa
+[INFO    ] registered org.apache.cxf:bus.id=cargo-tracker-test-Server-Bus,type=Bus,instance.id=98590435
+[INFO    ] registering MBean org.apache.cxf:bus.id=cargo-tracker-test-Server-Bus,WorkQueueManager=Bus.WorkQueueManager,type=WorkQueueManager,instance.id=1352100237: org.apache.cxf.bus.managers.WorkQueueManagerImplMBeanWrapper@2e6067d7
+[EL Info]: server: 2026-09-29 18:22:22.824--Detected server platform: org.eclipse.persistence.platform.server.was.WebSphere_Liberty_Platform.
+[INFO    ] CWWJP9990I: [eclipselink.server] Detected server platform: org.eclipse.persistence.platform.server.was.WebSphere_Liberty_Platform.
+[INFO    ] CWWJP9990I: [eclipselink] EclipseLink, version: Eclipse Persistence Services - 2.6.10.WAS-v20230307-f193aace40
+[INFO    ] CWWJP9990I: [eclipselink.connection] Not able to detect platform for vendor name [Generic Component Context DataSource[Generic Component Context DataSource : java:app/jdbc/CargoTrackerDatabase, 0]]. Defaulting to [org.eclipse.persistence.platform.database.DatabasePlatform]. The database dialect used may not match with the database you are using. Please explicitly provide a platform using property "eclipselink.target-database".
+[INFO    ] SESN8501I: The session manager did not find a persistent storage location; HttpSession objects will be stored in the local application server's memory.
+[INFO    ] CNTR4000I: The cargo-tracker-test.war EJB module in the cargo-tracker-test application is starting.
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.pathfinder.api.GraphTraversalService interface of the GraphTraversalService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:cargo-tracker-test/cargo-tracker-test.war/GraphTraversalService#org.eclipse.pathfinder.api.GraphTraversalService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.pathfinder.api.GraphTraversalService interface of the GraphTraversalService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:org.eclipse.pathfinder.api.GraphTraversalService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.pathfinder.api.GraphTraversalService interface of the GraphTraversalService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: java:global/cargo-tracker-test/GraphTraversalService!org.eclipse.pathfinder.api.GraphTraversalService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingService interface of the DefaultBookingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:cargo-tracker-test/cargo-tracker-test.war/DefaultBookingService#org.eclipse.cargotracker.application.BookingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingService interface of the DefaultBookingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:org.eclipse.cargotracker.application.BookingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingService interface of the DefaultBookingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: java:global/cargo-tracker-test/DefaultBookingService!org.eclipse.cargotracker.application.BookingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.domain.service.RoutingService interface of the ExternalRoutingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:cargo-tracker-test/cargo-tracker-test.war/ExternalRoutingService#org.eclipse.cargotracker.domain.service.RoutingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.domain.service.RoutingService interface of the ExternalRoutingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:org.eclipse.cargotracker.domain.service.RoutingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.domain.service.RoutingService interface of the ExternalRoutingService enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: java:global/cargo-tracker-test/ExternalRoutingService!org.eclipse.cargotracker.domain.service.RoutingService
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingServiceTestDataGenerator interface of the BookingServiceTestDataGenerator enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:cargo-tracker-test/cargo-tracker-test.war/BookingServiceTestDataGenerator#org.eclipse.cargotracker.application.BookingServiceTestDataGenerator
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingServiceTestDataGenerator interface of the BookingServiceTestDataGenerator enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: ejblocal:org.eclipse.cargotracker.application.BookingServiceTestDataGenerator
+[INFO    ] CNTR0167I: The server is binding the org.eclipse.cargotracker.application.BookingServiceTestDataGenerator interface of the BookingServiceTestDataGenerator enterprise bean in the cargo-tracker-test.war module of the cargo-tracker-test application.  The binding location is: java:global/cargo-tracker-test/BookingServiceTestDataGenerator!org.eclipse.cargotracker.application.BookingServiceTestDataGenerator
+[INFO    ] CWRLS0010I: Performing recovery processing for local WebSphere server (defaultServer).
+[INFO    ] CWRLS0007I: No existing recovery log files found in /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/tranlog. Cold starting the recovery log.
+[INFO    ] CWRLS0006I: Creating new recovery log file /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/tranlog/log1.
+[INFO    ] CWRLS0006I: Creating new recovery log file /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/tranlog/log2.
+[INFO    ] CWRLS0007I: No existing recovery log files found in /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/partnerlog. Cold starting the recovery log.
+[INFO    ] CWRLS0006I: Creating new recovery log file /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/partnerlog/log1.
+[INFO    ] CWRLS0006I: Creating new recovery log file /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/tranlog/partnerlog/log2.
+[INFO    ] CWRLS0012I: All persistent services have been directed to perform recovery processing for this WebSphere server (defaultServer).
+[INFO    ] WTRN0135I: Transaction service recovering no transactions.
+[INFO    ] CWWJP9990I: [eclipselink] EclipseLink, version: Eclipse Persistence Services - 2.6.10.WAS-v20230307-f193aace40
+[INFO    ] DSRA8203I: Database product name : Apache Derby
+[INFO    ] DSRA8204I: Database product version : 10.14.2.0 - (1828579)
+[INFO    ] DSRA8205I: JDBC driver name  : Apache Derby Embedded JDBC Driver
+[INFO    ] DSRA8206I: JDBC driver version  : 10.14.2.0 - (1828579)
+[WARNING ] CWWJP9991W: [eclipselink.metadata] isNullAllowed is reset to false in org.eclipse.persistence.mappings.AggregateObjectMapping[itinerary] because the aggregate has a (possibly nested) target foreign key mapping
+[WARNING ] CWWJP9991W: [eclipselink.metadata] isNullAllowed is reset to false in org.eclipse.persistence.mappings.AggregateObjectMapping[schedule] because the aggregate has a (possibly nested) target foreign key mapping
+[INFO    ] Loading sample data.
+[INFO    ] Unloading all existing data.
+[INFO    ] Loading sample locations.
+[INFO    ] Loading sample voyages.
+[INFO    ] CNTR4001I: The cargo-tracker-test.war EJB module in the cargo-tracker-test application has started successfully.
+[INFO    ] SRVE0169I: Loading Web Module: cargo-tracker-test.
+[INFO    ] SRVE0250I: Web Module cargo-tracker-test has been bound to default_host.
+[AUDIT   ] CWWKT0016I: Web application available (default_host): http://172.25.182.31:8080/cargo-tracker-test/
+[INFO    ] SESN0176I: A new session context will be created for application key default_host/cargo-tracker-test
+[INFO    ] SESN0172I: The session manager is using the Java default SecureRandom implementation for session ID generation.
+[INFO    ] DYNA1056I: Dynamic Cache (object cache) initialized successfully.
+[AUDIT   ] CWWKZ0001I: Application cargo-tracker-test started in 6.293 seconds.
+[INFO    ] SRVE0242I: [cargo-tracker-test] [/cargo-tracker-test] [ArquillianServletRunner]: Initialization successful.
+[INFO    ] Booked new cargo with tracking id CF072887
+[INFO    ] SRVE9103I: A configuration file for a web server plugin was automatically generated for this server at /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer/logs/state/plugin-cfg.xml.
+[INFO    ] Setting the server's publish address to be /rest/
+[INFO    ] SRVE0242I: [cargo-tracker-test] [/cargo-tracker-test] [org.eclipse.cargotracker.application.BookingServiceTestRestConfiguration]: Initialization successful.
+[INFO    ] Assigned cargo CF072887 to new route
+[INFO    ] Changed destination for cargo CF072887 to Helsinki [FIHEL]
+[AUDIT   ] CWWKG0016I: Starting server configuration update.
+[AUDIT   ] CWWKG0017I: The server configuration was successfully updated in 0.020 seconds.
+[AUDIT   ] CWWKT0017I: Web application removed (default_host): http://172.25.182.31:8080/cargo-tracker-test/
+[INFO    ] SRVE0253I: [cargo-tracker-test] [/cargo-tracker-test] [org.eclipse.cargotracker.application.BookingServiceTestRestConfiguration]: Destroy successful.
+[INFO    ] SRVE0253I: [cargo-tracker-test] [/cargo-tracker-test] [ArquillianServletRunner]: Destroy successful.
+[INFO    ] CNTR4003I: The cargo-tracker-test.war EJB module in the cargo-tracker-test application is stopping.
+[INFO    ] CNTR4004I: The cargo-tracker-test.war EJB module in the cargo-tracker-test application has stopped successfully.
+[INFO    ] unregistering MBean org.apache.cxf:bus.id=cargo-tracker-test-Server-Bus,type=Bus,instance.id=98590435
+[INFO    ] unregistering MBean org.apache.cxf:bus.id=cargo-tracker-test-Server-Bus,WorkQueueManager=Bus.WorkQueueManager,type=WorkQueueManager,instance.id=1352100237
+[AUDIT   ] CWWKZ0009I: The application cargo-tracker-test has stopped successfully.
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 23.48 s -- in org.eclipse.cargotracker.application.BookingServiceTest
+[INFO] Running org.eclipse.cargotracker.domain.model.handling.HandlingHistoryTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.033 s -- in org.eclipse.cargotracker.domain.model.handling.HandlingHistoryTest
+[INFO] Running org.eclipse.cargotracker.domain.model.handling.HandlingEventTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s -- in org.eclipse.cargotracker.domain.model.handling.HandlingEventTest
+[INFO] Running org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.052 s -- in org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest
+[INFO] Running org.eclipse.cargotracker.domain.model.cargo.CargoTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.081 s -- in org.eclipse.cargotracker.domain.model.cargo.CargoTest
+[INFO] Running org.eclipse.cargotracker.domain.model.cargo.ItineraryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in org.eclipse.cargotracker.domain.model.cargo.ItineraryTest
+
+Stopping server defaultServer.
+[AUDIT   ] CWWKE0055I: Server shutdown requested on Tuesday, September 29, 2026 at 6:22 PM. The server defaultServer is shutting down.
+[AUDIT   ] CWWKE1100I: Waiting for up to 30 seconds for the server to quiesce.
+[INFO    ] CWWKO0220I: TCP Channel defaultHttpEndpoint-ssl has stopped listening for requests on host *  (IPv6) port 8081.
+[INFO    ] CWWKO0220I: TCP Channel wasJmsEndpoint555 has stopped listening for requests on host localhost  (IPv4: 127.0.0.1) port 7276.
+[INFO    ] CWWKO0220I: TCP Channel defaultHttpEndpoint has stopped listening for requests on host *  (IPv6) port 8080.
+[INFO    ] CWWKO0220I: TCP Channel wasJmsEndpoint555-ssl has stopped listening for requests on host localhost  (IPv4: 127.0.0.1) port 7286.
+[INFO    ] CWWKY0005I: The batch JPA persistence service is activated.
+[INFO    ] CWWKY0008I: The batch feature is using persistence type JPA.
+[INFO    ] CWWKE1101I: Server quiesce complete.
+[INFO    ] CWWKY0005I: The batch JPA persistence service is deactivated.
+[AUDIT   ] CWWKI0002I: The CORBA name server is no longer available at corbaloc:iiop:localhost:2809/NameService.
+[AUDIT   ] WTRN0105I: The transaction service has shutdown successfully with no transactions requiring recovery.
+[INFO    ] CWWKS1124I: The collective authentication plugin with class name NullCollectiveAuthenticationPlugin has been deactivated. 
+[INFO    ] CWWKS0009I: The security service has stopped.
+[INFO    ]  CWSIS1589I: The file store has stopped successfully.
+[INFO    ]  CWSID0121I: JMS server stopped.  
+[AUDIT   ] CWWKE0036I: The server defaultServer stopped after 24.84 seconds.
+Server defaultServer stopped.
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 28, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  42.022 s
+[INFO] Finished at: 2026-09-29T18:22:32-04:00
+[INFO] ------------------------------------------------------------------------

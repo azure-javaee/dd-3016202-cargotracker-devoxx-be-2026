@@ -1,0 +1,57 @@
+{
+  "spike": "1.9",
+  "title": "Compiler diagnostics and type-system evidence",
+  "date": "2026-09-29",
+  "baseline": "cf19be6029aad88ce792e544cc4dd8135867723f",
+  "environment": {
+    "java": "Microsoft OpenJDK 17",
+    "maven_wrapper": "3.9.9",
+    "maven_compiler_plugin": "3.14.0",
+    "release": 17,
+    "java_ee_api": "javax:javaee-api:7.0",
+    "openliberty_profile_enabled": false,
+    "openliberty_runtime_created": false,
+    "openliberty_runtime_started": false
+  },
+  "warnings": {
+    "total": 14,
+    "categories": {
+      "rawtypes": 2,
+      "serial": 12
+    },
+    "requires_permanent_baseline": false,
+    "requires_suppression": false
+  },
+  "validation": {
+    "xlint_all_without_werror_status": 0,
+    "xlint_all_with_werror_status_before_fixes": 1,
+    "rawtypes_with_werror_status_before_fixes": 1,
+    "serial_with_werror_status_before_fixes": 1,
+    "clean_subset": "-Xlint:all,-rawtypes,-serial -Werror",
+    "clean_subset_status": 0,
+    "xlint_all_with_werror_status_after_fixes": 0,
+    "test_compile_source_count": 11,
+    "test_compile_with_xlint_all_werror_status_after_fixes": 0,
+    "generated_serial_uids_preserved": true,
+    "invented_api_fixture_status": 1,
+    "invented_api_diagnostic": "cannot find symbol: method agentInventedMethod(java.lang.String)"
+  },
+  "recommendation": {
+    "compiler_arguments": [
+      "-Xlint:all",
+      "-Werror"
+    ],
+    "show_warnings": true,
+    "named_ci_command": "./mvnw '-P!openliberty' -DskipTests clean compile",
+    "add_compiler_replacement": false
+  },
+  "artifacts": {
+    "warning_inventory": "warnings.tsv",
+    "run_summary": "run-summary.tsv",
+    "proposed_source_fixes": "proposed-warning-fixes.patch",
+    "generated_serial_uids": "inventories/generated-serial-version-uids.txt",
+    "explicit_serial_uids": "inventories/explicit-serial-version-uids.txt",
+    "type_failure": "inventories/type-failure.txt",
+    "post_fix_test_compile_log": "logs/20260929-1812-06-test-compile-xlint-all-werror-preserved-uids-job-logs.txt"
+  }
+}

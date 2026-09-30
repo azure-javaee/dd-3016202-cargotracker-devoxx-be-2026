@@ -1,0 +1,7 @@
+case	policy	fixture	baseline	check_status	apply_status	changed_java_files	added_lines	deleted_lines	check_log	apply_log	inventory
+historical-clean	historical	no	1fd1c340fa56c6c77a601d2fbba20294afa46dd9	0	0	0	0	0	logs/20260929-1806-01-historical-clean-check-job-logs.txt	logs/20260929-1806-01-historical-clean-apply-job-logs.txt	inventories/historical-clean.txt
+proposed-clean	proposed	no	cf19be6029aad88ce792e544cc4dd8135867723f	0	0	0	0	0	logs/20260929-1806-02-proposed-clean-check-job-logs.txt	logs/20260929-1806-02-proposed-clean-apply-job-logs.txt	inventories/proposed-clean.txt
+whole-tree	whole-tree	no	none	1	0	95	5245	5184	logs/20260929-1806-03-whole-tree-check-job-logs.txt	logs/20260929-1806-03-whole-tree-apply-job-logs.txt	inventories/whole-tree.txt
+historical-fixture	historical	yes	1fd1c340fa56c6c77a601d2fbba20294afa46dd9	1	0	2	179	186	logs/20260929-1806-04-historical-fixture-check-job-logs.txt	logs/20260929-1806-04-historical-fixture-apply-job-logs.txt	inventories/historical-fixture.txt
+proposed-fixture	proposed	yes	cf19be6029aad88ce792e544cc4dd8135867723f	1	0	2	179	186	logs/20260929-1806-05-proposed-fixture-check-job-logs.txt	logs/20260929-1806-05-proposed-fixture-apply-job-logs.txt	inventories/proposed-fixture.txt
+advanced-malformed-baseline	advanced-to-malformed-commit	committed-before-ratchet	083a3717567e5d13669a8ddd8ec5153eeda9f2bd	0	0	0	0	0	logs/20260929-1806-06-advanced-malformed-baseline-check-job-logs.txt	logs/20260929-1806-06-advanced-malformed-baseline-apply-job-logs.txt	inventories/advanced-malformed-baseline.txt

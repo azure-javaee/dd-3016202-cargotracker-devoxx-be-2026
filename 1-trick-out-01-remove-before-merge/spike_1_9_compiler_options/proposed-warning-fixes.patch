@@ -1,0 +1,167 @@
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/domain/model/voyage/SampleVoyages.java b/demo/src/main/java/org/eclipse/cargotracker/domain/model/voyage/SampleVoyages.java
+index 8cd7ab9..b123003 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/domain/model/voyage/SampleVoyages.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/domain/model/voyage/SampleVoyages.java
+@@ -114,7 +114,7 @@ public class SampleVoyages {
+ 	}
+ 
+ 	public static List<Voyage> getAll() {
+-		return new ArrayList(ALL.values());
++		return new ArrayList<>(ALL.values());
+ 	}
+ 
+ 	public static Voyage lookup(VoyageNumber voyageNumber) {
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/infrastructure/messaging/jms/JmsApplicationEvents.java b/demo/src/main/java/org/eclipse/cargotracker/infrastructure/messaging/jms/JmsApplicationEvents.java
+index 1b90acd..066337b 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/infrastructure/messaging/jms/JmsApplicationEvents.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/infrastructure/messaging/jms/JmsApplicationEvents.java
+@@ -17,6 +17,7 @@ import java.util.logging.Logger;
+ @ApplicationScoped
+ public class JmsApplicationEvents implements ApplicationEvents, Serializable {
+ 
++    private static final long serialVersionUID = -7798194159481061407L;
+     private static final int LOW_PRIORITY = 0;
+     @Inject
+     JMSContext jmsContext;
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/Leg.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/Leg.java
+index 30cb5e2..9584fd4 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/Leg.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/Leg.java
+@@ -11,6 +11,7 @@ import java.util.Date;
+  */
+ public class Leg implements Serializable {
+ 
++    private static final long serialVersionUID = 6476796480576183537L;
+     private static final SimpleDateFormat DATE_FORMAT
+             = new SimpleDateFormat("MM/dd/yyyy hh:mm a z");
+ 
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/RouteCandidate.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/RouteCandidate.java
+index e8d31f0..777ea8c 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/RouteCandidate.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/RouteCandidate.java
+@@ -10,6 +10,7 @@ import java.util.List;
+  */
+ public class RouteCandidate implements Serializable {
+ 
++    private static final long serialVersionUID = -4108469217855855236L;
+     private List<Leg> legs;
+ 
+     public RouteCandidate(List<Leg> legs) {
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java
+index 4dfa9f6..8c8304c 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java
+@@ -18,7 +18,7 @@ import java.util.Map;
+ @SessionScoped
+ public class ChangeDestinationDialog implements Serializable {
+ 
+-
++    private static final long serialVersionUID = -2417240804905241547L;
+     public void showDialog(String trackingId) {
+         Map<String, Object> options = new HashMap<>();
+         options.put("modal", true);
+@@ -35,7 +35,7 @@ public class ChangeDestinationDialog implements Serializable {
+         PrimeFaces.current().dialog().openDynamic("/admin/dialogs/changeDestination.xhtml", options, params);
+     }
+ 
+-    public void handleReturn(SelectEvent event) {  }
++    public void handleReturn(SelectEvent<?> event) {  }
+ 
+     public void cancel() {
+         // just kill the dialog
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/DashboardView.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/DashboardView.java
+index e7f809e..c962046 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/DashboardView.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/DashboardView.java
+@@ -16,6 +16,7 @@ import java.io.Serializable;
+ @ViewScoped
+ public class DashboardView implements Serializable {
+ 
++    private static final long serialVersionUID = -140203473850023659L;
+     private DashboardModel model;
+ 
+     private String name = "TestDD";
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/HandlingEventRegistrationAttempt.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/HandlingEventRegistrationAttempt.java
+index f071c43..2b9e102 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/HandlingEventRegistrationAttempt.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/HandlingEventRegistrationAttempt.java
+@@ -16,6 +16,7 @@ import java.util.Date;
+  */
+ public class HandlingEventRegistrationAttempt implements Serializable {
+ 
++    private static final long serialVersionUID = -2104556009339674945L;
+     private final Date registrationTime;
+     private final Date completionTime;
+     private final TrackingId trackingId;
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventFilesCheckpoint.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventFilesCheckpoint.java
+index ae606c9..b3283ba 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventFilesCheckpoint.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventFilesCheckpoint.java
+@@ -7,6 +7,7 @@ import java.util.List;
+ 
+ public class EventFilesCheckpoint implements Serializable {
+ 
++    private static final long serialVersionUID = -3545175108738448258L;
+     private List<File> files = new LinkedList<>();
+     private int fileIndex = 0;
+     private long filePointer = 0;
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventLineParseException.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventLineParseException.java
+index c9ac120..f53eaf9 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventLineParseException.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventLineParseException.java
+@@ -5,6 +5,7 @@ package org.eclipse.cargotracker.interfaces.handling.file;
+  */
+ public class EventLineParseException extends RuntimeException {
+ 
++    private static final long serialVersionUID = 3977812752277788976L;
+     private final String line;
+ 
+     public EventLineParseException(String message, Throwable cause, String line) {
+diff --git a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/mobile/EventWizard.java b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/mobile/EventWizard.java
+index 41dd2c0..0335a66 100644
+--- a/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/mobile/EventWizard.java
++++ b/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/mobile/EventWizard.java
+@@ -29,6 +29,7 @@ import java.util.List;
+ @ViewScoped
+ public class EventWizard implements Serializable {
+ 
++    private static final long serialVersionUID = -3035751891096705395L;
+     @Inject
+     private BookingServiceFacade bookingServiceFacade;
+ 
+diff --git a/demo/src/main/java/org/eclipse/pathfinder/api/TransitEdge.java b/demo/src/main/java/org/eclipse/pathfinder/api/TransitEdge.java
+index 5d34286..305ceec 100644
+--- a/demo/src/main/java/org/eclipse/pathfinder/api/TransitEdge.java
++++ b/demo/src/main/java/org/eclipse/pathfinder/api/TransitEdge.java
+@@ -9,6 +9,7 @@ import java.util.Date;
+  */
+ public class TransitEdge implements Serializable {
+ 
++    private static final long serialVersionUID = 9032278294178349704L;
+     private String voyageNumber;
+     private String fromUnLocode;
+     private String toUnLocode;
+diff --git a/demo/src/main/java/org/eclipse/pathfinder/api/TransitPath.java b/demo/src/main/java/org/eclipse/pathfinder/api/TransitPath.java
+index c846a00..0cb9da0 100644
+--- a/demo/src/main/java/org/eclipse/pathfinder/api/TransitPath.java
++++ b/demo/src/main/java/org/eclipse/pathfinder/api/TransitPath.java
+@@ -8,6 +8,7 @@ import java.util.List;
+ @XmlRootElement
+ public class TransitPath implements Serializable {
+ 
++    private static final long serialVersionUID = 794960150247732460L;
+     private List<TransitEdge> transitEdges;
+ 
+     public TransitPath() {
+diff --git a/demo/src/main/java/org/eclipse/pathfinder/internal/GraphDao.java b/demo/src/main/java/org/eclipse/pathfinder/internal/GraphDao.java
+index d4f97d9..91c3f0e 100644
+--- a/demo/src/main/java/org/eclipse/pathfinder/internal/GraphDao.java
++++ b/demo/src/main/java/org/eclipse/pathfinder/internal/GraphDao.java
+@@ -10,6 +10,7 @@ import java.util.Random;
+ @ApplicationScoped
+ public class GraphDao implements Serializable {
+ 
++    private static final long serialVersionUID = -3775903915803262457L;
+     private final Random random = new Random();
+ 
+     public List<String> listLocations() {

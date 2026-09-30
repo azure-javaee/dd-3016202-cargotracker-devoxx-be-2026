@@ -1,0 +1,12 @@
+case=advanced-malformed-baseline
+policy=advanced-to-malformed-commit
+fixture=committed-before-ratchet
+baseline=083a3717567e5d13669a8ddd8ec5153eeda9f2bd
+check_status=0
+apply_status=0
+
+[committed malformed Java files]
+M	demo/src/main/java/org/eclipse/cargotracker/domain/model/cargo/Cargo.java
+A	demo/src/test/java/org/eclipse/cargotracker/spotlessspike/BadFormatting.java
+
+[Java changes after apply]

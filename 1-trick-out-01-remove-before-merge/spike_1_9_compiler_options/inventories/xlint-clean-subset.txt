@@ -1,0 +1,34 @@
+case=xlint-clean-subset
+baseline=cf19be6029aad88ce792e544cc4dd8135867723f
+compiler_arguments=-Xlint:all,-rawtypes,-serial -Werror
+expected_status=0
+actual_status=0
+elapsed_seconds=6
+warning_count=0
+
+[compiler configuration]
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.14.0</version>
+				<configuration>
+					<showWarnings>true</showWarnings>
+					<compilerArgs>
+						<arg>-Xlint:all,-rawtypes,-serial</arg>
+						<arg>-Werror</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+
+[warning lines]

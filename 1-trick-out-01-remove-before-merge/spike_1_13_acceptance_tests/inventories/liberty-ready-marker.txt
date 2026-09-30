@@ -1,0 +1,1 @@
+[9/29/26, 18:36:20:721 EDT] 00000026 com.ibm.ws.kernel.feature.internal.FeatureManager            A CWWKF0011I: The defaultServer server is ready to run a smarter planet. The defaultServer server started in 13.846 seconds.

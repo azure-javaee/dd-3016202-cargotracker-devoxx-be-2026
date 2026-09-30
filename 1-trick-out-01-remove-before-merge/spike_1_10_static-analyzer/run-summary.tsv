@@ -1,0 +1,5 @@
+tool	phase	exit_status	elapsed_seconds	findings	report	log
+spotbugs	baseline	0	25	7	reports/spotbugs-baseline.xml	logs/20260929-1820-01-spotbugs-baseline-job-logs.txt
+spotbugs	fixture	0	19	8	reports/spotbugs-fixture.xml	logs/20260929-1820-02-spotbugs-fixture-job-logs.txt
+pmd	baseline	0	22	24	reports/pmd-baseline.xml	logs/20260929-1821-03-pmd-baseline-job-logs.txt
+pmd	fixture	0	13	25	reports/pmd-fixture.xml	logs/20260929-1821-04-pmd-fixture-job-logs.txt

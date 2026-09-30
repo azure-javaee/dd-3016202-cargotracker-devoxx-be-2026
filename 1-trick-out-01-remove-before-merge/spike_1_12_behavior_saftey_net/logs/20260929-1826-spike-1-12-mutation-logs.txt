@@ -1,0 +1,90 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< org.eclipse.ee4j:cargo-tracker >-------------------
+[INFO] Building Eclipse Cargo Tracker 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ cargo-tracker ---
+[INFO] Copying 5 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ cargo-tracker ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- liberty:3.12.1:create (install-liberty) @ cargo-tracker ---
+[INFO] The runtimeArtifact version 26.0.0.8 is overwritten by the liberty.runtime.version value 26.0.0.8.
+[INFO] CWWKM2102I: Using artifact based assembly archive : io.openliberty:openliberty-runtime:null:26.0.0.8:zip.
+[INFO] CWWKM2102I: Using installDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp.
+[INFO] CWWKM2102I: Using serverName : defaultServer.
+[INFO] CWWKM2102I: Using serverDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer.
+[INFO] CWWKM2112I: Re-using previously installed assembly.
+[INFO] Copying 2 files to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer
+[INFO] CWWKM2144I: Update server configuration file server.xml from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/server.xml.
+[INFO] CWWKM2144I: Update server configuration file bootstrap.properties from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/bootstrap.properties.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derby-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derby-10.14.2.0.jar.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derbytools-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derbytools-10.14.2.0.jar.
+[INFO] CWWKM2185I: The liberty-maven-plugin configuration parameter "appsDirectory" value defaults to "apps".
+[INFO] 
+[INFO] --- liberty:3.12.1:install-feature (install-liberty) @ cargo-tracker ---
+[INFO] Feature signature verify option: enforce
+[INFO] Parsing the server file for features and includes: defaultServer/server.xml
+[INFO] plugin listed esa: []
+
+[INFO] Resolving features: [javaee-7.0, localconnector-1.0]
+[INFO] The features are already installed, so no action is needed.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ cargo-tracker ---
+[INFO] Copying 3 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ cargo-tracker ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 11 source files with javac [debug release 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ cargo-tracker ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.098 s <<< FAILURE! -- in org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest
+[ERROR] org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest.testIsNotSatisfiedByMissedDeadline -- Time elapsed: 0.032 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)
+	at org.eclipse.cargotracker.domain.model.cargo.RouteSpecificationTest.testIsNotSatisfiedByMissedDeadline(RouteSpecificationTest.java:85)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   RouteSpecificationTest.testIsNotSatisfiedByMissedDeadline:85 expected: <true> but was: <false>
+[INFO] 
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.612 s
+[INFO] Finished at: 2026-09-29T18:23:05-04:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.2:test (default-test) on project cargo-tracker: There are test failures.
+[ERROR] 
+[ERROR] See /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

@@ -1,0 +1,6 @@
+result	path	status	evidence
+PASS	/	HTTP 200	Cargo Tracker
+PASS	/admin/dashboard.xhtml	HTTP 200	Cargo Dashboard ABC123
+PASS	/admin/show.xhtml?trackingId=ABC123	HTTP 200	ABC123
+PASS	/rest/cargo	HTTP 200	"trackingId":"ABC123" "trackingId":"DEF789" "trackingId":"JKL567" "trackingId":"MNO456"
+PASS	/rest/cargo	Content-Type	application/json

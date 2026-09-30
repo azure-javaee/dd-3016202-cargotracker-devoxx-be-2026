@@ -258,6 +258,7 @@ Completed spike 1.3 in:
 
 Selected commands:
 
+```
 ┌──────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────────┐
 │ Tier             │ Command                                                                                     │ Liberty behavior                                        │
 ├──────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
@@ -279,6 +280,7 @@ Selected commands:
 │ Packaging        │ ./mvnw -Popenliberty -Dskip=true -DskipTests clean package                                  │ Produces the canonical WAR without downloading,         │
 │                  │                                                                                             │ creating, or starting Liberty                           │
 └──────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────────────────────────────────┘
+```
 
 The default `clean test`, `clean package`, and `-Popenliberty verify` commands all start Liberty and run the same 28 tests; `verify` adds no distinct verification. The package command above preserves the Open Liberty profile’s Jackson dependencies and produced the canonical 8,233,001-byte WAR.
 
@@ -376,6 +378,11 @@ do not make wholesale legacy remediation part of this campaign.
 
 **Resolution:**
 
+Preserve the dependency tree, effective POM, WAR checksum,
+and vulnerability report as artifacts. Enforce no newly introduced
+high-severity dependency findings or use GitHub dependency review on PR deltas;
+do not make wholesale legacy remediation part of this campaign.
+
 ### 1.6 — Executable Java 17 and Java EE 7 compatibility contract
 
 **Question:** How should the repository reject accidental migration away from
@@ -417,6 +424,14 @@ contract check identifies the exact boundary that changed.
 
 **Resolution:**
 
+Use multiple narrow checks because no single tool covers
+the contract: Maven Enforcer for dependencies and Java version, a small
+JUnit-based repository contract test or script for POM/server configuration,
+and the Open Liberty acceptance job for runtime proof. Ban production imports
+from `jakarta.*` while allowing no exceptions unless a resolved question
+documents one.
+
+
 ### 1.7 — Repository-level instructions for agents
 
 **Question:** Which compatibility and validation rules must be written into
@@ -445,6 +460,76 @@ actually follows, misunderstands, or violates it.
 
 **Resolution:**
 
+Add an explicit, not necessarily short, `.github/copilot-instructions.md` containing at least these: 
+
+- Java 17 only;
+- Java EE 7 and `javax.*`, not Jakarta EE;
+- Maven Wrapper commands run from `demo/`;
+- WAR and Open Liberty assumptions;
+- required green CI before proceeding;
+- no broad dependency upgrades;
+- no replacement with Spring or another application server;
+- required evidence-matrix update timing.
+
+With this `applyTo:`
+
+```yaml
+applyTo:
+  - "**/*.java"
+  - "**/*.kt"
+  - "**/*.groovy"
+  - "**/pom.xml"
+  - "**/.mvn/**"
+  - "**/mvnw"
+  - "**/mvnw.cmd"
+  - "**/build.gradle"
+  - "**/build.gradle.kts"
+  - "**/settings.gradle"
+  - "**/settings.gradle.kts"
+  - "**/gradlew"
+  - "**/gradlew.bat"
+```
+
+```markdown
+## 3) Maven execution: tee-to-log (required)
+
+Whenever you invoke `mvn` (including via `./mvnw`), you must:
+
+- pipe **both stdout and stderr** through `tee` to a log file
+- this streams output to the console AND saves it to the file simultaneously
+- use this log naming pattern: `YYYYMMDD-HHMM-job-logs.txt` (local time)
+- look at the log file to evaluate the success or failure of the command
+- note the exact log filename and always use that exact filename to check results — do NOT guess with `ls -t`, glob sorting, or similar
+- ❌ do not use background `&` + `tail -f` (breaks under VS Code sandbox regime)
+- ❌ do not use any other output redirecting or tailing scheme
+- ✅ Use `requestUnsandboxedExecution` so the environment variables stick. See below.
+
+### POSIX (bash/zsh) pattern
+
+mvn [YOUR_GOALS] 2>&1 | tee "$(date +%Y%m%d-%H%M)-job-logs.txt"
+
+Replace \[YOUR GOALS\] with whatever `mvn` goals are appropriate in your particular case.
+
+### PowerShell pattern
+
+function Invoke-WithTeeLog {
+    param(
+        [Parameter(ValueFromRemainingArguments=$true)]
+        [string[]]$Command
+    )
+    $log = "$(Get-Date -Format 'yyyyMMdd-HHmm')-job-logs.txt"
+    Write-Host "Log file: $((Resolve-Path -Path '.' | Join-Path -ChildPath $log))" -ForegroundColor Cyan
+    $cmdString = $Command -join ' '
+    Invoke-Expression "$cmdString 2>&1" | Tee-Object -FilePath $log
+}
+Set-Alias -Name runt -Value Invoke-WithTeeLog
+
+then
+
+runt mvn [YOUR GOALS]
+```
+
+
 ### 1.8 — Spotless baseline and ratchet semantics
 
 **Question:** Should the existing Spotless `ratchetFrom` remain pinned to
@@ -471,6 +556,14 @@ tagging the completed pre-feature baseline.
 
 **Resolution:**
 
+Keep `ratchetFrom` pinned to `1fd1c340fa56c6c77a601d2fbba20294afa46dd9` throughout the trick-out implementation issues, with `formatting` remaining the first required CI job.
+
+Do not adopt whole-tree formatting: it rewrote 95 of 106 Java files, with 5,245 added and 5,184 deleted lines. The historical ratchet and a simulated ratchet at current HEAD behaved identically because no tracked Java files currently differ between them. Both detected and repaired a modified legacy file and a newly added Java file.
+
+Do not advance the ratchet early. The spike committed malformed Java and moved the ratchet to that commit; both `spotless:check` and `spotless:apply` then passed without touching the malformed files. Advance it only after the complete feature-absent trick-out baseline passes all gates and is tagged. Validate that commit using the old ratchet, then update `ratchetFrom` in a following POM-only commit to the tag’s immutable full commit SHA.
+
+The repeatable six-case spike, logs, inventories, summary, and paste-ready Resolution text are in `1-trick-out-01-remove-before-merge/spike_1_8_spotless/`. The campaign worktree’s Java sources were not modified.
+
 ### 1.9 — Compiler diagnostics and type-system evidence
 
 **Question:** Which compiler warnings can be enabled and enforced without
@@ -496,6 +589,24 @@ method or crosses a typed API boundary and preserve the compiler diagnostic as
 an example; do not intentionally break campaign CI.
 
 **Resolution:**
+
+Completed Spike 1.9 in:
+
+`1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/`
+
+The incorrectly created `spike_1_8_spotless/compiler-diagnostics-1.9` directory was removed. The independent Section 1.8 Spotless artifacts remain intact.
+
+Enable the full javac warning set rather than a reduced subset. On experiment baseline `cf19be6029aad88ce792e544cc4dd8135867723f`, `-Xlint:all` reported 14 warnings: 12 `serial` warnings and two `rawtypes` warnings. Both categories failed independently under `-Werror`; disabling exactly those categories made the remaining full warning set pass.
+
+All 14 warnings fit in one small implementation issue and require no permanent baseline. Correct the raw `ArrayList` construction in `SampleVoyages` with the diamond operator and change `ChangeDestinationDialog.handleReturn` to accept `SelectEvent<?>`. Add explicit `serialVersionUID` fields to the 12 serializable classes, using the current generated values captured by `serialver` rather than arbitrary `1L` values so existing serialization identities are preserved.
+
+After those corrections, both 95 main sources and 11 test sources compiled successfully with `-Xlint:all -Werror`. Configure `maven-compiler-plugin` with `showWarnings`, `-Xlint:all`, and `-Werror`, and keep:
+
+./mvnw '-P!openliberty' -DskipTests clean compile
+
+as a distinct named CI compilation check. Preserve a validation path that also reaches `testCompile`. Do not add Error Prone, NullAway, or another compiler replacement during this campaign.
+
+The controlled failure fixture called nonexistent `Cargo.agentInventedMethod(String)` and javac rejected it with a precise `cannot find symbol` diagnostic. The repeatable harness, warning inventory, proposed source patch, UID compatibility evidence, results JSON, and logs are retained in the spike directory. No Open Liberty runtime was downloaded, created, or started.
 
 ### 1.10 — Static analyzer and legacy-debt strategy
 
@@ -524,6 +635,8 @@ containing a known null-dereference/resource bug and assert that the selected
 rules detect it.
 
 **Resolution:**
+
+Spike 1.10 is complete. Decision: select SpotBugs and defer PMD. The artifacts, repeatable harness, reports, classification, and resolution are in `1-trick-out-01-remove-before-merge/spike_1_10_static-analyzer/`.
 
 ### 1.11 — Actual test inventory and dormant-test disposition
 
@@ -554,6 +667,11 @@ without reconstructing obsolete infrastructure. Remove no test-shaped code
 without documenting why it cannot provide reliable coverage.
 
 **Resolution:**
+
+Classify every existing test as active, intentionally
+dormant, or repairable. Repair only tests that can express stable behavior
+without reconstructing obsolete infrastructure. Remove no test-shaped code
+without documenting why it cannot provide reliable coverage.
 
 ### 1.12 — Behavioral safety net for the later deadline feature
 
@@ -592,6 +710,12 @@ failure.
 
 **Resolution:**
 
+Spike 1.12 is complete. Decision: retain the existing JUnit 5 and Arquillian
+foundation, add a production-WAR HTTP acceptance boundary using seeded cargo
+`ABC123`, and defer browser automation. The artifacts, repeatable harness,
+reports, findings, and resolution are in
+`1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/`.
+
 ### 1.13 — Open Liberty lifecycle and acceptance-test boundary
 
 **Question:** Should Open Liberty acceptance reuse Arquillian's managed server,
@@ -613,6 +737,28 @@ and stop with Liberty Maven Plugin 3.12.1 and runtime 26.0.0.8. Identify the
 startup log marker and HTTP readiness endpoint.
 
 **Resolution:**
+
+Accept the existing recommendation. Keep Arquillian for focused in-container tests and use one black-box acceptance job with this verified lifecycle:
+
+./mvnw -DskipTests clean package
+./mvnw liberty:deploy
+./mvnw -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start
+
+   > # Run bounded HTTP checks
+./mvnw liberty:stop
+
+Key findings:
+
+- `liberty:deploy` is required; `clean package` creates the WAR and runtime but does not deploy the application.
+- `liberty:start` waits for both `CWWKF0011I`—“is ready to run a smarter planet”—and `CWWKZ0001I` for `cargo-tracker`.
+- Use `GET /cargo-tracker/rest/cargo` as readiness. Require HTTP 200, JSON content type, and seeded content such as `"trackingId":"ABC123"`.
+- Do not gate on `liberty:status` exit status: it returned zero both while running and after reporting the server stopped.
+- `liberty:run` works for development, but its foreground lifecycle is unsuitable for CI orchestration.
+- The repeatable harness always invokes `liberty:stop` through an exit trap and preserves Maven, Liberty, and HTTP evidence.
+
+The final harness passed root-page, dashboard, REST-content, and JSON content-type checks. Liberty was stopped and scratch runtimes were removed. The paste-ready resolution, `results.json`, logs, negative missing-deployment experiment, responses, and runnable `run-spike.sh` are retained in the spike directory.
+
+Fully examine the complete spike in `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/`.
 
 ### 1.14 — Runtime observability mechanism
 
@@ -639,94 +785,140 @@ thread or as optional follow-on evidence.
 
 **Resolution:**
 
-### 1.15 — Telemetry correlation, redaction, and artifact format
+Select option B for the agentic inner loop. Attach a pinned OpenTelemetry Java agent to the Java 17 Open Liberty runtime without changing application APIs or adding MicroProfile features. Run a pinned local OpenTelemetry Collector alongside Liberty in GitHub Actions, export traces and metrics to local machine-readable files, and preserve Liberty console and `messages.log` output as build artifacts. After Liberty is ready, exercise the stable `/cargo-tracker/rest/cargo` endpoint and fail the observability check unless it produces a successful server trace and non-empty JVM/runtime metric samples. Archive the collector configuration, telemetry output, Liberty logs, and diagnostic output needed to explain a failed assertion. The inner loop must require no Azure resource, credentials, or external telemetry service and must remain reproducible locally with the same commands used in CI. Keep sampling deterministic for the exercised request, pin the agent and collector versions or image digest, and treat missing telemetry or collector failure as an explicit test failure. Azure Monitor, Application Insights, and triggered JFR profiling belong to the separate deployed-system feedback loop and do not replace or gate this local inner-loop evidence.
 
-**Question:** Which fields and artifact formats make a failed request
-diagnosable while preventing cargo data, credentials, or environment secrets
-from leaking into CI artifacts?
+### 1.15 — Repeatable performance workload and resource envelope
 
-At minimum, evidence should correlate:
+**Question:** What exact bounded workload, controlled JVM/runner context,
+measurement protocol, repetition count, and failure policy will produce
+comparable JVM performance evidence in hosted CI despite normal runner
+variability?
 
-- workflow run and commit SHA;
-- application startup;
-- HTTP request path and status;
-- trace/span identifier;
-- relevant application or Liberty log lines;
-- collector export;
-- test or smoke-check result.
+The purpose is to define and validate the experiment that section 1.16 will
+reuse unchanged. It is not to introduce containerization, tune Cargo Tracker,
+select a benchmark winner, or enforce narrow latency regressions.
 
-**Recommendation:** Use a fixed CI-only request identifier, do not log request
-bodies or secrets, export collector output in a text or JSON format suitable
-for artifact upload, and retain Liberty `messages.log`, `console.log`, and the
-smoke-test transcript. Add an explicit artifact-redaction check before upload.
+The workload contract must resolve:
 
-**Failure example:** Exercise a known invalid cargo or route request and verify
-the failure can be followed from the smoke-test output to a trace and
-application log without exposing a secret.
+- the exact WAR checksum and Open Liberty configuration under test;
+- the launch-to-readiness boundary, using the lifecycle and readiness signal
+  established in resolution 1.13;
+- the warm-up request sequence;
+- the measured HTTP endpoints, request data, request count, concurrency, and
+  pacing;
+- the shutdown and cleanup sequence;
+- the maximum duration for startup, workload, diagnostics, and the complete
+  repetition.
+
+The execution context must remain non-containerized. Run Open Liberty directly
+on a fresh GitHub-hosted Linux runner with Microsoft Build of OpenJDK 17.
+Record rather than synthesize the runner's CPU, memory, operating system,
+kernel, and `/sys/fs/cgroup` view. Do not impose Docker/OCI limits or create a
+privileged nested cgroup. Because section 1.16 must allow `jaz` to select JVM
+tuning, do not make `-X*` or `-XX*` tuning flags part of the workload contract.
+Diagnostic flags that do not suppress `jaz` tuning may be retained.
+
+Each repetition must capture:
+
+- process-launch-to-readiness duration;
+- workload success, response validation, and request-duration summary;
+- peak process RSS and process CPU time;
+- effective JVM command and flags;
+- heap and GC evidence available without changing the launch policy;
+- explicit GC logging;
+- a bounded JFR recording started dynamically after launch;
+- total repetition duration, exit status, and cleanup result.
+
+**Spike needed:** Build the WAR and Liberty runtime once, then execute the
+candidate workload directly on the same runner for at least five independent
+repetitions, using a fresh Liberty output/data directory each time. Preserve
+all measurements and report the minimum, median, maximum, range, and
+coefficient of variation for timing and resource observations. Adjust warm-up,
+request count, pacing, and timeouts until the workload completes reliably and
+produces useful GC, JFR, memory, and request evidence within a bounded CI
+duration.
+
+**Recommendation:** Use the direct Open Liberty lifecycle established in
+resolution 1.13 and the stable `/cargo-tracker/rest/cargo` acceptance path as
+the initial candidate. Treat measurements as diagnostic evidence. Fail only
+on crashes, out-of-memory errors, readiness or workload failure, invalid
+responses, missing or unparseable diagnostics, cleanup failure, or a generous
+gross-duration/resource bound justified by the spike. Report ordinary timing
+and resource variation without turning it into a brittle required threshold.
 
 **Resolution:**
 
-### 1.16 — Repeatable performance workload and resource envelope
+See `1-trick-out-01-remove-before-merge/spike_1_15_capture_repeatable_performance_envelope`.
 
-**Question:** Which workload is stable enough to compare JVM startup and
-runtime behavior in hosted CI, and what resource limits should constrain it?
+Select the non-containerized Open Liberty workload implemented by this spike as the shared baseline for section 1.16. Build and deploy one WAR and Liberty runtime, then restore a pristine `defaultServer` for each repetition. Measure startup through validated HTTP readiness, issue five warm-up requests, dynamically record a 10-second JFR, and issue 30 sequential validated requests at 200-millisecond intervals. Repeat the workload five times per launch mode on the same CI runner. Do not use containers, synthetic cgroup limits, fixed heap or processor settings, or other JVM tuning flags that could interfere with the `java`/`jaz` comparison.
 
-Possible workloads:
+The spike’s five direct-`java` repetitions all completed successfully and produced the required JVM, process, heap, GC, JFR, HTTP, Liberty, and timing evidence. However, several aggregate measurements varied by approximately 15–23%, and individual request timings were noisier. Therefore, treat the results as comparative diagnostic evidence rather than microbenchmark data or narrow regression thresholds. Fail only on functional or diagnostic failure, crash or OOM, startup beyond 90 seconds, a complete repetition beyond 120 seconds, cleanup failure, or a provisional gross peak-RSS bound of 2 GiB. Use a redacted JFR configuration and calibrate the broad resource bounds during the first GitHub-hosted run without changing the workload contract.
 
-- time from process start to the first successful `/cargo-tracker/` response;
-- a fixed number of cargo-tracking or routing HTTP requests;
-- an application-service test loop;
-- a containerized Liberty run with explicit CPU and memory limits.
-
-Hosted runners are noisy, so strict latency regression thresholds could create
-false failures. The initial value is diagnostic evidence, not benchmark
-competition.
-
-**Spike needed:** Run the candidate workload at least three times under a
-fixed container memory and CPU limit. Record variance for startup, peak RSS,
-heap, GC, request duration, and total job duration.
-
-**Recommendation:** Use a containerized Open Liberty workload with a generous
-timeout and broad sanity bounds. Upload measurements on every run, but fail
-only on crashes, out-of-memory errors, inability to become ready, or gross
-regressions supported by repeatable evidence.
-
-**Resolution:**
-
-### 1.17 — `java` versus `jaz`, GC logs, and JFR capture
+### 1.16 — `java` versus `jaz`, GC logs, and JFR capture
 
 **Question:** How should CI compare direct JVM launch with Azure Command
-Launcher for Java (`jaz`) while proving both runs execute the same Liberty
-artifact under the same cgroup limits?
+Launcher for Java (`jaz`) on the same GitHub-hosted Linux VM while proving that
+the application artifact, Liberty runtime, workload, diagnostics, and host
+resource view are otherwise unchanged?
 
-Required evidence candidates:
+The comparison must use the workload and measurement protocol resolved in
+section 1.15. Containerization and synthetic cgroup limits are out of scope.
+The GitHub-hosted VM is the shared resource envelope; record its host and
+cgroup data as evidence rather than attempting to alter it.
 
-- effective JVM command/options;
-- selected heap and GC settings;
-- startup time;
-- container memory limit and observed memory;
-- GC log;
-- bounded JFR recording;
-- workload result;
-- exit status.
+Required launch modes:
 
-**Spike needed:** Determine the supported `jaz` installation and invocation for
-the Liberty launch command. Verify that `jaz` observes the intended cgroup CPU
-and memory limits and that its chosen settings are visible without exposing
-secrets.
+1. direct `java`;
+2. `jaz` with `JAZ_BYPASS=1`, to measure the launcher path without tuning;
+3. normal `jaz`, allowing it to select its tuning.
 
-**Recommendation:** Run direct `java` and `jaz` sequentially in equivalent
-fresh containers. Use the same WAR, Liberty runtime, workload, limits, and
-artifact naming. Treat differences as observations unless repeated runs
-support a defensible threshold.
+Build the WAR and Liberty runtime once and use their checksums for every mode.
+Run all modes sequentially in the same job and alternate their order across
+repetitions to reduce temporal and cache bias. Use a fresh Liberty output/data
+directory for every launch.
 
-**Failure example:** Use an intentionally too-small memory limit only in an
-isolated spike to verify the job preserves GC, JFR, container, and startup
-diagnostics; do not retain an unstable limit in required CI.
+The experiment must not pass JVM tuning flags such as `-Xms`, `-Xmx`,
+`-XX:ActiveProcessorCount`, or `-XX:StartFlightRecording`; those flags would
+prevent or interfere with evaluation of `jaz` tuning. Use `-Xlog` for GC
+diagnostics, start JFR dynamically with `jcmd JFR.start`, and capture effective
+settings with `jcmd VM.command_line` and `jcmd VM.flags`.
+
+Required evidence:
+
+- pinned `jaz` version and installation source;
+- `JAZ_DRY_RUN=1` output showing the command selected for the tuned mode;
+- direct, bypassed, and tuned effective JVM commands and flags;
+- recorded runner CPU, memory, OS, kernel, and cgroup view;
+- startup time, peak RSS, process CPU time, GC log, bounded JFR, workload
+  result, total duration, and exit status for each repetition;
+- paired comparison summary with run order and variance;
+- confirmation that each mode used the same WAR, Liberty runtime, request data,
+  readiness condition, workload, and artifact naming.
+
+**Spike needed:** Determine how to substitute `jaz` for the Java launcher used
+by the current Open Liberty scripts without changing application behavior.
+Install a pinned `jaz` release on the GitHub-hosted Linux runner, verify the
+three launch modes, and execute the section 1.15 workload repeatedly in one
+job. Confirm that diagnostics remain available without suppressing `jaz`
+tuning and that `jaz` relays Liberty output, signals, and exit status
+correctly.
+
+**Recommendation:** Compare the three modes on the same non-containerized
+runner and treat selected JVM flags and measured differences as observations.
+Fail on installation failure, inability to launch or stop Liberty, artifact or
+workload mismatch, suppressed or unverifiable tuning, missing diagnostics, or
+functional failure. Do not enforce a performance winner unless repeated paired
+runs establish a defensible bound. Validate `jaz` under real AKS pod limits in
+the separate Azure deployment thread rather than synthesizing container limits
+in this campaign.
+
+**Failure example:** Add an isolated user-provided JVM tuning flag and verify
+that the harness detects that normal `jaz` tuning was suppressed; do not retain
+that flag in the comparison workload.
 
 **Resolution:**
 
-### 1.18 — Artifact naming, retention, and merge evidence
+### 1.17 — Artifact naming, retention, and merge evidence
 
 **Question:** What stable naming and retention scheme will let the later
 feature campaign and slide author locate evidence without reading arbitrary
@@ -765,7 +957,37 @@ Create these as ordered serial issues. Every issue inherits the evidence-matrix
 gate later in this document. Stage 20 may refine titles after all Phase 1
 resolutions are filled, but it must preserve this dependency order.
 
-### 2.1 — Make CI authoritative and establish the Maven/dependency foundation
+### 2.1 — Establish the Open Liberty-only baseline
+
+The existing Payara/Cargo/GlassFish paths materially distort Maven dependency
+analysis, plugin governance, documentation, and Arquillian configuration.
+Later agents could reasonably mistake them for supported compatibility
+requirements.
+
+Scope:
+
+- Remove the Payara profile, Payara Arquillian dependency, Cargo plugin, and
+  Payara download properties from `demo/pom.xml`.
+- Remove the Payara container from
+  `demo/src/test/resources/arquillian.xml`.
+- Delete `demo/src/main/webapp/WEB-INF/glassfish-web.xml`.
+- Remove Payara setup, testing, Java 8, and Eclipse instructions from
+  `demo/README.md`.
+- Rewrite the GlassFish/WebLogic-specific source comment in runtime-neutral
+  terms.
+- Preferably flatten the `openliberty` profile into the main POM so Open
+  Liberty is the build, not one selectable server profile.
+- Search for and remove remaining Payara, GlassFish, WebLogic, Cargo-plugin,
+  WildFly, and Tomcat runtime guidance.
+- Preserve Java EE 7 application APIs; this is **runtime cleanup**, not Jakarta
+  migration.
+
+**Gate:** Spotless passes, `./mvnw clean package` passes from a clean `target/`,
+the Open Liberty test/runtime path passes, the WAR remains deployable, and a
+repository search finds no unsupported-server build configuration or
+instructions.
+
+### 2.2 — Make CI authoritative and establish the Maven/dependency foundation
 
 **Reasons exercised:** 5. Build system maturity and dependency management;
 6. Code formatting and style enforcement.
@@ -848,7 +1070,7 @@ resolutions are filled, but it must preserve this dependency order.
 - Required reports are downloadable from the run.
 - The evidence-matrix update is merged and visible on the campaign base branch.
 
-### 2.2 — Enforce the Java 17 and Java EE 7 compatibility contract
+### 2.3 — Enforce the Java 17 and Java EE 7 compatibility contract
 
 **Reasons exercised:** 3. Backwards compatibility culture; 1. Type system;
 5. Build system maturity and dependency management.
@@ -921,7 +1143,7 @@ resolutions are filled, but it must preserve this dependency order.
 - The application packages and starts on JDK 17/Open Liberty.
 - CI is green and the evidence-matrix update is merged.
 
-### 2.3 — Strengthen formatting, compiler, type, and static-analysis gates
+### 2.4 — Strengthen formatting, compiler, type, and static-analysis gates
 
 **Reasons exercised:** 6. Code formatting and style enforcement; 1. Type
 system; 4. Deep static analysis.
@@ -988,7 +1210,7 @@ system; 4. Deep static analysis.
 - Suppressions are narrow and documented.
 - The evidence-matrix update is merged before behavioral-test work begins.
 
-### 2.4 — Build the behavioral safety net
+### 2.5 — Build the behavioral safety net
 
 **Reasons exercised:** 2. Testing ecosystem; 3. Backwards compatibility
 culture; 1. Type system where tests compile against typed boundaries.
@@ -1065,19 +1287,27 @@ culture; 1. Type system where tests compile against typed boundaries.
 - Open Liberty starts, serves the selected path, and stops reliably.
 - Required CI is green and the evidence-matrix update is merged.
 
-### 2.5 — Add CI observability and diagnostic artifacts
+### 2.6 — Add CI observability and diagnostic artifacts
 
 **Reasons exercised:** 8. Observability stack; 2. Testing ecosystem through
 diagnosable runtime failures.
 
 **What to build:**
 
-- Add the resolved OpenTelemetry Java agent and local collector path, or the
-  alternative selected in resolutions 1.14 and 1.15.
-- Correlate a stable CI request with application/Liberty logs and exported
-  telemetry.
+- Add the OpenTelemetry Java agent and local collector selected in resolution
+  1.14.
+- Use a fixed CI-only request identifier to correlate the smoke-test
+  transcript, HTTP path and status, trace/span identifiers,
+  application/Liberty logs, and collector export.
 - Exercise both a successful request and a controlled invalid request.
-- Redact artifacts and upload only durable diagnostic outputs.
+- Export telemetry in machine-readable JSON or text and include metadata with
+  the workflow run ID, commit SHA, job name, instrumentation versions, and
+  commands executed.
+- Preserve Liberty `messages.log`, `console.log`, and the smoke-test
+  transcript.
+- Do not log request bodies, credentials, environment secrets, or cargo data.
+  Run an explicit redaction check before uploading only durable diagnostic
+  outputs.
 - Keep Azure Monitor/Application Insights optional and outside required CI.
 
 **Files to modify:**
@@ -1103,7 +1333,11 @@ diagnosable runtime failures.
 - Send a deliberately invalid request.
 - Verify exported telemetry contains the expected service name, operation,
   status, timestamps, and trace identifier.
-- Verify logs and traces can be correlated.
+- Verify the successful and invalid requests can each be followed from the
+  smoke-test transcript through the exported trace and relevant
+  application/Liberty log lines.
+- Verify the artifact metadata identifies the workflow run, commit, job,
+  instrumentation versions, and commands.
 - Search staged artifacts for configured secret patterns before upload.
 - Stop both Liberty and the collector in an always-run cleanup step.
 
@@ -1120,10 +1354,10 @@ diagnosable runtime failures.
 
 - collector output;
 - telemetry JSON/text;
-- Liberty logs;
+- Liberty `messages.log` and `console.log`;
 - successful and failed request transcripts;
-- redaction-check result;
-- instrumentation versions and command metadata.
+- workflow, commit, job, version, timestamp, and command metadata;
+- redaction-check result.
 
 **Rollback considerations:**
 
@@ -1137,23 +1371,27 @@ diagnosable runtime failures.
 **Issue gate:**
 
 - A successful and failed request both produce correlated durable evidence.
+- The uploaded evidence identifies the exact workflow run and commit.
 - No Azure resource is required.
 - Secret/redaction checks pass.
 - Required CI is green and the evidence-matrix update is merged.
 
-### 2.6 — Add bounded JVM performance and `jaz` evidence
+### 2.7 — Add bounded JVM performance and `jaz` evidence
 
 **Reasons exercised:** 9. JVM performance tuning; 8. Observability stack.
 
 **What to build:**
 
-- Create the resolved repeatable workload and constrained container runtime.
-- Run the same WAR and Liberty runtime directly and through `jaz`.
-- Capture effective JVM settings, startup time, memory/CPU limits, GC logs,
-  bounded JFR recordings, workload results, and exit status.
+- Create the resolved repeatable workload and non-containerized runner/JVM
+  measurement harness.
+- Run the same WAR and Liberty runtime through direct `java`, bypassed `jaz`,
+  and tuned `jaz` launch modes on the same GitHub-hosted VM.
+- Capture effective JVM settings, runner and cgroup metadata, startup time,
+  peak RSS, process CPU time, GC logs, bounded JFR recordings, workload
+  results, total duration, and exit status.
 - Upload comparable artifacts without introducing brittle microbenchmark
   thresholds.
-- Use observability from issue 2.5 to explain failures or anomalies.
+- Use observability from issue 2.6 to explain failures or anomalies.
 
 **Files to modify:**
 
@@ -1170,14 +1408,22 @@ diagnosable runtime failures.
 
 **Tests and validation:**
 
-- Build the WAR once and use the same checksum for both launch paths.
-- Run each path in a fresh container with identical CPU and memory limits.
-- Use a bounded JFR duration and explicit GC logging.
+- Build the WAR and Liberty runtime once and use the same checksums for all
+  three launch modes.
+- Pin and record the `jaz` installation.
+- Record the runner CPU, memory, OS, kernel, and `/sys/fs/cgroup` view.
+- Run all three launch modes sequentially in one job, alternating order across
+  repetitions and using a fresh Liberty output/data directory for each launch.
+- Do not pass JVM tuning flags that suppress or replace `jaz` tuning.
+- Capture `JAZ_DRY_RUN=1` output for the tuned mode.
+- Use explicit GC logging and start a bounded JFR dynamically with `jcmd`.
+- Capture effective command lines and JVM flags for every mode.
 - Wait for the same readiness condition.
 - Execute the same request count and request data.
 - Record at least the spike-determined number of repetitions.
 - Verify JFR and GC artifacts are nonempty and parseable.
-- Verify the `jaz` report reflects the configured cgroup limits.
+- Verify direct, bypassed, and tuned modes use the same WAR, Liberty runtime,
+  workload, and host resource view.
 - Fail on crash, out-of-memory, readiness failure, missing diagnostics, or
   workload failure; report timing differences without enforcing a narrow
   winner unless the resolution establishes a repeatable bound.
@@ -1185,17 +1431,23 @@ diagnosable runtime failures.
 **Expected failure evidence:**
 
 - JVM cannot become ready within the bound;
-- out-of-memory or container kill;
+- out-of-memory or abnormal process termination;
+- `jaz` cannot replace the Liberty Java launcher or relay signals/exit status;
+- user-provided JVM tuning suppresses the intended `jaz` tuning;
+- direct, bypassed, and tuned modes use different application or runtime
+  artifacts;
 - missing or empty JFR/GC output;
-- `jaz` does not observe the intended cgroup limits;
-- workload fails under one launch path.
+- workload fails under any launch mode.
 
 **Required artifacts:**
 
 - direct-Java metadata, GC log, JFR, and workload result;
-- `jaz` metadata, selected settings, GC log, JFR, and workload result;
+- bypassed-`jaz` metadata, GC log, JFR, and workload result;
+- tuned-`jaz` dry-run output, selected settings, GC log, JFR, and workload
+  result;
 - WAR checksum;
-- container resource configuration;
+- Liberty runtime checksum;
+- runner and cgroup metadata;
 - comparison summary with variance and timestamps.
 
 **Rollback considerations:**
@@ -1203,13 +1455,16 @@ diagnosable runtime failures.
 - Keep performance evidence downstream of correctness and observability.
 - Do not make hosted-runner timing noise a strict required threshold.
 - Pin or verify `jaz` installation according to the resolution.
+- Do not introduce Docker/OCI execution or privileged cgroup manipulation for
+  this comparison.
 - Do not change application code merely to make one launch path look faster.
 
 **Issue gate:**
 
-- Both launch paths use the identical application artifact and resource
-  envelope.
-- Both complete the resolved workload or produce precise diagnostic failure.
+- All three launch modes use the identical application artifact, Liberty
+  runtime, workload, and recorded host resource envelope.
+- All three complete the resolved workload or produce precise diagnostic
+  failure.
 - JFR, GC, and metadata artifacts are durable and comparable.
 - The complete required workflow is green.
 - The evidence-matrix update is merged before the tricked-out baseline is

@@ -1,0 +1,143 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< org.eclipse.ee4j:cargo-tracker >-------------------
+[INFO] Building Eclipse Cargo Tracker 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- liberty:3.12.1:help (default-cli) @ cargo-tracker ---
+[INFO] liberty-maven-plugin 3.12.1
+  Liberty Maven Plugin : Install, Start/Stop, Package, Create Server,
+  Deploy/Undeploy applications
+
+liberty:start
+  Start a liberty server
+
+  Available parameters:
+
+    applications
+      comma separated list of app names to wait for
+      User property: applications
+
+    assemblyArchive
+      A file which points to a specific assembly ZIP archive. If this parameter
+      is set, then it will install server from archive
+      User property: runtimeArchive
+
+    assemblyArtifact
+      Maven coordinates of a server assembly. This is best listed as a
+      dependency, in which case the version can be omitted.
+      User property: runtimeArtifact
+
+    assemblyInstallDirectory (Default: ${project.build.directory}/liberty)
+      Server Install Directory
+      User property: runtimeInstallDirectory
+
+    bootstrapProperties
+
+    bootstrapPropertiesFile
+      Location of bootstrap.properties file.
+      User property: bootstrapPropertiesFile
+
+    clean (Default: false)
+      Clean all cached information on server start up.
+      User property: clean
+
+    configDirectory (Default: ${basedir}/src/main/liberty/config)
+      Location of customized configuration directory
+      User property: configDirectory
+
+    copyDependencies
+
+    embedded (Default: false)
+      Start the server in embedded mode
+      User property: embedded
+
+    install
+      Liberty install option. If set, Liberty will be downloaded and installed
+      from the WASdev repository or the given URL.
+
+    installDirectory
+      Installation directory of Liberty profile.
+      User property: installDirectory
+
+    isInstall (Default: true)
+      Set the false to skip the installation of the assembly, re-using anything
+      that is already there.
+      User property: isInstall
+
+    jdkToolchain
+
+    jvmOptions
+
+    jvmOptionsFile
+      Location of jvm.options file.
+      User property: jvmOptionsFile
+
+    libertyRuntimeArtifactId
+      ArtifactId to override any specified in the assemblyArtifact
+      User property: liberty.runtime.artifactId
+
+    libertyRuntimeGroupId
+      GroupId to override any specified in the assemblyArtifact
+      User property: liberty.runtime.groupId
+
+    libertyRuntimeVersion
+      Version to override any specified in the assemblyArtifact
+      User property: liberty.runtime.version
+
+    licenseArtifact
+      Maven coordinates of a liberty license artifact. This is best listed as a
+      dependency, in which case the version can be omitted.
+
+    mergeServerEnv (Default: false)
+      If set, merges server.env contents from default server.env, configDir
+      server.env, inline properties, and specified server.env
+      User property: mergeServerEnv
+
+    outputDirectory
+      Liberty output directory
+      User property: outputDirectory
+
+    refresh (Default: false)
+      Enable forced install refresh.
+      User property: refresh
+
+    serverEnvFile
+      Location of customized server environment file server.env
+      User property: serverEnvFile
+
+    serverName (Default: defaultServer)
+      Liberty server name, default is defaultServer
+      User property: serverName
+
+    serverStartTimeout (Default: 30)
+      Time in seconds to wait while verifying that the server has started.
+      User property: serverStartTimeout
+
+    serverXmlFile
+      Location of customized configuration file server.xml in devmode
+      User property: serverXmlFile
+
+    skip (Default: false)
+      Skips the specific goal
+      User property: skip
+
+    useOpenLiberty
+      User property: useOpenLiberty
+
+    userDirectory
+      Liberty user directory
+      User property: userDirectory
+
+    verifyTimeout (Default: 30)
+      Time in seconds to wait while verifying that the server has started.
+      User property: verifyTimeout
+
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.097 s
+[INFO] Finished at: 2026-09-29T18:32:29-04:00
+[INFO] ------------------------------------------------------------------------

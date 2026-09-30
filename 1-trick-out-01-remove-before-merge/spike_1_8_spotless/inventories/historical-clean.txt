@@ -1,0 +1,30 @@
+case=historical-clean
+policy=historical
+fixture=no
+baseline=1fd1c340fa56c6c77a601d2fbba20294afa46dd9
+check_status=0
+apply_status=0
+changed_java_files=0
+added_lines=0
+deleted_lines=0
+
+[changed Java files after apply]
+
+[Java diff statistics after apply]
+
+[Spotless configuration]
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>2.43.0</version>
+				<configuration>
+					<ratchetFrom>1fd1c340fa56c6c77a601d2fbba20294afa46dd9</ratchetFrom>
+					<java>
+						<googleJavaFormat>
+							<version>1.18.1</version>
+						</googleJavaFormat>
+					</java>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>

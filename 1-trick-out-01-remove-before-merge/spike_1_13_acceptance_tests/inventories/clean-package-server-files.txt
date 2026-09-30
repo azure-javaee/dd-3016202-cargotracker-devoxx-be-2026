@@ -1,0 +1,4 @@
+bootstrap.properties
+server.env
+server.xml
+workarea/.sLock

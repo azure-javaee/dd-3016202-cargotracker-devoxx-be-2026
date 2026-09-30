@@ -1,0 +1,58 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< org.eclipse.ee4j:cargo-tracker >-------------------
+[INFO] Building Eclipse Cargo Tracker 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ cargo-tracker ---
+[INFO] Copying 5 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.0:compile (default-compile) @ cargo-tracker ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- liberty:3.12.1:create (install-liberty) @ cargo-tracker ---
+[INFO] The runtimeArtifact version 26.0.0.8 is overwritten by the liberty.runtime.version value 26.0.0.8.
+[INFO] CWWKM2102I: Using artifact based assembly archive : io.openliberty:openliberty-runtime:null:26.0.0.8:zip.
+[INFO] CWWKM2102I: Using installDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp.
+[INFO] CWWKM2102I: Using serverName : defaultServer.
+[INFO] CWWKM2102I: Using serverDirectory : /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer.
+[INFO] CWWKM2112I: Re-using previously installed assembly.
+[INFO] Copying 2 files to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/servers/defaultServer
+[INFO] CWWKM2144I: Update server configuration file server.xml from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/server.xml.
+[INFO] CWWKM2144I: Update server configuration file bootstrap.properties from /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/liberty/config/bootstrap.properties.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derby-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derby-10.14.2.0.jar.
+[INFO] Copying 1 file to /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources
+[INFO] copyDependencies copied file derbytools-10.14.2.0.jar to location /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/liberty/wlp/usr/shared/resources/derbytools-10.14.2.0.jar.
+[INFO] CWWKM2185I: The liberty-maven-plugin configuration parameter "appsDirectory" value defaults to "apps".
+[INFO] 
+[INFO] --- liberty:3.12.1:install-feature (install-liberty) @ cargo-tracker ---
+[INFO] Feature signature verify option: enforce
+[INFO] Parsing the server file for features and includes: defaultServer/server.xml
+[INFO] plugin listed esa: []
+
+[INFO] Resolving features: [javaee-7.0, localconnector-1.0]
+[INFO] The features are already installed, so no action is needed.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ cargo-tracker ---
+[INFO] Copying 3 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.0:testCompile (default-testCompile) @ cargo-tracker ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.2:test (default-test) @ cargo-tracker ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- war:3.5.1:war (default-war) @ cargo-tracker ---
+[INFO] Packaging webapp
+[INFO] Assembling webapp [cargo-tracker] in [/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/cargo-tracker]
+[INFO] Processing war project
+[INFO] Copying webapp resources [/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/src/main/webapp]
+[INFO] Building war: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/cargo-tracker.war
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.536 s
+[INFO] Finished at: 2026-09-29T18:23:31-04:00
+[INFO] ------------------------------------------------------------------------

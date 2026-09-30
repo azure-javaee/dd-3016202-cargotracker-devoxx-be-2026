@@ -1,0 +1,48 @@
+case=xlint-all-werror
+baseline=cf19be6029aad88ce792e544cc4dd8135867723f
+compiler_arguments=-Xlint:all -Werror
+expected_status=nonzero
+actual_status=1
+elapsed_seconds=4
+warning_count=14
+
+[compiler configuration]
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.14.0</version>
+				<configuration>
+					<showWarnings>true</showWarnings>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Werror</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+
+[warning lines]
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/HandlingEventRegistrationAttempt.java:[17,8] serializable class org.eclipse.cargotracker.interfaces.handling.HandlingEventRegistrationAttempt has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/RouteCandidate.java:[11,8] serializable class org.eclipse.cargotracker.interfaces.booking.facade.dto.RouteCandidate has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/facade/dto/Leg.java:[12,8] serializable class org.eclipse.cargotracker.interfaces.booking.facade.dto.Leg has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/domain/model/voyage/SampleVoyages.java:[117,28] found raw type: java.util.ArrayList
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/infrastructure/messaging/jms/JmsApplicationEvents.java:[18,8] serializable class org.eclipse.cargotracker.infrastructure.messaging.jms.JmsApplicationEvents has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/pathfinder/api/TransitPath.java:[9,8] serializable class org.eclipse.pathfinder.api.TransitPath has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/pathfinder/api/TransitEdge.java:[10,8] serializable class org.eclipse.pathfinder.api.TransitEdge has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java:[38,30] found raw type: org.primefaces.event.SelectEvent
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/ChangeDestinationDialog.java:[19,8] serializable class org.eclipse.cargotracker.interfaces.booking.web.ChangeDestinationDialog has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/booking/web/DashboardView.java:[17,8] serializable class org.eclipse.cargotracker.interfaces.booking.web.DashboardView has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventFilesCheckpoint.java:[8,8] serializable class org.eclipse.cargotracker.interfaces.handling.file.EventFilesCheckpoint has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/file/EventLineParseException.java:[6,8] serializable class org.eclipse.cargotracker.interfaces.handling.file.EventLineParseException has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/cargotracker/interfaces/handling/mobile/EventWizard.java:[30,8] serializable class org.eclipse.cargotracker.interfaces.handling.mobile.EventWizard has no definition of serialVersionUID
+[WARNING] /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/scratch/xlint-all-werror/demo/src/main/java/org/eclipse/pathfinder/internal/GraphDao.java:[11,8] serializable class org.eclipse.pathfinder.internal.GraphDao has no definition of serialVersionUID
