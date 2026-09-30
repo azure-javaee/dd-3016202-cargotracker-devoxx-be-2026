@@ -2,16 +2,19 @@ name: Main Build
 
 on:
   push:
-    paths-ignore:
-      - "docs/**"
-    branches-ignore:
+    branches:
       - edburns/dd-3016202-cargotracker-devoxx-be-2026-01
+      - edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   formatting:
@@ -43,6 +46,12 @@ jobs:
     defaults:
       run:
         working-directory: demo
+    env:
+      CI_EVENT: ${{ github.event_name }}
+      CI_PR_NUMBER: ${{ github.event.pull_request.number }}
+      CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      CI_FALLBACK_BASE_REF: origin/${{ github.event.repository.default_branch }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -58,5 +67,70 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build with Maven
-        run: ./mvnw clean package --file pom.xml
+      - name: Capture evidence start
+        run: |
+          echo "CI_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+          {
+            echo 'CI_COMMANDS<<EOF'
+            echo 'echo "CI_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
+            echo "./mvnw '-P!openliberty' -DskipTests clean compile"
+            echo "./scripts/ci/run-dependency-security-gate.sh"
+            echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test"
+            echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
+            echo "./mvnw -Popenliberty -Dskip=true -DskipTests clean package"
+            echo "./scripts/ci/run-negative-controls.sh"
+            echo "./scripts/ci/write-build-metadata.sh"
+            echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
+            echo "./scripts/ci/write-build-metadata.sh --artifact-metadata"
+            echo "./scripts/ci/verify-build-contract.sh"
+            echo EOF
+          } >> "$GITHUB_ENV"
+      - name: Compile without Open Liberty
+        run: ./mvnw '-P!openliberty' -DskipTests clean compile
+      - name: Run dependency security and delta gate
+        timeout-minutes: 15
+        run: ./scripts/ci/run-dependency-security-gate.sh
+      - name: Run focused unit tests
+        run: >
+          ./mvnw '-P!openliberty'
+          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest
+          clean test
+      - name: Run Open Liberty integration tests
+        run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
+      - name: Build canonical WAR
+        run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+      - name: Run negative controls
+        run: ./scripts/ci/run-negative-controls.sh
+      - name: Write build contract reports
+        run: ./scripts/ci/write-build-metadata.sh
+      - name: Capture evidence end
+        run: echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Write artifact metadata
+        run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
+      - name: Verify build contract
+        run: ./scripts/ci/verify-build-contract.sh
+      - name: Upload build contract
+        id: upload-build-contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-contract
+          path: demo/ci-artifacts/build-contract
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload dependency reports
+        id: upload-dependency-reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-reports
+          path: demo/ci-artifacts/dependency-reports
+          retention-days: 90
+          if-no-files-found: error
+      - name: Record artifact evidence
+        if: always()
+        run: |
+          {
+            echo "### Build contract evidence"
+            echo "- Tested SHA: \`${GITHUB_SHA}\`"
+            echo "- build-contract: id \`${{ steps.upload-build-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-build-contract.outputs.artifact-id }}, digest \`${{ steps.upload-build-contract.outputs.artifact-digest }}\`"
+            echo "- dependency-reports: id \`${{ steps.upload-dependency-reports.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-dependency-reports.outputs.artifact-id }}, digest \`${{ steps.upload-dependency-reports.outputs.artifact-digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

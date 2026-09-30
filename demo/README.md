@@ -26,6 +26,24 @@ The simplest steps are the following:
   and run: `./mvnw clean package liberty:run`
 * Go to http://localhost:8080/cargo-tracker/
 
+## Canonical Maven validation tiers
+
+Run these commands from `demo/` with JDK 17 and the Maven Wrapper:
+
+* Formatting: `./mvnw spotless:check`
+* Compile/build contract: `./mvnw '-P!openliberty' -DskipTests clean compile`
+* Focused unit tests: `./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test`
+* Open Liberty integration: `./mvnw -Popenliberty -Dtest=BookingServiceTest clean test`
+* Canonical package: `./mvnw -Popenliberty -Dskip=true -DskipTests clean package`
+
+The package tier produces `target/cargo-tracker.war`. The Open Liberty profile
+is deliberately disabled for compilation and focused unit tests so those tiers
+do not install or start a runtime. Maven Enforcer runs at `validate` and keeps
+Java, Maven, plugin versions, dependency convergence, direct dependency bans,
+duplicate declarations, and project repositories deterministic. The historical
+Spotless ratchet remains pinned; it is a changed-file policy, not a whole-tree
+formatting request.
+
 ## Exploring the Application
 
 After the application runs, it will be available at: 

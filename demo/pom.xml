@@ -149,6 +149,16 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.2.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.5.1</version>
 				<configuration>
@@ -173,6 +183,68 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.2</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.6.3</version>
+				<executions>
+					<execution>
+						<id>enforce-build-contract</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireJavaVersion>
+									<version>[17,18)</version>
+								</requireJavaVersion>
+								<requireMavenVersion>
+									<version>[3.9.9,4.0.0)</version>
+								</requireMavenVersion>
+								<requirePluginVersions>
+									<banLatest>true</banLatest>
+									<banRelease>true</banRelease>
+									<banSnapshots>true</banSnapshots>
+									<phases>clean,validate,compile,test,package,verify</phases>
+									<unCheckedPluginList>org.apache.maven.plugins:maven-install-plugin,org.apache.maven.plugins:maven-site-plugin,org.apache.maven.plugins:maven-deploy-plugin</unCheckedPluginList>
+								</requirePluginVersions>
+								<dependencyConvergence />
+								<banDuplicatePomDependencyVersions />
+								<bannedDependencies>
+									<searchTransitive>false</searchTransitive>
+									<excludes>
+										<exclude>jakarta.*:*</exclude>
+										<exclude>org.springframework*:*</exclude>
+										<exclude>fish.payara*:*</exclude>
+										<exclude>org.wildfly*:*</exclude>
+										<exclude>org.jboss.as:*</exclude>
+										<exclude>org.apache.tomcat*:*</exclude>
+									</excludes>
+								</bannedDependencies>
+								<requireNoRepositories>
+									<banRepositories>true</banRepositories>
+									<banPluginRepositories>true</banPluginRepositories>
+									<allowedRepositories>
+										<allowedRepository>central</allowedRepository>
+									</allowedRepositories>
+									<allowedPluginRepositories>
+										<allowedPluginRepository>central</allowedPluginRepository>
+									</allowedPluginRepositories>
+								</requireNoRepositories>
+								<bannedRepositories>
+									<allowedRepositories>
+										<allowedRepository>https://repo.maven.apache.org/maven2*</allowedRepository>
+									</allowedRepositories>
+									<allowedPluginRepositories>
+										<allowedPluginRepository>https://repo.maven.apache.org/maven2*</allowedPluginRepository>
+									</allowedPluginRepositories>
+								</bannedRepositories>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>
