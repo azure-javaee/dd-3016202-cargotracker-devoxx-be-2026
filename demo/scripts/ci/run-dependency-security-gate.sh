@@ -19,10 +19,13 @@ write_inventory() {
   jq -e 'type == "object" and (.groupId and .artifactId and .children)' "$output" >/dev/null
 }
 
-: "${CI_BASE_SHA:?CI_BASE_SHA is required for dependency comparison}"
-git cat-file -e "$CI_BASE_SHA:demo/pom.xml"
+base_sha="${CI_BASE_SHA:-${GITHUB_SHA:?GITHUB_SHA is required for dependency comparison}}"
+if [[ "$base_sha" =~ ^0+$ ]]; then
+  base_sha="$GITHUB_SHA"
+fi
+git cat-file -e "$base_sha:demo/pom.xml"
 write_inventory "$root/pom.xml" "$tmp/current-tree.json"
-git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/base-pom.xml"
+git show "$base_sha:demo/pom.xml" > "$tmp/base-pom.xml"
 write_inventory "$tmp/base-pom.xml" "$tmp/base-tree.json"
 
 python3 - "$tmp/current-tree.json" "$tmp/base-tree.json" "$tmp/current.json" "$tmp/base.json" <<'PY'
