@@ -23,9 +23,13 @@ timeout --signal=TERM --kill-after=30s 8m ./mvnw "org.owasp:dependency-check-mav
   -DfailBuildOnCVSS=11 -DoutputDirectory="$root/ci-artifacts/dependency-reports" \
   -DdataDirectory="$data_dir" -DautoUpdate=true
 mv "$root/ci-artifacts/dependency-reports/dependency-check-report.json" "$report"
+if [[ ! -s "$report" ]]; then
+  echo "ERROR: vulnerability report is missing or empty" >&2
+  exit 1
+fi
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
-  timeout --signal=TERM --kill-after=10s 60s cp -a --reflink=auto "$data_dir" "$tmp/baseline-data"
+  cp -a "$data_dir" "$tmp/baseline-data"
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
   timeout --signal=TERM --kill-after=30s 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
@@ -50,10 +54,6 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     exit 1
   fi
 else
-  if [[ ! -s "$report" ]]; then
-    echo "ERROR: vulnerability report is missing or empty" >&2
-    exit 1
-  fi
   cp -- "$report" "$baseline_report"
   {
     echo "OWASP Dependency-Check ${scanner_version}"
