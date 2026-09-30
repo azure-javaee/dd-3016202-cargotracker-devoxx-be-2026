@@ -1,0 +1,5 @@
+155564:
+ garbage-first heap   total 278528K, used 139905K [0x00000005ab000000, 0x0000000800000000)
+  region size 8192K, 6 young (49152K), 2 survivors (16384K)
+ Metaspace       used 129051K, committed 132288K, reserved 1179648K
+  class space    used 15035K, committed 16384K, reserved 1048576K

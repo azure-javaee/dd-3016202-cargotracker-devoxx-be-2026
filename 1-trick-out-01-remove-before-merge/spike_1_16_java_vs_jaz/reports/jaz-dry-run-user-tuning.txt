@@ -1,0 +1,1 @@
+jaz would run: [/usr/lib/jvm/msopenjdk-17-amd64/bin/java -XX:NativeMemoryTracking=summary -XX:ErrorFile=/tmp/jaz-hotspot-error-567723023/hs_err_pid%p.log -Xmx256m -version]

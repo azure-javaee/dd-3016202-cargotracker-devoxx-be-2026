@@ -1,0 +1,4 @@
+mode	count	minimum_ms	median_ms	p90_ms	p95_ms	p99_ms	maximum_ms	cv_percent
+direct	150	5.832	7.880	9.865	11.963	14.057	14.541	19.597
+bypass	150	5.847	8.158	12.400	14.824	26.535	36.042	40.830
+tuned	150	5.748	7.782	11.346	15.502	19.289	19.350	30.892

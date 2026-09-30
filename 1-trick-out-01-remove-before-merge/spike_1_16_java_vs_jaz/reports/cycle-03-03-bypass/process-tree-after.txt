@@ -1,0 +1,5 @@
+server_pid=162369
+launcher_pid=162345
+processes_begin
+ 165554  133145 S    awk             awk -v server_pid=162369 -v launcher_pid=162345 -v scratch=/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/scratch -v jaz=/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/scratch/jaz-install/usr/bin/jaz            $1 == server_pid ||           $1 == launcher_pid ||           index($0, scratch) ||           index($0, jaz)         
+processes_end

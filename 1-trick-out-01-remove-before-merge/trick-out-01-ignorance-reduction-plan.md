@@ -918,6 +918,16 @@ that flag in the comparison workload.
 
 **Resolution:**
 
+Reuse the workload, bounds, request protocol, diagnostics, and redacted JFR configuration resolved by spike 1.15. Install and checksum-pin `jaz` 1.0.4, then compare direct `java`, `JAZ_BYPASS=1`, and tuned `jaz` in five alternating-order cycles on the same non-containerized runner. Build the WAR and Open Liberty runtime once and restore a pristine server before every launch.
+
+Integrate `jaz` through Liberty’s `server.env` using a `JAVA_HOME` that mirrors the real JDK and replaces only `bin/java`; keep Maven and diagnostic tools on the real JDK. Capture `JAZ_DRY_RUN=1`, effective JVM commands and flags, launcher/child-process evidence, server-PID GC logs, dynamically started JFR, workload results, and cleanup status.
+
+All 15 spike launches passed. Bypassed `jaz` retained default heap and GC behavior but added native-memory tracking and error-file configuration. Tuned `jaz` selected a roughly 10.0–10.5 GB maximum heap, 10/50 heap-free ratios, time-based G1 heap sizing, native-memory tracking, and 10-second periodic GC. It consistently produced more GC pauses, but other performance differences were inconsistent or within the spike 1.15 noise floor.
+
+Use this comparison to verify launcher integration, selected tuning, functional equivalence, diagnostics, and cleanup—not to declare a performance winner. Fail on installation or checksum failure, launcher substitution failure, suppressed or unverifiable tuning, artifact or workload mismatch, missing diagnostics, functional failure, or incomplete cleanup. Evaluate `jaz` under real AKS pod limits in the separate Azure deployment work.
+
+Completely read `dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/` for the complete details.
+
 ### 1.17 — Artifact naming, retention, and merge evidence
 
 **Question:** What stable naming and retention scheme will let the later
@@ -957,7 +967,29 @@ Create these as ordered serial issues. Every issue inherits the evidence-matrix
 gate later in this document. Stage 20 may refine titles after all Phase 1
 resolutions are filled, but it must preserve this dependency order.
 
+Every Phase 2 issue includes a **Required Phase 1 evidence lookup** block.
+Stage 20 must preserve that block in the generated issue body. The assigned
+agent must read the named Phase 1 resolutions and spike artifacts before
+implementation. Spike decisions are part of the issue specification: do not
+repeat candidate selection, substitute a different mechanism, or contradict a
+resolved constraint without explicitly documenting the new evidence and
+obtaining human approval.
+
 ### 2.1 — Establish the Open Liberty-only baseline
+
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.3, 1.4, 1.6, and 1.13, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_3_validation_tier_selection/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_4_dependency_governance/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/run-spike.sh`
+
+Preserve the selected canonical packaging and Open Liberty lifecycle while
+removing alternate-server paths. In particular, do not treat
+`clean package` as deployment, do not use `liberty:status` exit status as
+readiness, and do not invalidate the selected validation tiers without
+updating their documentation and evidence.
 
 The existing Payara/Cargo/GlassFish paths materially distort Maven dependency
 analysis, plugin governance, documentation, and Arquillian configuration.
@@ -988,6 +1020,22 @@ repository search finds no unsupported-server build configuration or
 instructions.
 
 ### 2.2 — Make CI authoritative and establish the Maven/dependency foundation
+
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.1 through 1.5 and 1.8, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_1_authoritative_ci_path/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_1_authoritative_ci_path/observed-state.json`
+- `1-trick-out-01-remove-before-merge/spike_1_3_validation_tier_selection/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_3_validation_tier_selection/results.json`
+- `1-trick-out-01-remove-before-merge/spike_1_4_dependency_governance/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_4_dependency_governance/run-summary.tsv`
+- `1-trick-out-01-remove-before-merge/spike_1_8_spotless/README.md`
+
+Implement the selected experiment-branch push/PR authority, serial job
+topology, validation-tier commands, and low-noise Enforcer policy from those
+artifacts. Do not rerun tool selection or broaden dependency remediation beyond
+the resolved baseline.
 
 **Reasons exercised:** 5. Build system maturity and dependency management;
 6. Code formatting and style enforcement.
@@ -1072,6 +1120,18 @@ instructions.
 
 ### 2.3 — Enforce the Java 17 and Java EE 7 compatibility contract
 
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.4, 1.6, 1.7, and 1.13, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_4_dependency_governance/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/README.md`
+
+Use the resolved Java/Maven ranges, direct-dependency bans, Java 17 compiler
+contract, and verified production-WAR startup/readiness path. Keep this issue
+on Java EE 7 and `javax.*`; none of the spike findings authorize Jakarta EE,
+Spring, or alternate-server migration.
+
 **Reasons exercised:** 3. Backwards compatibility culture; 1. Type system;
 5. Build system maturity and dependency management.
 
@@ -1145,6 +1205,22 @@ instructions.
 
 ### 2.4 — Strengthen formatting, compiler, type, and static-analysis gates
 
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.3 and 1.8 through 1.10, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_8_spotless/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_8_spotless/run-summary.tsv`
+- `1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/warnings.tsv`
+- `1-trick-out-01-remove-before-merge/spike_1_9_compiler_options/proposed-warning-fixes.patch`
+- `1-trick-out-01-remove-before-merge/spike_1_10_static-analyzer/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_10_static-analyzer/finding-classification.tsv`
+
+Implement the resolved Spotless ratchet semantics, full javac warning cleanup
+and `-Werror` gate, and SpotBugs selection. Defer PMD, preserve the recorded
+serialization identities, and do not replace focused suppressions with broad
+exclusions.
+
 **Reasons exercised:** 6. Code formatting and style enforcement; 1. Type
 system; 4. Deep static analysis.
 
@@ -1211,6 +1287,22 @@ system; 4. Deep static analysis.
 - The evidence-matrix update is merged before behavioral-test work begins.
 
 ### 2.5 — Build the behavioral safety net
+
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.3 and 1.11 through 1.13, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_3_validation_tier_selection/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/resolution.md`
+- `1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/run-http-acceptance.sh`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/run-spike.sh`
+
+Use the discovered active-test inventory, the deterministic seeded cargo
+`ABC123`, the selected browser-free REST and Administration contracts, and the
+verified `package` → `liberty:deploy` → bounded `liberty:start` → HTTP checks →
+always-run `liberty:stop` lifecycle. Do not add browser automation, claim
+dormant tests as coverage, or invent a different readiness mechanism.
 
 **Reasons exercised:** 2. Testing ecosystem; 3. Backwards compatibility
 culture; 1. Type system where tests compile against typed boundaries.
@@ -1288,6 +1380,21 @@ culture; 1. Type system where tests compile against typed boundaries.
 - Required CI is green and the evidence-matrix update is merged.
 
 ### 2.6 — Add CI observability and diagnostic artifacts
+
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.12 through 1.14 and the completed issue 2.5 implementation, then fully
+examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_12_behavior_saftey_net/reports/http-probe.txt`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/run-spike.sh`
+
+Reuse the resolved `/cargo-tracker/rest/cargo` request, seeded response
+assertions, and bounded Open Liberty lifecycle as the telemetry stimulus.
+Layer the resolved OpenTelemetry agent and local collector onto that proven
+acceptance path; do not create a second server lifecycle or make Azure
+resources part of required CI.
 
 **Reasons exercised:** 8. Observability stack; 2. Testing ecosystem through
 diagnosable runtime failures.
@@ -1377,6 +1484,34 @@ diagnosable runtime failures.
 - Required CI is green and the evidence-matrix update is merged.
 
 ### 2.7 — Add bounded JVM performance and `jaz` evidence
+
+**Required Phase 1 evidence lookup:** Before implementation, read resolutions
+1.13 and 1.15 through 1.17, then fully examine:
+
+- `1-trick-out-01-remove-before-merge/spike_1_13_acceptance_tests/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_15_capture_repeatable_performance_envelope/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_15_capture_repeatable_performance_envelope/run-spike.sh`
+- `1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/README.md`
+- `1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/run-spike.sh`
+- `1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/reports/run-order.tsv`
+- `1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/reports/run-summary.tsv`
+- `1-trick-out-01-remove-before-merge/spike_1_16_java_vs_jaz/reports/selected-jvm-flags.tsv`
+
+Treat the spike workload, repetition count, time bounds, diagnostic capture,
+launcher integration, and three-mode comparison as the issue specification.
+Pin and checksum-verify `jaz` 1.0.4 exactly as resolved. Integrate it through
+Liberty `server.env` with a `JAVA_HOME` that mirrors the real JDK and replaces
+only `bin/java`; keep Maven, `jcmd`, and other diagnostic tools on the real
+JDK. Set `JAZ_EXIT_WITHOUT_FLUSH=1` for bypassed and tuned modes, do not set
+`JAZ_IGNORE_USER_TUNING`, and reject tuned runs whose effective flags do not
+show the expected `jaz` settings. Run five alternating-order cycles containing
+direct, bypassed, and tuned modes, verify launcher/child process relationships
+and complete cleanup, and repeat the unchanged comparison on one GitHub-hosted
+VM before treating it as hosted-runner evidence. Use the result to prove
+launcher integration, functional equivalence, selected tuning, diagnostics,
+and cleanup—not to declare a performance winner. Do not redesign the workload,
+introduce containers or synthetic cgroup limits, pass JVM tuning flags that
+suppress `jaz`, or impose narrow hosted-runner performance thresholds.
 
 **Reasons exercised:** 9. JVM performance tuning; 8. Observability stack.
 

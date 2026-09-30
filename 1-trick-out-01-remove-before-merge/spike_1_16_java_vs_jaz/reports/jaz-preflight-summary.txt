@@ -1,0 +1,5 @@
+jaz_version=1.0.4
+tuned_dry_run=PASS
+xlog_does_not_suppress_tuning=PASS
+bypass_removes_heap_gc_tuning=PASS
+user_tuning_suppresses_tuning=PASS

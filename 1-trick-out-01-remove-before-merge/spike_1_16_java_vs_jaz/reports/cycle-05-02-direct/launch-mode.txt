@@ -1,0 +1,3 @@
+cycle=5
+position=2
+mode=direct
