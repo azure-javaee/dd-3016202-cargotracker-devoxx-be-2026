@@ -29,7 +29,9 @@ if [[ -z "$base_sha" ]]; then
   if default_ref="$(git symbolic-ref --quiet refs/remotes/origin/HEAD)"; then
     candidates+=("${default_ref#refs/remotes/}")
   fi
-  candidates+=("origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-01")
+  if [[ -n "${CI_FALLBACK_BASE_REF:-}" ]]; then
+    candidates+=("$CI_FALLBACK_BASE_REF")
+  fi
   for candidate in "${candidates[@]}"; do
     if git rev-parse --verify "$candidate" >/dev/null 2>&1; then
       base_sha="$(git merge-base HEAD "$candidate")"
