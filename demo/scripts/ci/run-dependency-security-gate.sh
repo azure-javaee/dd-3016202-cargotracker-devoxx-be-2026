@@ -60,6 +60,7 @@ def flatten(node, result):
             "type": node.get("type", "jar"),
             "classifier": node.get("classifier", ""),
             "version": node["version"],
+            "scope": node.get("scope", "compile"),
         })
     for child in node.get("children", []):
         flatten(child, result)
