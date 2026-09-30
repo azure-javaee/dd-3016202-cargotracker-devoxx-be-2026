@@ -10,24 +10,97 @@ mkdir -p "$build_dir" "$dependency_dir"
 ./mvnw help:effective-pom -Doutput="$dependency_dir/effective-pom.xml"
 ./mvnw dependency:tree -DoutputFile="$dependency_dir/dependency-tree.txt"
 ./mvnw dependency:resolve-plugins -DoutputFile="$dependency_dir/resolved-plugins.txt"
-
 jar tf target/cargo-tracker.war > "$build_dir/war-inventory.txt"
 sha256sum target/cargo-tracker.war > "$build_dir/war.sha256"
 ./mvnw -version > "$build_dir/maven-version.txt"
-cat > "$dependency_dir/vulnerability-report.txt" <<'EOF'
-Dependency vulnerability policy
-===============================
-This report is the dependency-security evidence for the canonical build.
-Historical findings are not a baseline failure; CI must reject newly
-introduced high-severity findings through the pull-request dependency review.
-The dependency tree used for that delta review is in dependency-tree.txt.
-EOF
+
+if [[ ! -s "$dependency_dir/vulnerability-report.json" ]]; then
+  echo "vulnerability gate did not produce a report" >&2
+  exit 1
+fi
 
 if [[ "${1:-}" == "--artifact-metadata" ]]; then
-  tested_sha="${GITHUB_SHA:-$(git rev-parse HEAD)}"
-  for dir in "$build_dir" "$dependency_dir"; do
-    cat > "$dir/artifact-metadata.json" <<EOF
-{"schema":1,"artifact":"$(basename "$dir")","testedSha":"$tested_sha","runId":"${GITHUB_RUN_ID:-local}","generatedAt":"$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
-EOF
-  done
+  python3 - "$root" <<'PY'
+import hashlib
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from xml.etree import ElementTree
+
+root = pathlib.Path(sys.argv[1])
+required_env = [
+    "GITHUB_REPOSITORY", "GITHUB_REF", "GITHUB_SHA", "GITHUB_WORKFLOW",
+    "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_SERVER_URL",
+    "GITHUB_EVENT_NAME", "RUNNER_OS", "RUNNER_ARCH", "JAVA_HOME",
+]
+missing = [name for name in required_env if not os.environ.get(name)]
+if missing:
+    raise SystemExit("missing CI metadata: " + ", ".join(missing))
+
+started = datetime.now(timezone.utc)
+pom = ElementTree.parse(root / "pom.xml").getroot()
+ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+liberty = pom.find(".//m:liberty.runtime.version", ns)
+java = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT, text=True)
+maven = subprocess.check_output(["./mvnw", "-version"], text=True)
+tools = {
+    "java": java.splitlines()[0],
+    "maven": maven.splitlines()[0],
+    "openLibertyRuntime": liberty.text if liberty is not None else None,
+}
+if not all(tools.values()):
+    raise SystemExit("unable to resolve required tool versions")
+
+commands = [
+    "./mvnw '-P!openliberty' -DskipTests clean compile",
+    "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test",
+    "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test",
+    "./mvnw -Popenliberty -Dskip=true -DskipTests clean package",
+    "./scripts/ci/run-dependency-security-gate.sh",
+    "./scripts/ci/run-negative-controls.sh",
+    "./scripts/ci/write-build-metadata.sh",
+    "./scripts/ci/verify-build-contract.sh",
+]
+pr = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
+base_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+metadata = {
+    "schema": 1,
+    "concern": "build reproducibility and dependency security",
+    "name": None,
+    "repository": os.environ["GITHUB_REPOSITORY"],
+    "ref": os.environ["GITHUB_REF"],
+    "sha": os.environ["GITHUB_SHA"],
+    "workflow": os.environ["GITHUB_WORKFLOW"],
+    "run": os.environ["GITHUB_RUN_ID"],
+    "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+    "url": f"{base_url}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+    "job": os.environ.get("GITHUB_JOB", "build"),
+    "event": os.environ["GITHUB_EVENT_NAME"],
+    "pr": os.environ.get("CI_PR_NUMBER", "not-applicable") if pr else "not-applicable",
+    "runner": {"os": os.environ["RUNNER_OS"], "architecture": os.environ["RUNNER_ARCH"]},
+    "tools": tools,
+    "startedAt": started.isoformat(),
+    "endedAt": datetime.now(timezone.utc).isoformat(),
+    "commands": commands,
+}
+for directory, name in ((root / "ci-artifacts/build-contract", "build-contract"),
+                        (root / "ci-artifacts/dependency-reports", "dependency-reports")):
+    metadata["name"] = name
+    files = []
+    for file in sorted(directory.rglob("*")):
+        if file.is_file() and file.name != "artifact-metadata.json":
+            files.append({
+                "path": file.relative_to(directory).as_posix(),
+                "bytes": file.stat().st_size,
+                "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+            })
+    if not files:
+        raise SystemExit(f"empty artifact: {name}")
+    metadata["files"] = files
+    (directory / "artifact-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+PY
 fi

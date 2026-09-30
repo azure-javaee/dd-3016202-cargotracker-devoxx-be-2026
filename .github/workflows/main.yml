@@ -74,15 +74,18 @@ jobs:
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
       - name: Build canonical WAR
         run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+      - name: Run dependency security and delta gate
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_PR_NUMBER: ${{ github.event.pull_request.number }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: ./scripts/ci/run-dependency-security-gate.sh
+      - name: Run negative controls
+        run: ./scripts/ci/run-negative-controls.sh
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
       - name: Verify build contract
         run: ./scripts/ci/verify-build-contract.sh
-      - name: Reject new high-severity dependency findings
-        if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
       - name: Write artifact metadata
         run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
       - name: Upload build contract
