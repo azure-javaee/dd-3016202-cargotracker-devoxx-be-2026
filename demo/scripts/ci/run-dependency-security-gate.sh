@@ -7,7 +7,7 @@ report="$root/ci-artifacts/dependency-reports/vulnerability-report.json"
 baseline_report="$root/ci-artifacts/dependency-reports/baseline-vulnerability-report.json"
 summary="$root/ci-artifacts/dependency-reports/vulnerability-report.txt"
 scanner_version="11.1.0"
-data_dir="${DEPENDENCY_CHECK_DATA_DIR:-$HOME/.dependency-check-data}"
+data_dir="$HOME/.dependency-check-data"
 mkdir -p "$(dirname "$report")"
 mkdir -p "$data_dir"
 
