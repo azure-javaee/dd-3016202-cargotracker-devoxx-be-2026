@@ -89,8 +89,8 @@ meaningful evidence. Keep entries in serial issue order.
 
 ### Issue #3: Make CI authoritative and establish the Maven/dependency foundation
 
-- **PR:** current task PR
-- **Implementation commit:** recorded by the authoritative experiment-branch push run
+- **PR:** #10
+- **Implementation commit:** `6fa9a812f6a07b2a21f4831ddb0616224a8a2288`
 - **Completed:** 2026-09-30 UTC
 - **Reasons expected to be exercised:** 5, 6
 - **Reasons actually exercised:** 5, 6 locally; hosted exact-SHA artifact evidence pending
@@ -99,14 +99,15 @@ meaningful evidence. Keep entries in serial issue order.
   - The profile-excluded compile and canonical Open Liberty package passed locally with Maven 3.9.9 and Java 17.
   - The build contract generated nonempty effective-POM, dependency-tree, resolved-plugin, vulnerability-policy, WAR inventory, and checksum reports; checksum verification passed.
   - The workflow preserves the historical Spotless ratchet and runs formatting before all expensive work.
-  - The authoritative push run for the exact merged experiment-branch SHA must be recorded after this PR is merged.
+  - PR validation run [#36758752561](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36758752561) targeted the current change, but GitHub marked it `action_required` pending approval for the dependency-review action; no hosted artifact was produced.
 - **Durable artifacts:**
   - `demo/pom.xml`
   - `demo/README.md`
   - `demo/scripts/ci/write-build-metadata.sh`
   - `demo/scripts/ci/verify-build-contract.sh`
   - `.github/workflows/main.yml`
-- **Evidence assessment:** Moderate until the post-merge push run supplies hosted artifact IDs, URLs, digests, and tested SHA; local Maven and checksum evidence is strong.
+  - PR validation run [#36758752561](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36758752561) (`action_required`, no job/artifact)
+- **Evidence assessment:** Moderate for local Maven and checksum evidence; hosted workflow evidence is not exercised because GitHub required maintainer approval for the new dependency-review action.
 - **Candidate reusable lessons:** Keep formatting first and make fast Maven tiers explicitly disable the active Open Liberty profile.
 
 Use this template:
