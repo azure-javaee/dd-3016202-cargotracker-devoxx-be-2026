@@ -3,6 +3,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
+repo_root="$(git rev-parse --show-toplevel)"
 report="$root/ci-artifacts/dependency-reports/vulnerability-report.json"
 baseline_report="$root/ci-artifacts/dependency-reports/baseline-vulnerability-report.json"
 summary="$root/ci-artifacts/dependency-reports/vulnerability-report.txt"
@@ -19,14 +20,29 @@ write_inventory() {
   jq -e 'type == "object" and (.groupId and .artifactId and .children)' "$output" >/dev/null
 }
 
-base_sha="${CI_BASE_SHA:-${GITHUB_SHA:?GITHUB_SHA is required for dependency comparison}}"
+base_sha="${CI_BASE_SHA:-}"
 if [[ "$base_sha" =~ ^0+$ ]]; then
-  base_sha="$GITHUB_SHA"
+  base_sha=""
+fi
+if [[ -z "$base_sha" ]]; then
+  for candidate in \
+    "origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment" \
+    "origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-01"; do
+    if git rev-parse --verify "$candidate" >/dev/null 2>&1; then
+      base_sha="$(git merge-base HEAD "$candidate")"
+      break
+    fi
+  done
+fi
+if [[ -z "$base_sha" ]]; then
+  echo "ERROR: unable to determine a dependency baseline SHA" >&2
+  exit 1
 fi
 git cat-file -e "$base_sha:demo/pom.xml"
 write_inventory "$root/pom.xml" "$tmp/current-tree.json"
-git show "$base_sha:demo/pom.xml" > "$tmp/base-pom.xml"
-write_inventory "$tmp/base-pom.xml" "$tmp/base-tree.json"
+mkdir -p "$tmp/base-root"
+git -C "$repo_root" archive "$base_sha" | tar -x -C "$tmp/base-root"
+write_inventory "$tmp/base-root/demo/pom.xml" "$tmp/base-tree.json"
 
 python3 - "$tmp/current-tree.json" "$tmp/base-tree.json" "$tmp/current.json" "$tmp/base.json" <<'PY'
 import json, pathlib, sys
