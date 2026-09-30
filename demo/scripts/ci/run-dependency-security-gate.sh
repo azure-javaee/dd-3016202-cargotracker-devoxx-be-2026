@@ -36,6 +36,10 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
     -DdataDirectory="$tmp/baseline-data" -DautoUpdate=false
+  if [[ ! -s "$tmp/baseline/dependency-check-report.json" ]]; then
+    echo "ERROR: baseline vulnerability report is missing or empty" >&2
+    exit 1
+  fi
   cp "$tmp/baseline/dependency-check-report.json" "$baseline_report"
   jq -r '[.dependencies[]?.vulnerabilities[]? | select(((.severity // "") | ascii_downcase) as $severity | $severity == "high" or $severity == "critical") | .name] | unique[]?' \
     "$report" | sort -u > "$tmp/current-high"
