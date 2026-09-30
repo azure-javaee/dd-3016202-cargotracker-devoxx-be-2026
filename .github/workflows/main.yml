@@ -2,8 +2,6 @@ name: Main Build
 
 on:
   push:
-    paths-ignore:
-      - "docs/**"
     branches:
       - edburns/dd-3016202-cargotracker-devoxx-be-2026-01
       - edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
@@ -76,10 +74,10 @@ jobs:
             echo 'CI_COMMANDS<<EOF'
             echo 'echo "CI_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
             echo "./mvnw '-P!openliberty' -DskipTests clean compile"
+            echo "./scripts/ci/run-dependency-security-gate.sh"
             echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test"
             echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
             echo "./mvnw -Popenliberty -Dskip=true -DskipTests clean package"
-            echo "./scripts/ci/run-dependency-security-gate.sh"
             echo "./scripts/ci/run-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
             echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
@@ -89,6 +87,9 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Compile without Open Liberty
         run: ./mvnw '-P!openliberty' -DskipTests clean compile
+      - name: Run dependency security and delta gate
+        timeout-minutes: 15
+        run: ./scripts/ci/run-dependency-security-gate.sh
       - name: Run focused unit tests
         run: >
           ./mvnw '-P!openliberty'
@@ -98,9 +99,6 @@ jobs:
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
       - name: Build canonical WAR
         run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
-      - name: Run dependency security and delta gate
-        timeout-minutes: 15
-        run: ./scripts/ci/run-dependency-security-gate.sh
       - name: Run negative controls
         run: ./scripts/ci/run-negative-controls.sh
       - name: Write build contract reports

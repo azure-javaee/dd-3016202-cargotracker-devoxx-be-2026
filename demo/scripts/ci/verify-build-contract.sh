@@ -40,4 +40,11 @@ for path in (
         file_path = path.parent / entry["path"]
         assert file_path.is_file() and entry["bytes"] == file_path.stat().st_size
         assert entry["sha256"] == hashlib.sha256(file_path.read_bytes()).hexdigest()
+
+for path in (
+    root / "ci-artifacts/dependency-reports/vulnerability-report.json",
+    root / "ci-artifacts/dependency-reports/baseline-vulnerability-report.json",
+):
+    data = json.loads(path.read_text())
+    assert len(data.get("baselineSha", "")) == 40
 PY

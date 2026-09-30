@@ -5,12 +5,20 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 build_dir="$root/ci-artifacts/build-contract"
 dependency_dir="$root/ci-artifacts/dependency-reports"
+dependency_plugin_version="3.7.0"
+help_plugin_version="3.5.1"
 mkdir -p "$build_dir" "$dependency_dir"
 
 if [[ "${1:-}" != "--artifact-metadata" ]]; then
-  ./mvnw help:effective-pom -Doutput="$dependency_dir/effective-pom.xml"
-  ./mvnw dependency:tree -DoutputFile="$dependency_dir/dependency-tree.txt"
-  ./mvnw dependency:resolve-plugins -DoutputFile="$dependency_dir/resolved-plugins.txt"
+  ./mvnw validate \
+    "org.apache.maven.plugins:maven-help-plugin:${help_plugin_version}:effective-pom" \
+    -Doutput="$dependency_dir/effective-pom.xml"
+  ./mvnw validate \
+    "org.apache.maven.plugins:maven-dependency-plugin:${dependency_plugin_version}:tree" \
+    -DoutputFile="$dependency_dir/dependency-tree.txt"
+  ./mvnw validate \
+    "org.apache.maven.plugins:maven-dependency-plugin:${dependency_plugin_version}:resolve-plugins" \
+    -DoutputFile="$dependency_dir/resolved-plugins.txt"
   jar tf target/cargo-tracker.war > "$build_dir/war-inventory.txt"
   sha256sum target/cargo-tracker.war > "$build_dir/war.sha256"
   ./mvnw -version > "$build_dir/maven-version.txt"

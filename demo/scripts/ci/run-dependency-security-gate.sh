@@ -80,10 +80,11 @@ new = [current[key] for key in sorted(set(current) - set(base))]
 pathlib.Path(sys.argv[3]).write_text(json.dumps(new, indent=2) + "\n")
 PY
 
-python3 - "$tmp/new.json" "$report" "$baseline_report" "$summary" "$tmp/current.json" "$tmp/base.json" <<'PY'
+python3 - "$tmp/new.json" "$report" "$baseline_report" "$summary" \
+  "$tmp/current.json" "$tmp/base.json" "$base_sha" <<'PY'
 import json, pathlib, subprocess, sys, urllib.parse
 
-new_path, report_path, baseline_path, summary_path, current_path, base_path = sys.argv[1:]
+new_path, report_path, baseline_path, summary_path, current_path, base_path, base_sha = sys.argv[1:]
 new = json.loads(pathlib.Path(new_path).read_text())
 advisories = []
 for coordinate in new:
@@ -111,6 +112,7 @@ payload = {
     "scanner": {"name": "GitHub Advisory Database REST API", "endpoint": "/advisories",
                 "ecosystem": "maven"},
     "policy": "Fail only for newly introduced HIGH or CRITICAL advisories.",
+    "baselineSha": base_sha,
     "currentInventory": json.loads(pathlib.Path(current_path).read_text()),
     "baselineInventory": json.loads(pathlib.Path(base_path).read_text()),
     "newCoordinates": new,
@@ -119,6 +121,7 @@ payload = {
 pathlib.Path(report_path).write_text(json.dumps(payload, indent=2) + "\n")
 pathlib.Path(baseline_path).write_text(json.dumps({
     "schema": 1, "scanner": payload["scanner"],
+    "baselineSha": base_sha,
     "baselineInventory": payload["baselineInventory"],
 }, indent=2) + "\n")
 matches = [item for item in advisories if item["results"]]

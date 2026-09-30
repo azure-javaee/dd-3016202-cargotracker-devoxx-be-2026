@@ -49,7 +49,12 @@ PY
     cat "$tmp/$name.log" >&2
     exit 1
   fi
-  printf '%s: nonzero with %s\n' "$name" "$diagnostic" >> "$out"
+  {
+    printf '%s: nonzero with %s\n' "$name" "$diagnostic"
+    printf '%s\n' "--- $name bounded Maven diagnostic ---"
+    grep -i -C 4 "$diagnostic" "$tmp/$name.log" | tail -n 40
+    printf '%s\n' "--- end $name diagnostic ---"
+  } >> "$out"
 }
 run_case java java "RequireJavaVersion"
 run_case maven maven "RequireMavenVersion"
