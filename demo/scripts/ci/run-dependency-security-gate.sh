@@ -18,7 +18,7 @@ fi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-timeout --signal=TERM 8m ./mvnw "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+timeout --signal=TERM --kill-after=30s 8m ./mvnw "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
   -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
   -DfailBuildOnCVSS=11 -DoutputDirectory="$root/ci-artifacts/dependency-reports" \
   -DdataDirectory="$data_dir" -DautoUpdate=true
@@ -26,7 +26,7 @@ mv "$root/ci-artifacts/dependency-reports/dependency-check-report.json" "$report
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
-  timeout --signal=TERM 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+  timeout --signal=TERM --kill-after=30s 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
     -DdataDirectory="$data_dir" -DautoUpdate=false
@@ -51,7 +51,6 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
 else
   test -s "$report"
   cp -- "$report" "$baseline_report"
-  test -s "$baseline_report"
   {
     echo "OWASP Dependency-Check ${scanner_version}"
     echo "No comparison baseline is available for this event; baseline report mirrors the current scan."
