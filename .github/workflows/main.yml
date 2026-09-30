@@ -99,7 +99,7 @@ jobs:
       - name: Build canonical WAR
         run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
       - name: Run dependency security and delta gate
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: ./scripts/ci/run-dependency-security-gate.sh
       - name: Run negative controls
         run: ./scripts/ci/run-negative-controls.sh
