@@ -7,16 +7,18 @@ build_dir="$root/ci-artifacts/build-contract"
 dependency_dir="$root/ci-artifacts/dependency-reports"
 mkdir -p "$build_dir" "$dependency_dir"
 
-./mvnw help:effective-pom -Doutput="$dependency_dir/effective-pom.xml"
-./mvnw dependency:tree -DoutputFile="$dependency_dir/dependency-tree.txt"
-./mvnw dependency:resolve-plugins -DoutputFile="$dependency_dir/resolved-plugins.txt"
-jar tf target/cargo-tracker.war > "$build_dir/war-inventory.txt"
-sha256sum target/cargo-tracker.war > "$build_dir/war.sha256"
-./mvnw -version > "$build_dir/maven-version.txt"
+if [[ "${1:-}" != "--artifact-metadata" ]]; then
+  ./mvnw help:effective-pom -Doutput="$dependency_dir/effective-pom.xml"
+  ./mvnw dependency:tree -DoutputFile="$dependency_dir/dependency-tree.txt"
+  ./mvnw dependency:resolve-plugins -DoutputFile="$dependency_dir/resolved-plugins.txt"
+  jar tf target/cargo-tracker.war > "$build_dir/war-inventory.txt"
+  sha256sum target/cargo-tracker.war > "$build_dir/war.sha256"
+  ./mvnw -version > "$build_dir/maven-version.txt"
 
-if [[ ! -s "$dependency_dir/vulnerability-report.json" ]]; then
-  echo "vulnerability gate did not produce a report" >&2
-  exit 1
+  if [[ ! -s "$dependency_dir/vulnerability-report.json" ]]; then
+    echo "vulnerability gate did not produce a report" >&2
+    exit 1
+  fi
 fi
 
 if [[ "${1:-}" == "--artifact-metadata" ]]; then
@@ -25,7 +27,6 @@ import hashlib
 import json
 import os
 import pathlib
-import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -41,7 +42,9 @@ missing = [name for name in required_env if not os.environ.get(name)]
 if missing:
     raise SystemExit("missing CI metadata: " + ", ".join(missing))
 
-started = datetime.now(timezone.utc)
+started = os.environ.get("CI_STARTED_AT")
+if not started:
+    raise SystemExit("CI_STARTED_AT is required")
 pom = ElementTree.parse(root / "pom.xml").getroot()
 ns = {"m": "http://maven.apache.org/POM/4.0.0"}
 liberty = pom.find(".//m:liberty.runtime.version", ns)
@@ -55,17 +58,14 @@ tools = {
 if not all(tools.values()):
     raise SystemExit("unable to resolve required tool versions")
 
-commands = [
-    "./mvnw '-P!openliberty' -DskipTests clean compile",
-    "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test",
-    "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test",
-    "./mvnw -Popenliberty -Dskip=true -DskipTests clean package",
-    "./scripts/ci/run-dependency-security-gate.sh",
-    "./scripts/ci/run-negative-controls.sh",
-    "./scripts/ci/write-build-metadata.sh",
-    "./scripts/ci/verify-build-contract.sh",
-]
+commands = [line for line in os.environ.get("CI_COMMANDS", "").splitlines() if line]
+if not commands:
+    raise SystemExit("CI_COMMANDS is required")
 pr = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
+if pr:
+    pr_number = os.environ.get("CI_PR_NUMBER", "")
+    if not pr_number.isdigit() or int(pr_number) <= 0:
+        raise SystemExit("CI_PR_NUMBER must be a positive integer for pull requests")
 base_url = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
 metadata = {
     "schema": 1,
@@ -83,8 +83,8 @@ metadata = {
     "pr": os.environ.get("CI_PR_NUMBER", "not-applicable") if pr else "not-applicable",
     "runner": {"os": os.environ["RUNNER_OS"], "architecture": os.environ["RUNNER_ARCH"]},
     "tools": tools,
-    "startedAt": started.isoformat(),
-    "endedAt": datetime.now(timezone.utc).isoformat(),
+    "startedAt": started,
+    "endedAt": os.environ.get("CI_ENDED_AT", datetime.now(timezone.utc).isoformat()),
     "commands": commands,
 }
 for directory, name in ((root / "ci-artifacts/build-contract", "build-contract"),

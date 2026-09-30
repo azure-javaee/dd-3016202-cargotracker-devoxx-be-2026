@@ -5,29 +5,50 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 report="$root/ci-artifacts/dependency-reports/vulnerability-report.json"
 summary="$root/ci-artifacts/dependency-reports/vulnerability-report.txt"
+scanner_version="11.1.0"
 mkdir -p "$(dirname "$report")"
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
   : "${CI_BASE_SHA:?CI_BASE_SHA is required for pull-request dependency comparison}"
-  gh api \
-    -H 'Accept: application/vnd.github+json' \
-    "repos/${GITHUB_REPOSITORY}/dependency-graph/compare/${CI_BASE_SHA}...${GITHUB_SHA}" \
-    > "$report"
-  jq -e 'type == "object"' "$report" >/dev/null
-  if jq -e '
-      [.changed_dependencies[]?, .removed_dependencies[]?]
-      | map(.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical"))
-      | length > 0
-    ' "$report" >/dev/null; then
+  git cat-file -e "$CI_BASE_SHA:demo/pom.xml"
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+./mvnw "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+  -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
+  -DfailBuildOnCVSS=11 -DoutputDirectory="$root/ci-artifacts/dependency-reports" \
+  -DdataDirectory="$tmp/current-data"
+mv "$root/ci-artifacts/dependency-reports/dependency-check-report.json" "$report"
+
+if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
+  git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
+  ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+    -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
+    -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
+    -DdataDirectory="$tmp/baseline-data"
+  jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
+    "$report" | sort -u > "$tmp/current-high"
+  jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
+    "$tmp/baseline/dependency-check-report.json" | sort -u > "$tmp/baseline-high"
+  comm -23 "$tmp/current-high" "$tmp/baseline-high" > "$tmp/new-high"
+  {
+    echo "OWASP Dependency-Check ${scanner_version}"
+    echo "Historical findings are retained; only new HIGH/CRITICAL identifiers fail."
+    echo "Current HIGH/CRITICAL: $(wc -l < "$tmp/current-high")"
+    echo "Baseline HIGH/CRITICAL: $(wc -l < "$tmp/baseline-high")"
+    echo "New HIGH/CRITICAL:"
+    cat "$tmp/new-high"
+  } > "$summary"
+  if [[ -s "$tmp/new-high" ]]; then
     echo "new high-severity dependency findings detected" >&2
     exit 1
   fi
 else
-  gh api \
-    -H 'Accept: application/vnd.github+json' \
-    "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" \
-    > "$report"
-  jq -e '.sbom and (.sbom.packages | length > 0)' "$report" >/dev/null
+  {
+    echo "OWASP Dependency-Check ${scanner_version}"
+    echo "Full vulnerability report is in vulnerability-report.json."
+  } > "$summary"
 fi
 
-jq . "$report" > "$summary"
+jq -e '.dependencies | type == "array"' "$report" >/dev/null
