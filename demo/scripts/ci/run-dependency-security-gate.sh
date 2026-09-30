@@ -29,7 +29,8 @@ if [[ ! -s "$report" ]]; then
 fi
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
-  cp -a "$data_dir" "$tmp/baseline-data"
+  mkdir -p "$tmp/baseline-data"
+  cp -a "$data_dir/." "$tmp/baseline-data"
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
   timeout --signal=TERM --kill-after=30s 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
