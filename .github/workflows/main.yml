@@ -4,14 +4,19 @@ on:
   push:
     paths-ignore:
       - "docs/**"
-    branches-ignore:
+    branches:
       - edburns/dd-3016202-cargotracker-devoxx-be-2026-01
+      - edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   formatting:
@@ -58,5 +63,50 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build with Maven
-        run: ./mvnw clean package --file pom.xml
+      - name: Compile without Open Liberty
+        run: ./mvnw '-P!openliberty' -DskipTests clean compile
+      - name: Run focused unit tests
+        run: >
+          ./mvnw '-P!openliberty'
+          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest
+          clean test
+      - name: Run Open Liberty integration tests
+        run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
+      - name: Build canonical WAR
+        run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+      - name: Write build contract reports
+        run: ./scripts/ci/write-build-metadata.sh
+      - name: Verify build contract
+        run: ./scripts/ci/verify-build-contract.sh
+      - name: Reject new high-severity dependency findings
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+      - name: Write artifact metadata
+        run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
+      - name: Upload build contract
+        id: upload-build-contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-contract
+          path: demo/ci-artifacts/build-contract
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload dependency reports
+        id: upload-dependency-reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-reports
+          path: demo/ci-artifacts/dependency-reports
+          retention-days: 90
+          if-no-files-found: error
+      - name: Record artifact evidence
+        if: always()
+        run: |
+          {
+            echo "### Build contract evidence"
+            echo "- Tested SHA: \`${GITHUB_SHA}\`"
+            echo "- build-contract: id \`${{ steps.upload-build-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-build-contract.outputs.artifact-id }}, digest \`${{ steps.upload-build-contract.outputs.artifact-digest }}\`"
+            echo "- dependency-reports: id \`${{ steps.upload-dependency-reports.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-dependency-reports.outputs.artifact-id }}, digest \`${{ steps.upload-dependency-reports.outputs.artifact-digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
