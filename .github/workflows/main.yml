@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore:
       - "docs/**"
-    branches:
+    branches-ignore:
       - edburns/dd-3016202-cargotracker-devoxx-be-2026-01
   pull_request:
     types:
