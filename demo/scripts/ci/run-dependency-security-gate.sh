@@ -25,11 +25,12 @@ timeout --signal=TERM --kill-after=30s 8m ./mvnw "org.owasp:dependency-check-mav
 mv "$root/ci-artifacts/dependency-reports/dependency-check-report.json" "$report"
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
+  timeout --signal=TERM --kill-after=10s 60s cp -a --reflink=auto "$data_dir" "$tmp/baseline-data"
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
   timeout --signal=TERM --kill-after=30s 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
-    -DdataDirectory="$data_dir" -DautoUpdate=false
+    -DdataDirectory="$tmp/baseline-data" -DautoUpdate=false
   cp "$tmp/baseline/dependency-check-report.json" "$baseline_report"
   jq -r '[.dependencies[]?.vulnerabilities[]? | select(((.severity // "") | ascii_downcase) as $severity | $severity == "high" or $severity == "critical") | .name] | unique[]?' \
     "$report" | sort -u > "$tmp/current-high"
@@ -49,7 +50,10 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     exit 1
   fi
 else
-  test -s "$report"
+  if [[ ! -s "$report" ]]; then
+    echo "ERROR: vulnerability report is missing or empty" >&2
+    exit 1
+  fi
   cp -- "$report" "$baseline_report"
   {
     echo "OWASP Dependency-Check ${scanner_version}"
