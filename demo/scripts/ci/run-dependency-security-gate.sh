@@ -31,9 +31,9 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
     -DdataDirectory="$data_dir" -DautoUpdate=false
   cp "$tmp/baseline/dependency-check-report.json" "$baseline_report"
-  jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
+  jq -r '[.dependencies[]?.vulnerabilities[]? | select(((.severity // "") | ascii_downcase) as $severity | $severity == "high" or $severity == "critical") | .name] | unique[]?' \
     "$report" | sort -u > "$tmp/current-high"
-  jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
+  jq -r '[.dependencies[]?.vulnerabilities[]? | select(((.severity // "") | ascii_downcase) as $severity | $severity == "high" or $severity == "critical") | .name] | unique[]?' \
     "$tmp/baseline/dependency-check-report.json" | sort -u > "$tmp/baseline-high"
   comm -23 "$tmp/current-high" "$tmp/baseline-high" > "$tmp/new-high"
   {
@@ -49,10 +49,12 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     exit 1
   fi
 else
-  cp "$report" "$baseline_report"
+  test -s "$report"
+  cp -- "$report" "$baseline_report"
+  test -s "$baseline_report"
   {
     echo "OWASP Dependency-Check ${scanner_version}"
-    echo "Full vulnerability report is in vulnerability-report.json."
+    echo "No comparison baseline is available for this event; baseline report mirrors the current scan."
   } > "$summary"
 fi
 
