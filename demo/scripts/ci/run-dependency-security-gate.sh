@@ -131,5 +131,11 @@ pathlib.Path(summary_path).write_text(
     "HIGH/CRITICAL advisory queries with matches: %d\n"
     % (len(new), len(matches)))
 if matches:
-    raise SystemExit("new HIGH/CRITICAL Maven advisory detected")
+    details = []
+    for item in matches:
+        coordinate = item["coordinate"]
+        affects = f'{coordinate["groupId"]}:{coordinate["artifactId"]}@{coordinate["version"]}'
+        identifiers = sorted({result["ghsa_id"] for result in item["results"]})
+        details.append(f'{affects}: {", ".join(identifiers)}')
+    raise SystemExit("new HIGH/CRITICAL Maven advisory detected: " + "; ".join(details))
 PY

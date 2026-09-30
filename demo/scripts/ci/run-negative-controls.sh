@@ -66,7 +66,7 @@ run_case convergence convergence "Dependency convergence"
 fixture="$tmp/BadFormatting.java"
 mkdir -p "$root/src/main/java/org/eclipse/cargotracker/ci"
 fixture="$root/src/main/java/org/eclipse/cargotracker/ci/BadFormatting.java"
-printf 'package org.eclipse.cargotracker.ci; public class BadFormatting { public static void main(String[] args) { } }\\n' > "$fixture"
+printf 'package org.eclipse.cargotracker.ci; public class BadFormatting { public static void main(String[] args) { } }\n' > "$fixture"
 trap 'git reset --quiet "$fixture" 2>/dev/null || true; rm -rf "$tmp" "$fixture" "$root/src/main/java/org/eclipse/cargotracker/ci"' EXIT
 git add "$fixture"
 set +e
