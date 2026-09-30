@@ -12,6 +12,7 @@ test -s ci-artifacts/dependency-reports/dependency-tree.txt
 test -s ci-artifacts/dependency-reports/resolved-plugins.txt
 test -s ci-artifacts/dependency-reports/vulnerability-report.txt
 test -s ci-artifacts/dependency-reports/vulnerability-report.json
+test -s ci-artifacts/dependency-reports/baseline-vulnerability-report.json
 test -s ci-artifacts/build-contract/enforcer-negative-controls.txt
 test -s ci-artifacts/build-contract/artifact-metadata.json
 test -s ci-artifacts/dependency-reports/artifact-metadata.json

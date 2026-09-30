@@ -64,9 +64,11 @@ jobs:
       - name: Cache Maven packages
         uses: actions/cache@v6
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          path: |
+            ~/.m2
+            ~/.dependency-check-data
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-build-
       - name: Capture evidence start
         run: |
           echo "CI_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
@@ -80,8 +82,6 @@ jobs:
             echo "./scripts/ci/run-dependency-security-gate.sh"
             echo "./scripts/ci/run-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
-            echo "./scripts/ci/write-build-metadata.sh --artifact-metadata"
-            echo "./scripts/ci/verify-build-contract.sh"
             echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
             echo "./scripts/ci/write-build-metadata.sh --artifact-metadata"
             echo "./scripts/ci/verify-build-contract.sh"
@@ -99,20 +99,17 @@ jobs:
       - name: Build canonical WAR
         run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
       - name: Run dependency security and delta gate
+        timeout-minutes: 10
         run: ./scripts/ci/run-dependency-security-gate.sh
       - name: Run negative controls
         run: ./scripts/ci/run-negative-controls.sh
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
+      - name: Capture evidence end
+        run: echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - name: Write artifact metadata
         run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
       - name: Verify build contract
-        run: ./scripts/ci/verify-build-contract.sh
-      - name: Capture evidence end
-        run: echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
-      - name: Finalize artifact metadata
-        run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
-      - name: Verify finalized build contract
         run: ./scripts/ci/verify-build-contract.sh
       - name: Upload build contract
         id: upload-build-contract

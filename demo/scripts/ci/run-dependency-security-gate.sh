@@ -4,9 +4,12 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 report="$root/ci-artifacts/dependency-reports/vulnerability-report.json"
+baseline_report="$root/ci-artifacts/dependency-reports/baseline-vulnerability-report.json"
 summary="$root/ci-artifacts/dependency-reports/vulnerability-report.txt"
 scanner_version="11.1.0"
+data_dir="${DEPENDENCY_CHECK_DATA_DIR:-$HOME/.dependency-check-data}"
 mkdir -p "$(dirname "$report")"
+mkdir -p "$data_dir"
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
   : "${CI_BASE_SHA:?CI_BASE_SHA is required for pull-request dependency comparison}"
@@ -15,18 +18,19 @@ fi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-./mvnw "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+timeout --signal=TERM 8m ./mvnw "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
   -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
   -DfailBuildOnCVSS=11 -DoutputDirectory="$root/ci-artifacts/dependency-reports" \
-  -DdataDirectory="$tmp/current-data"
+  -DdataDirectory="$data_dir" -DautoUpdate=true
 mv "$root/ci-artifacts/dependency-reports/dependency-check-report.json" "$report"
 
 if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
   git show "$CI_BASE_SHA:demo/pom.xml" > "$tmp/pom.xml"
-  ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
+  timeout --signal=TERM 8m ./mvnw -f "$tmp/pom.xml" "org.owasp:dependency-check-maven:${scanner_version}:aggregate" \
     -Dformat=JSON -DfailOnError=true -DskipTestScope=true \
     -DfailBuildOnCVSS=11 -DoutputDirectory="$tmp/baseline" \
-    -DdataDirectory="$tmp/baseline-data"
+    -DdataDirectory="$data_dir" -DautoUpdate=false
+  cp "$tmp/baseline/dependency-check-report.json" "$baseline_report"
   jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
     "$report" | sort -u > "$tmp/current-high"
   jq -r '[.dependencies[]?.vulnerabilities[]? | select((.severity // "") | ascii_downcase == "high" or ascii_downcase == "critical") | .name] | unique[]?' \
@@ -45,6 +49,7 @@ if [[ "${CI_EVENT:-}" == "pull_request" ]]; then
     exit 1
   fi
 else
+  cp "$report" "$baseline_report"
   {
     echo "OWASP Dependency-Check ${scanner_version}"
     echo "Full vulnerability report is in vulnerability-report.json."
