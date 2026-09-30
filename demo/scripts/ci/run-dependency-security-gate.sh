@@ -25,9 +25,12 @@ if [[ "$base_sha" =~ ^0+$ ]]; then
   base_sha=""
 fi
 if [[ -z "$base_sha" ]]; then
-  for candidate in \
-    "origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment" \
-    "origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-01"; do
+  candidates=()
+  if default_ref="$(git symbolic-ref --quiet refs/remotes/origin/HEAD)"; then
+    candidates+=("${default_ref#refs/remotes/}")
+  fi
+  candidates+=("origin/edburns/dd-3016202-cargotracker-devoxx-be-2026-01")
+  for candidate in "${candidates[@]}"; do
     if git rev-parse --verify "$candidate" >/dev/null 2>&1; then
       base_sha="$(git merge-base HEAD "$candidate")"
       break
