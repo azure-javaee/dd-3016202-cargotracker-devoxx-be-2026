@@ -33,6 +33,8 @@ Every increment must preserve required green GitHub Actions CI before the next
 serial issue begins. The campaign must prefer a small number of attributable,
 reliable controls over a broad collection of noisy checks.
 
+This is the demo app accompanying a presentation whose abstract is in `dd-3032592-10-boring-reasons-abstract.md`.
+
 ### Baseline technology contract
 
 | Concern | Current contract |
@@ -967,6 +969,8 @@ Create these as ordered serial issues. Every issue inherits the evidence-matrix
 gate later in this document. Stage 20 may refine titles after all Phase 1
 resolutions are filled, but it must preserve this dependency order.
 
+Every issue must include text that informs the agent that this is the demo app accompanying a presentation whose abstract is in `dd-3032592-10-boring-reasons-abstract.md`.
+
 Every Phase 2 issue includes a **Required Phase 1 evidence lookup** block.
 Stage 20 must preserve that block in the generated issue body. The assigned
 agent must read the named Phase 1 resolutions and spike artifacts before
@@ -1672,16 +1676,5 @@ The absence of meaningful evidence is not a reason to skip the update. Record th
 ## Reference material
 
 - `dd-3032592-10-boring-reasons-abstract.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/20260928-sol-understanding-of-goal.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/suggested-implementation-order-from-workback-plan.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/workback-plan.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/20260925-prompts.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/20260928-prompts.md`
-- `dd-3016202-cargotracker-devoxx-be-2026-01-remove-before-merge/20260929-prompts.md`
-- `.github/workflows/main.yml`
-- `demo/pom.xml`
-- `demo/src/main/liberty/config/server.xml`
-- `demo/src/test/java/org/eclipse/cargotracker/`
-- `1-trick-out-01-remove-before-merge/shepherd-campaign.json`
-- `1-trick-out-01-remove-before-merge/evidence-matrix.md`
-- `1-trick-out-01-remove-before-merge/campaign-lessons.md`
+- `.github/workflows/` and all children
+- `demo` and all children
