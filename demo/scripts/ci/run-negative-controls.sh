@@ -83,11 +83,13 @@ if sha256sum --check "$tmp/cargo-tracker.sha256" >/dev/null 2>&1; then
   echo "checksum FAILED" >> "$out"
   exit 1
 fi
-printf '%s\n' 'advisory: known-vulnerable log4j coordinate rejected by HIGH/CRITICAL query' >> "$out"
-query='advisories?ecosystem=maven&affects=org.apache.logging.log4j%3Alog4j-core%402.14.1&severity=critical&per_page=100'
-if ! gh api "$query" > "$tmp/advisory.json" 2> "$tmp/advisory.log" ||
-  ! jq -e 'type == "array" and length > 0' "$tmp/advisory.json" >/dev/null; then
-  echo "advisory FAILED: known vulnerable coordinate was not rejected" >> "$out"
-  cat "$tmp/advisory.log" >&2
-  exit 1
-fi
+printf '%s\n' 'advisory: known-vulnerable log4j coordinate rejected by HIGH/CRITICAL queries' >> "$out"
+for severity in high critical; do
+  query="advisories?ecosystem=maven&affects=org.apache.logging.log4j%3Alog4j-core%402.14.1&severity=${severity}&per_page=100"
+  if ! gh api "$query" > "$tmp/advisory-${severity}.json" 2> "$tmp/advisory.log" ||
+    ! jq -e 'type == "array" and length > 0' "$tmp/advisory-${severity}.json" >/dev/null; then
+    echo "advisory FAILED: known vulnerable coordinate was not rejected for $severity" >> "$out"
+    cat "$tmp/advisory.log" >&2
+    exit 1
+  fi
+done
