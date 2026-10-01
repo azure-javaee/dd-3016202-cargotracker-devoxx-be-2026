@@ -128,6 +128,12 @@ expect_rejection interpreter-only \
 expect_rejection forced-compilation \
   'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
   JAVA_TOOL_OPTIONS=-Xcomp
+expect_rejection batch-compilation \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-Xbatch
+expect_rejection compile-threshold \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-XX:CompileThreshold=1
 expect_rejection ignore-user-tuning \
   'JAZ_IGNORE_USER_TUNING must not be set for the comparison' \
   JAZ_IGNORE_USER_TUNING=1
@@ -146,8 +152,10 @@ file_tuning_pristine="$file_tuning/pristine"
 file_tuning_server="$file_tuning/liberty/usr/servers/defaultServer"
 file_tuning_output="$file_tuning/output"
 mkdir -p "$file_tuning_pristine" "$file_tuning_output"
-printf 'JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount=1"\n' \
-  > "$file_tuning_pristine/server.env"
+cat > "$file_tuning_pristine/server.env" <<'EOF'
+JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount=1"
+JVM_ARGS='-XX:TieredStopAtLevel=1'
+EOF
 file_tuning_hash="$(tar --sort=name --mtime='UTC 1970-01-01' \
   --owner=0 --group=0 --numeric-owner -C "$file_tuning_pristine" -cf - . |
   sha256sum | awk '{ print $1 }')"

@@ -75,7 +75,7 @@ if [[ "${1:-}" == "--one" ]]; then
     normalized="${value//=/ }"
     normalized="${normalized//\"/ }"
     normalized="${normalized//\'/ }"
-    [[ "$normalized" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
+    [[ "$normalized" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
   }
 
   validate_no_user_tuning() {
@@ -591,12 +591,27 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
 fi
 workspace="${RUNNER_TEMP:-/tmp}/cargo-tracker-performance-$$"
 mkdir -p "$workspace"
+database_dir="$root/target/cargo-tracker-data"
+database_backup="$workspace/original-cargo-tracker-data"
+database_baseline="$workspace/database-baseline"
+database_had_original=false
+if [[ -e "$database_dir" ]]; then
+  cp -a "$database_dir" "$database_backup"
+  database_had_original=true
+fi
+rm -rf "$database_dir"
+mkdir -p "$database_baseline" "$database_dir"
 cleanup_workspace() {
   local code=$?
+  rm -rf "$database_dir"
+  if [[ "$database_had_original" == true ]]; then
+    cp -a "$database_backup" "$database_dir"
+  fi
   rm -rf "$workspace"
   exit "$code"
 }
 trap cleanup_workspace EXIT
+trap 'exit 143' HUP INT TERM
 comparison_command() {
   printf '%s\n' "$*" >> "$comparison/commands.txt"
 }
@@ -616,7 +631,7 @@ if [[ "$(uname -m)" != x86_64 ]]; then
 fi
 for name in JAVA_TOOL_OPTIONS _JAVA_OPTIONS JDK_JAVA_OPTIONS JAVA_OPTS JVM_ARGS MAVEN_OPTS; do
   value="${!name:-}"
-  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
+  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
     echo "user-provided JVM tuning is not allowed ($name)" >&2
     exit 1
   fi
@@ -762,6 +777,9 @@ workload_sha256="$(
   "$JAVA_HOME/lib/jfr/profile.jfc" "$comparison/profile-without-environment.jfc"
 jfr_sha256="$(sha256sum "$comparison/profile-without-environment.jfc" | awk '{ print $1 }')"
 host_sha256="$(sha256sum "$comparison/runner-environment.txt" | awk '{ print $1 }')"
+database_baseline_sha256="$(tar --sort=name --mtime='UTC 1970-01-01' \
+  --owner=0 --group=0 --numeric-owner -C "$database_baseline" -cf - . |
+  sha256sum | awk '{ print $1 }')"
 cat > "$comparison/artifact-identity.txt" <<EOF
 war_sha256=$war_sha256
 open_liberty_runtime_sha256=$runtime_sha256
@@ -769,10 +787,11 @@ pristine_default_server_sha256=$server_template_sha256
 workload_and_configuration_sha256=$workload_sha256
 redacted_jfr_profile_sha256=$jfr_sha256
 runner_environment_sha256=$host_sha256
+database_baseline_sha256=$database_baseline_sha256
 EOF
 write_current_artifact_identity() {
   local output_file="$1"
-  local current_war current_runtime current_server current_workload current_jfr
+  local current_war current_runtime current_server current_workload current_jfr current_database
   current_war="$(sha256sum "$war" | awk '{ print $1 }')"
   current_runtime="$(
     cd "$liberty_root"
@@ -792,6 +811,9 @@ write_current_artifact_identity() {
   current_jfr="$(
     sha256sum "$comparison/profile-without-environment.jfc" | awk '{ print $1 }'
   )"
+  current_database="$(tar --sort=name --mtime='UTC 1970-01-01' \
+    --owner=0 --group=0 --numeric-owner -C "$database_dir" -cf - . |
+    sha256sum | awk '{ print $1 }')"
   cat > "$output_file" <<EOF
 war_sha256=$current_war
 open_liberty_runtime_sha256=$current_runtime
@@ -799,6 +821,7 @@ pristine_default_server_sha256=$current_server
 workload_and_configuration_sha256=$current_workload
 redacted_jfr_profile_sha256=$current_jfr
 runner_environment_sha256=$host_sha256
+database_baseline_sha256=$current_database
 EOF
 }
 printf 'WAR SHA-256\t%s\nLiberty runtime SHA-256\t%s\n' \
@@ -858,6 +881,9 @@ while IFS=$'\t' read -r cycle position mode run_name; do
     printf ' %q' "${args[@]}"
     printf '\n'
   } >> "$comparison/commands.txt"
+  rm -rf "$database_dir"
+  cp -a "$database_baseline" "$database_dir"
+  comparison_command "restore and hash the empty Derby database baseline before $run_name"
   {
     printf 'mode\t%s\ncycle\t%s\nposition\t%s\nrun\t%s\n' \
       "$mode" "$cycle" "$position" "$run_name"

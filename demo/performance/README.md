@@ -54,15 +54,17 @@ Each request has a 10-second timeout. Response bodies are validated in
 temporary files and are not retained in artifacts.
 
 The scripts record runner CPU, memory, OS, kernel and cgroup view; checksums
-for the WAR, Liberty runtime, pristine server, workload, JFR profile and host
-record; process-launch-to-readiness time; request distributions; 200-ms RSS
-and CPU samples; heap before and after measured work; server-PID-specific GC
-logs; JFR and its parsed summary; effective JVM command and flags; process
-ancestry; start/stop logs; exit status; and cleanup outcome. The JFR profile
-disables JVM information, initial system properties, OS information, initial
-environment variables, and system-process events. Every completed recording
-must report zero events of those five types before artifact upload. Task 2.6 OpenTelemetry and
-Liberty artifacts from the same workflow job/runner are retained as
+for the WAR, Liberty runtime, pristine server, empty Derby baseline, workload,
+JFR profile and host record; process-launch-to-readiness time; request
+distributions; 200-ms RSS and CPU samples; heap before and after measured work;
+server-PID-specific GC logs; JFR and its parsed summary; effective JVM command
+and flags; process ancestry; start/stop logs; exit status; and cleanup outcome.
+The empty Derby baseline is restored before every launch, while any database
+that existed before the harness is restored on exit. The JFR profile disables
+JVM information, initial system properties, OS information, initial environment
+variables, and system-process events. Every completed recording must report
+zero events of those five types before artifact upload. Task 2.6 OpenTelemetry
+and Liberty artifacts from the same workflow job/runner are retained as
 diagnostic context, not misrepresented as measurements from these individual
 processes.
 
@@ -81,8 +83,9 @@ including native-memory tracking and its error-file setting. User-supplied
 heap, GC, processor-count, compiler-count, or startup-recording options are
 rejected, as are interpreter-only and forced-compilation modes. The same
 validation applies to quoted option assignments in `server.env` without
-sourcing that file. Positive initial- and maximum-heap values are required for
-every direct and bypass run and must remain identical between those modes.
+sourcing that file; batch, tiered, background, and threshold compiler controls
+are prohibited. Positive initial- and maximum-heap values are required for every
+direct and bypass run and must remain identical between those modes.
 
 CI fails for startup beyond 90 seconds, failed readiness or workload requests,
 crash/OOM, repetition beyond 120 seconds, peak sampled RSS above 2 GiB, missing
