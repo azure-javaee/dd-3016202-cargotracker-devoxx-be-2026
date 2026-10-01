@@ -299,8 +299,10 @@ grep -Fq 'Liberty JVM PID changed unexpectedly' "$scratch/changed-pid.err"
 start_fixture bypass
 sampler_output="$scratch/duplicate-samples.tsv"
 sampler_stop="$scratch/duplicate.stop"
+duplicate_pid_file="$scratch/duplicate.pid"
+printf '%s\n' "$selected_fixture_pid" > "$duplicate_pid_file"
 "$helper" sample-server "$fixture_server_dir" "$sampler_output" \
-  "$sampler_stop" 0.02 "$sampler_pid_file" \
+  "$sampler_stop" 0.02 "$duplicate_pid_file" \
   > "$scratch/duplicate.out" 2> "$scratch/duplicate.err" &
 fixture_sampler_pid=$!
 fixture_sampler_stop="$sampler_stop"

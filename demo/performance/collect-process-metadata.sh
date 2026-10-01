@@ -150,11 +150,10 @@ PY
     server_pid_file="${5:?server PID file required}"
     printf 'elapsed_ms\tpid\trss_kb\tcpu_ticks\n' > "$output"
     start_ns="$(date +%s%N)"
-    while [[ ! -e "$stop_file" ]]; do
-      if [[ ! -s "$server_pid_file" ]]; then
-        sleep "$interval"
-        continue
-      fi
+    sample_selected_pid() {
+      local server_dir="$1" output="$2" server_pid_file="$3" start_ns="$4"
+      local pid rss_kb stat cpu_ticks elapsed_ms
+      local -a pids stat_fields
       pid="$(cat "$server_pid_file")"
       if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
         echo "selected Liberty PID file is invalid" >&2
@@ -181,31 +180,17 @@ PY
       cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
       elapsed_ms="$((( $(date +%s%N) - start_ns) / 1000000))"
       printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
+    }
+    while [[ ! -e "$stop_file" ]]; do
+      if [[ ! -s "$server_pid_file" ]]; then
+        sleep "$interval"
+        continue
+      fi
+      sample_selected_pid "$server_dir" "$output" "$server_pid_file" "$start_ns"
       sleep "$interval"
     done
     if [[ -s "$server_pid_file" ]]; then
-      pid="$(cat "$server_pid_file")"
-      mapfile -t pids < <(find_server_pids "$server_dir")
-      if (( ${#pids[@]} != 1 )); then
-        printf 'expected one Liberty JVM for %s, found %s\n' \
-          "$server_dir" "${#pids[@]}" >&2
-        exit 1
-      fi
-      if [[ "${pids[0]}" != "$pid" ]]; then
-        printf 'Liberty JVM PID changed unexpectedly: selected %s, found %s\n' \
-          "$pid" "${pids[0]}" >&2
-        exit 1
-      fi
-      if [[ ! -r "/proc/$pid/status" || ! -r "/proc/$pid/stat" ]]; then
-        printf 'selected Liberty JVM %s disappeared during sampling\n' "$pid" >&2
-        exit 1
-      fi
-      rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
-      stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
-      read -r -a stat_fields <<< "$stat"
-      cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
-      elapsed_ms="$((($(date +%s%N) - start_ns) / 1000000))"
-      printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
+      sample_selected_pid "$server_dir" "$output" "$server_pid_file" "$start_ns"
     fi
     [[ "$(wc -l < "$output")" -gt 1 ]]
     ;;
