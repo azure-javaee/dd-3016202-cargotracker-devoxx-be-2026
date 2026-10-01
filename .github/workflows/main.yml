@@ -40,9 +40,51 @@ jobs:
       - name: Check formatting
         run: ./mvnw spotless:check
 
-  build:
+  source-gates:
     runs-on: ubuntu-latest
     needs: [formatting]
+    defaults:
+      run:
+        working-directory: demo
+    env:
+      CI_PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: "17"
+      - name: Cache Maven packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Run formatting, compiler, and SpotBugs gates
+        run: ./scripts/ci/verify-source-gates.sh
+      - name: Upload source gates
+        id: upload-source-gates
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-gates
+          path: demo/ci-artifacts/source-gates
+          retention-days: 90
+          if-no-files-found: error
+      - name: Record source-gate evidence
+        if: always()
+        run: |
+          {
+            echo "### Source-gate evidence"
+            echo "- Tested SHA: \`${GITHUB_SHA}\`"
+            echo "- source-gates: id \`${{ steps.upload-source-gates.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-source-gates.outputs.artifact-id }}, digest \`${{ steps.upload-source-gates.outputs.artifact-digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [formatting, source-gates]
     defaults:
       run:
         working-directory: demo
