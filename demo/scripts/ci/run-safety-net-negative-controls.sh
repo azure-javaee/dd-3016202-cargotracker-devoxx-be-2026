@@ -26,6 +26,7 @@ test -s "$tmp/web.java"
 http_server_pid=
 readiness_server_pid=
 cleanup() {
+  local status=$?
   [[ -z "$http_server_pid" ]] || kill "$http_server_pid" 2>/dev/null || true
   [[ -z "$readiness_server_pid" ]] || kill "$readiness_server_pid" 2>/dev/null || true
   if pgrep -f '[w]lp/bin/server run defaultServer' >/dev/null 2>&1; then
@@ -35,6 +36,7 @@ cleanup() {
   cp "$tmp/BookingServiceTest.java" "$service_test"
   cp "$tmp/web.java" "$web_source"
   rm -rf "$tmp"
+  return "$status"
 }
 trap cleanup EXIT
 
@@ -61,7 +63,7 @@ expect_failure_with_diagnostic() {
   expect_failure "$name" "$@"
   if ! grep -Eiq "$pattern" "$tmp/$name.log"; then
     echo "$name: expected diagnostic /$pattern/ not found" | tee -a "$report"
-    return 1
+    exit 1
   fi
 }
 
@@ -86,10 +88,15 @@ for _ in $(seq 1 20); do
 done
 expect_failure_with_diagnostic http-non-200-or-missing-content '404|curl: \(22\)' \
   curl --fail --silent --show-error --max-time 5 http://127.0.0.1:18080/missing
-python3 -c 'import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(("127.0.0.1",18081)); s.listen(1); s.accept()[0].recv(1); time.sleep(10)' >"$tmp/readiness-server.log" 2>&1 &
+python3 -c 'import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(("127.0.0.1",18081)); s.listen(1); conn,_=s.accept(); time.sleep(10)' >"$tmp/readiness-server.log" 2>&1 &
 readiness_server_pid=$!
-expect_failure_with_diagnostic readiness-timeout 'timed out|Failed to connect|Could not connect' \
-  timeout 3s curl --fail --silent --show-error --connect-timeout 1 --max-time 2 \
+sleep 0.2
+if ! kill -0 "$readiness_server_pid" 2>/dev/null; then
+  echo "readiness-timeout: stalling fixture failed to start" | tee -a "$report"
+  exit 1
+fi
+expect_failure_with_diagnostic readiness-timeout 'timed out|Operation timed out|\(28\)' \
+  curl --fail --silent --show-error --connect-timeout 1 --max-time 2 \
   http://127.0.0.1:18081/cargo-tracker/rest/cargo
 
 if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/forced-acceptance.log" 2>&1; then
