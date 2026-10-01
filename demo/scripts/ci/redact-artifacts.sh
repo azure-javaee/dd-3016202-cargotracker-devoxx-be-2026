@@ -70,6 +70,24 @@ if not files:
 findings = []
 artifact_findings = []
 redactions = 0
+
+
+def inspect_json(value, path):
+    if isinstance(value, dict):
+        attribute_key = value.get("key")
+        if isinstance(attribute_key, str) and attribute_key.lower() in forbidden_attributes:
+            artifact_findings.append(
+                f"{display_path(path)}: forbidden field {attribute_key}"
+            )
+        for key, child in value.items():
+            if key.lower() in forbidden_attributes:
+                artifact_findings.append(f"{display_path(path)}: forbidden field {key}")
+            inspect_json(child, path)
+    elif isinstance(value, list):
+        for child in value:
+            inspect_json(child, path)
+
+
 for path in sorted(files):
     try:
         content = path.read_bytes()
@@ -83,32 +101,12 @@ for path in sorted(files):
         except (UnicodeDecodeError, json.JSONDecodeError):
             document = None
 
-        def inspect_json(value):
-            if isinstance(value, dict):
-                attribute_key = value.get("key")
-                if (
-                    isinstance(attribute_key, str)
-                    and attribute_key.lower() in forbidden_attributes
-                ):
-                    artifact_findings.append(
-                        f"{display_path(path)}: forbidden field {attribute_key}"
-                    )
-                for key, child in value.items():
-                    if key.lower() in forbidden_attributes:
-                        artifact_findings.append(
-                            f"{display_path(path)}: forbidden field {key}"
-                        )
-                    inspect_json(child)
-            elif isinstance(value, list):
-                for child in value:
-                    inspect_json(child)
-
         if document is not None:
-            inspect_json(document)
+            inspect_json(document, path)
         else:
             for line in content.splitlines():
                 try:
-                    inspect_json(json.loads(line))
+                    inspect_json(json.loads(line), path)
                 except (UnicodeDecodeError, json.JSONDecodeError):
                     continue
     changed = content

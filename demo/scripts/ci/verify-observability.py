@@ -87,14 +87,13 @@ def verify_redaction(path: pathlib.Path, documents: list[dict]) -> None:
             for key, child in value.items():
                 if key.lower() in FORBIDDEN_ATTRIBUTES:
                     fail(f"artifact redaction failed: telemetry contains forbidden field {key}")
-                yield from walk(child)
+                walk(child)
         elif isinstance(value, list):
             for child in value:
-                yield from walk(child)
+                walk(child)
 
     for document in documents:
-        for _ in walk(document):
-            pass
+        walk(document)
 
 
 def resource_spans(document: dict) -> Iterator[tuple[str, str, dict]]:
