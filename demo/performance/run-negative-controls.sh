@@ -9,6 +9,7 @@ fixture_launcher_pid=""
 fixture_java_pids=()
 cleanup() {
   local pid
+  local -a cleanup_java_pids
   if [[ -d "$fixture_server_dir" ]]; then
     mapfile -t cleanup_java_pids < <("$helper" list-server-pids "$fixture_server_dir")
     for pid in "${cleanup_java_pids[@]}"; do
@@ -94,8 +95,10 @@ fixture_jar="$scratch/liberty/bin/tools/ws-server.jar"
 start_fixture() {
   local mode="$1"
   local expected_count
+  local -a existing_fixture_pids discovered_fixture_pids
   mapfile -t existing_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
   expected_count=$((${#existing_fixture_pids[@]} + 1))
+  fixture_java_pids=("${existing_fixture_pids[@]}")
   case "$mode" in
     direct)
       "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
@@ -113,10 +116,10 @@ start_fixture() {
       ;;
   esac
   fixture_launcher_pid=$!
-  fixture_java_pids=()
   for _ in $(seq 1 50); do
-    mapfile -t fixture_java_pids < <("$helper" list-server-pids "$fixture_server_dir")
-    if [[ "${#fixture_java_pids[@]}" -eq "$expected_count" ]]; then
+    mapfile -t discovered_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
+    if [[ "${#discovered_fixture_pids[@]}" -eq "$expected_count" ]]; then
+      fixture_java_pids=("${discovered_fixture_pids[@]}")
       return 0
     fi
     sleep 0.1
@@ -167,6 +170,7 @@ for mode in direct bypass tuned; do
   stop_fixture
 done
 
+# These app args deliberately contain Liberty identifiers without its -jar launch form.
 "$JAVA_HOME/bin/java" -cp "$fixture_jar" PerformanceProcessFixture \
   "$fixture_jar" defaultServer > "$scratch/non-server-java.log" 2>&1 &
 fixture_launcher_pid=$!
@@ -182,7 +186,6 @@ printf 'expected non-server Java helper ignored\n'
 
 start_fixture direct
 start_fixture bypass
-mapfile -t fixture_java_pids < <("$helper" list-server-pids "$fixture_server_dir")
 if [[ "${#fixture_java_pids[@]}" -ne 2 ]]; then
   echo "duplicate JVM fixture did not produce exactly two server-shaped processes" >&2
   exit 1
