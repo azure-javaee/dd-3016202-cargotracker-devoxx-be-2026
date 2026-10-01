@@ -23,7 +23,7 @@ collect_logs() {
   fi
   if [[ -f "$liberty_out/messages.log" ]]; then
     if [[ -s "$liberty_out/messages.log" ]]; then
-      cp "$liberty_out/messages.log" "$out/liberty-messages-excerpt.txt"
+      tail -n 80 "$liberty_out/messages.log" > "$out/liberty-messages-excerpt.txt"
     else
       printf '%s\n' "Liberty messages.log was empty." > "$out/liberty-messages-excerpt.txt"
     fi

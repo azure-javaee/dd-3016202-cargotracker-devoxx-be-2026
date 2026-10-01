@@ -9,6 +9,7 @@ report="$out/safety-net-negative-controls.txt"
 log_excerpt_lines=12
 : > "$report"
 tmp="$(mktemp -d)"
+command -v timeout >/dev/null
 route_test=src/test/java/org/eclipse/cargotracker/domain/model/cargo/RouteSpecificationTest.java
 service_test=src/test/java/org/eclipse/cargotracker/application/BookingServiceTest.java
 web_source="$(find src/main -path '*interfaces/booking/web*' -type f -name '*.java' | head -1)"
@@ -57,7 +58,7 @@ if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/
   echo "forced-acceptance-cleanup: UNEXPECTED PASS" | tee -a "$report"
   exit 1
 fi
-if pgrep -f 'wlp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; then
+if pgrep -f '[w]lp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; then
   echo "forced-acceptance-cleanup: Liberty still running" | tee -a "$report"
   cat "$tmp/processes" >> "$report"
   exit 1
