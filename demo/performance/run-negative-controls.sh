@@ -10,6 +10,7 @@ fixture_java_pids=()
 last_fixture_pid=""
 fixture_sampler_pid=""
 fixture_sampler_stop=""
+fixture_sampler_status=""
 cleanup() {
   local pid
   local -a cleanup_java_pids
@@ -37,7 +38,7 @@ cleanup() {
 trap cleanup EXIT
 
 wait_for_sampler_exit() {
-  local description="$1" attempt sampler_state
+  local description="$1" attempt sampler_state sampler_wait_pid="$fixture_sampler_pid"
   local sampler_exited=false
   for ((attempt = 0; attempt < 50; attempt++)); do
     sampler_state="$(ps -o stat= -p "$fixture_sampler_pid" 2>/dev/null || true)"
@@ -59,13 +60,24 @@ wait_for_sampler_exit() {
     done
   fi
   if [[ "$sampler_exited" != true ]]; then
-    kill "$fixture_sampler_pid" 2>/dev/null || true
-    wait "$fixture_sampler_pid" 2>/dev/null || true
+    kill "$sampler_wait_pid" 2>/dev/null || true
+    if wait "$sampler_wait_pid" 2>/dev/null; then
+      fixture_sampler_status=0
+    else
+      fixture_sampler_status=$?
+    fi
     fixture_sampler_pid=""
     fixture_sampler_stop=""
     printf '%s sampler did not exit within the bounded wait\n' "$description" >&2
     return 1
   fi
+  if wait "$sampler_wait_pid"; then
+    fixture_sampler_status=0
+  else
+    fixture_sampler_status=$?
+  fi
+  fixture_sampler_pid=""
+  fixture_sampler_stop=""
 }
 
 if [[ -z "${JAVA_HOME:-}" || ! -f "$JAVA_HOME/release" ]]; then
@@ -322,12 +334,10 @@ printf '1\n' > "$changed_pid_file"
 fixture_sampler_pid=$!
 fixture_sampler_stop="$scratch/changed-pid.stop"
 wait_for_sampler_exit changed-PID
-if wait "$fixture_sampler_pid"; then
+if [[ "$fixture_sampler_status" -eq 0 ]]; then
   echo "sampler accepted a different post-readiness Liberty PID" >&2
   exit 1
 fi
-fixture_sampler_pid=""
-fixture_sampler_stop=""
 grep -Fq 'Liberty JVM PID changed unexpectedly' "$scratch/changed-pid.err"
 start_fixture bypass
 sampler_output="$scratch/duplicate-samples.tsv"
@@ -340,12 +350,10 @@ printf '%s\n' "$selected_fixture_pid" > "$duplicate_pid_file"
 fixture_sampler_pid=$!
 fixture_sampler_stop="$sampler_stop"
 wait_for_sampler_exit duplicate-PID
-if wait "$fixture_sampler_pid"; then
+if [[ "$fixture_sampler_status" -eq 0 ]]; then
   echo "sampler accepted multiple Liberty JVMs after PID selection" >&2
   exit 1
 fi
-fixture_sampler_pid=""
-fixture_sampler_stop=""
 grep -Fq 'expected one Liberty JVM' "$scratch/duplicate.err"
 if grep -Fq 'Broken pipe' "$scratch/duplicate.err"; then
   echo "sampler emitted a broken-pipe error during duplicate discovery" >&2
