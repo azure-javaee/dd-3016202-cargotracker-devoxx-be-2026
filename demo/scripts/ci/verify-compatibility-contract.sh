@@ -26,8 +26,7 @@ assert text("m:properties/m:javaee_api.version") == "7.0", \
     "compatibility boundary: Java EE API version must be 7.0"
 javaee = [
     d for d in pom.findall("m:dependencies/m:dependency", ns)
-    if text("m:properties/m:javaee_api.version") == "7.0" and
-    d.findtext("m:groupId", namespaces=ns) == "javax" and
+    if d.findtext("m:groupId", namespaces=ns) == "javax" and
     d.findtext("m:artifactId", namespaces=ns) == "javaee-api" and
     d.findtext("m:version", namespaces=ns) in ("7.0", "${javaee_api.version}")
 ]
@@ -90,7 +89,6 @@ trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/src/main/liberty/config" "$tmp/src/main/java/example"
 cp pom.xml "$tmp/pom.xml"
 cp src/main/liberty/config/server.xml "$tmp/src/main/liberty/config/server.xml"
-printf 'package example;\nimport jakarta.ws.rs.GET;\nclass BadImport {}\n' > "$tmp/src/main/java/example/BadImport.java"
 
 run_negative() {
   local name="$1" expression="$2" diagnostic="$3"
