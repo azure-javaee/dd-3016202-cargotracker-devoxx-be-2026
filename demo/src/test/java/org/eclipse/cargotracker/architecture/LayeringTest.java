@@ -15,8 +15,7 @@ import org.junit.jupiter.api.Test;
 class LayeringTest {
 
   private static final String PACKAGE = "org.eclipse.cargotracker.";
-  private static final Pattern DEPENDENCY =
-      Pattern.compile("^\\s*(\\S+)\\s+->\\s+(\\S+)\\s+.*$");
+  private static final Pattern DEPENDENCY = Pattern.compile("^\\s*(\\S+)\\s+->\\s+(\\S+)\\s+.*$");
   private static final Map<String, Set<String>> KNOWN_LEGACY_REFERENCES =
       Map.of(
           PACKAGE + "domain.model.cargo.BookingBackingBean",
