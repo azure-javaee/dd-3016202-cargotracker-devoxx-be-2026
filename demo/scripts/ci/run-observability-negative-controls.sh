@@ -118,7 +118,10 @@ fi
 echo "unsafe-cargo-id: seeded tracking ID rejected by final artifact scan" >> "$out"
 
 mkdir -p "$tmp/secret-fixture"
-printf '%s\n' 'api_key=fixture-secret-never-retained' > "$tmp/secret-fixture/synthetic.txt"
+cat > "$tmp/secret-fixture/synthetic.txt" <<'EOF'
+api_key=fixture-secret-never-retained
+{"password": "first second,third"}
+EOF
 if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/secret-fixture" \
   > "$tmp/secret-check.log" 2>&1; then
   echo "secret-pattern: unexpected success" >> "$out"
@@ -133,6 +136,11 @@ fi
 ./scripts/ci/redact-artifacts.sh --check-only "$tmp/secret-fixture" >> "$out"
 if grep -Fq "fixture-secret-never-retained" "$tmp/secret-fixture/synthetic.txt"; then
   echo "secret-pattern: redaction left fixture secret behind" >> "$out"
+  exit 1
+fi
+if grep -Fq "first second,third" "$tmp/secret-fixture/synthetic.txt" \
+  || ! grep -Fq '"password": "<REDACTED>"' "$tmp/secret-fixture/synthetic.txt"; then
+  echo "secret-pattern: redaction left part of a quoted credential value behind" >> "$out"
   exit 1
 fi
 echo "secret-like artifact content: rejected, redacted, and rechecked" >> "$out"

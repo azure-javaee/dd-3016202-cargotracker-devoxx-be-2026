@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 out="$root/ci-artifacts/compatibility-contract"
-liberty_out="$root/ci-artifacts/liberty-logs"
+liberty_out="${LIBERTY_LOG_OUTPUT_DIR:-$root/ci-artifacts/liberty-logs}"
 job_log="$root/target/$(date -u +%Y%m%d-%H%M)-job-logs.txt"
 mkdir -p "$out"
 mkdir -p "$root/target"

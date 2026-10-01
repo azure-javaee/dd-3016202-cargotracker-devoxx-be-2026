@@ -32,9 +32,18 @@ def display_path(path):
 
 credential = re.compile(
     rb"""(?ix)
-    (\b(?:password|passwd|token|secret|authorization|api[_-]?key|
+    (?P<prefix>\b(?:password|passwd|token|secret|authorization|api[_-]?key|
     client[_-]?secret|access[_-]?key|connectionstring)\b
-    ["']?\s*[:=]\s*["']?)(?!<REDACTED>)([^\s,"'}]+)
+    ["']?\s*[:=]\s*)
+    (?:
+      (?P<quote>["'])
+      (?!<REDACTED>(?P=quote))
+      (?P<quoted_value>(?:\\.|(?!(?P=quote)).)*)
+      (?P=quote)
+      |
+      (?!<REDACTED>(?=$|[\s,"'}]))
+      (?P<unquoted_value>[^\s,"'}]+)
+    )
     """
 )
 secret_patterns = [
@@ -123,7 +132,13 @@ for path in sorted(files):
                 findings.append(display_path(path))
                 break
             continue
-        if pattern is credential or pattern is secret_patterns[-1]:
+        if pattern is credential:
+            def redact_credential(match):
+                quote = match.group("quote") or b""
+                return match.group("prefix") + quote + b"<REDACTED>" + quote
+
+            changed, count = pattern.subn(redact_credential, changed)
+        elif pattern is secret_patterns[-1]:
             changed, count = pattern.subn(lambda match: match.group(1) + b"<REDACTED>", changed)
         else:
             changed, count = pattern.subn(b"<REDACTED>", changed)
