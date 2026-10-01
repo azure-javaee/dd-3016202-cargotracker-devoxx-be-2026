@@ -131,7 +131,10 @@ start_fixture() {
 launch_jaz_fixture() {
   local mode="$1"
   # Both jaz modes intentionally share the same jaz-to-Java ancestry.
-  [[ "${PERF_JAZ_MODE:-}" == "$mode" ]] || return 1
+  if [[ "${PERF_JAZ_MODE:-}" != "$mode" ]]; then
+    echo "jaz fixture mode does not match its environment" >&2
+    return 1
+  fi
   python3 -c 'import ctypes, subprocess, sys; ctypes.CDLL(None).prctl(15, ctypes.c_char_p(b"jaz"), 0, 0, 0); raise SystemExit(subprocess.call(sys.argv[1:]))' \
     "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
     > "$scratch/$mode.log" 2>&1
@@ -176,15 +179,15 @@ done
 # These app args deliberately contain Liberty identifiers without its -jar launch form.
 "$JAVA_HOME/bin/java" -cp "$fixture_jar" PerformanceProcessFixture \
   "$fixture_jar" defaultServer > "$scratch/non-server-java.log" 2>&1 &
-fixture_helper_pid=$!
-fixture_launcher_pids+=("$fixture_helper_pid")
+fixture_non_server_pid=$!
+fixture_launcher_pids+=("$fixture_non_server_pid")
 sleep 0.5
 if [[ -n "$("$helper" list-server-pids "$fixture_server_dir")" ]]; then
   echo "non-server Java helper was misidentified as the Liberty JVM" >&2
   exit 1
 fi
-kill "$fixture_helper_pid" 2>/dev/null || true
-wait "$fixture_helper_pid" 2>/dev/null || true
+kill "$fixture_non_server_pid" 2>/dev/null || true
+wait "$fixture_non_server_pid" 2>/dev/null || true
 fixture_launcher_pids=()
 printf 'expected non-server Java helper ignored\n'
 
