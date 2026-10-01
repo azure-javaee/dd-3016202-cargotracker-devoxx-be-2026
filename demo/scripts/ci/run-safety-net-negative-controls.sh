@@ -40,6 +40,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+control_log_path() {
+  printf '%s/%s.log' "$tmp" "$1"
+}
 expect_failure() {
   local name="$1"; shift
   local log
@@ -58,9 +61,6 @@ expect_failure() {
   fi
   echo "$name: expected failure" | tee -a "$report"
   sed -n "1,${log_excerpt_lines}p" "$log" >> "$report"
-}
-control_log_path() {
-  printf '%s/%s.log' "$tmp" "$1"
 }
 expect_failure_with_diagnostic() {
   local name="$1" pattern="$2"; shift 2
