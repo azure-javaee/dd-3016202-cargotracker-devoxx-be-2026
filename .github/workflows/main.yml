@@ -137,10 +137,24 @@ jobs:
       - name: Run focused unit tests
         run: >
           ./mvnw '-P!openliberty'
-          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest
+          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest,LayeringTest,BookingFacadeDtoTest
           clean test
+      - name: Write test inventory
+        run: ./scripts/ci/write-test-inventory.sh
+      - name: Preserve unit test reports
+        run: cp -R target/surefire-reports ci-artifacts/test-reports-unit/surefire-reports
+      - name: Assert unit test count
+        run: |
+          count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          test "$count" -eq 27
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
+      - name: Assert Arquillian test count
+        run: |
+          count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          test "$count" -eq 4
+      - name: Preserve Liberty test reports
+        run: mkdir -p ci-artifacts/test-reports-liberty && cp -R target/surefire-reports ci-artifacts/test-reports-liberty/surefire-reports
       - name: Build canonical WAR
         run: |
           PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"
@@ -161,6 +175,32 @@ jobs:
         run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
       - name: Verify build contract
         run: ./scripts/ci/verify-build-contract.sh
+      - name: Upload unit test reports
+        id: upload-test-reports-unit
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-unit
+          path: |
+            demo/target/surefire-reports
+            demo/ci-artifacts/test-reports-unit
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload Liberty test reports
+        id: upload-test-reports-liberty
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-liberty
+          path: demo/ci-artifacts/test-reports-liberty
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload Liberty logs
+        id: upload-liberty-logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: liberty-logs
+          path: demo/ci-artifacts/compatibility-contract/liberty-*.log
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload build contract
         id: upload-build-contract
         uses: actions/upload-artifact@v4

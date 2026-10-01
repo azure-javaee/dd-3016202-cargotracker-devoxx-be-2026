@@ -58,5 +58,13 @@ curl --fail --silent --show-error --dump-header "$out/readiness.headers" \
   -H 'Accept: application/json' \
   http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"
 grep -qi '^content-type: application/json' "$out/readiness.headers"
+curl --fail --silent --show-error http://localhost:8080/cargo-tracker/ > "$out/root.html"
+grep -q '<title>Cargo Tracker</title>' "$out/root.html"
+curl --fail --silent --show-error \
+  "http://localhost:8080/cargo-tracker/admin/dashboard.xhtml" > "$out/admin-dashboard.html"
+grep -qi 'dashboard' "$out/admin-dashboard.html"
+curl --fail --silent --show-error \
+  "http://localhost:8080/cargo-tracker/admin/show.xhtml?trackingId=ABC123" > "$out/admin-show.html"
+grep -q 'ABC123' "$out/admin-show.html"
 collect_logs
 stop_server
