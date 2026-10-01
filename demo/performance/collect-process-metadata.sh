@@ -344,9 +344,9 @@ elif kind == "summarize-all":
     }
     comparison = artifact_root / "performance-comparison"
     runs = []
-    for mode, artifact_root in artifact_roots.items():
+    for mode, mode_artifact_root in artifact_roots.items():
         mode_runs = []
-        for directory in sorted(artifact_root.glob("cycle-*-*-*")):
+        for directory in sorted(mode_artifact_root.glob("cycle-*-*-*")):
             run = summarize_run(directory)
             run["mode"] = mode
             run["directory"] = directory
@@ -358,8 +358,8 @@ elif kind == "summarize-all":
             raise SystemExit(f"one or more {mode} repetitions failed")
 
     flag_values = {}
-    for mode, artifact_root in artifact_roots.items():
-        for directory in sorted(artifact_root.glob("cycle-*-*-*")):
+    for mode, mode_artifact_root in artifact_roots.items():
+        for directory in sorted(mode_artifact_root.glob("cycle-*-*-*")):
             with (directory / "selected-jvm-flags.tsv").open() as stream:
                 values = {
                     row["flag"]: row["value"]
@@ -458,15 +458,15 @@ elif kind == "summarize-all":
                     f"{bypass_delta:.3f}\t{tuned:.3f}\t{tuned_delta:.3f}\n"
                 )
 
-    for mode, artifact_root in artifact_roots.items():
+    for mode, mode_artifact_root in artifact_roots.items():
         mode_runs = [run for run in runs if run["mode"] == mode]
-        with (artifact_root / "run-summary.tsv").open("w") as stream:
+        with (mode_artifact_root / "run-summary.tsv").open("w") as stream:
             stream.write("\t".join(fields) + "\n")
             for run in sorted(mode_runs, key=lambda item: (item["cycle"], item["position"])):
                 stream.write(
                     "\t".join(format_value(run.get(field)) for field in fields) + "\n"
                 )
-        with (artifact_root / "mode-summary.tsv").open("w") as stream:
+        with (mode_artifact_root / "mode-summary.tsv").open("w") as stream:
             stream.write("metric\tmedian\tmin\tmax\tcv_percent\n")
             for metric in mode_metrics:
                 values = [float(run[metric]) for run in mode_runs]

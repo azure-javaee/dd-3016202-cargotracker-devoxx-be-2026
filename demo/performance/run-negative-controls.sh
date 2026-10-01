@@ -53,3 +53,6 @@ expect_rejection external-bypass \
 expect_rejection external-dry-run \
   'JAZ launcher variables must be controlled by the harness' \
   JAZ_DRY_RUN=1
+expect_rejection external-exit-without-flush \
+  'JAZ launcher variables must be controlled by the harness' \
+  JAZ_EXIT_WITHOUT_FLUSH=1
