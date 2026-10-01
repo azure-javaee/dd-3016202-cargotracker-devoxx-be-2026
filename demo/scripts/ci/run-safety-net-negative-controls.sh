@@ -104,7 +104,7 @@ import time
 s = socket.socket()
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(("127.0.0.1", 18081))
-s.listen(1)
+s.listen(5)
 time.sleep(3600)
 ' >"$tmp/readiness-server.log" 2>&1 &
 readiness_server_pid=$!
@@ -114,6 +114,20 @@ for _ in $(seq 1 20); do
 done
 if ! kill -0 "$readiness_server_pid" 2>/dev/null; then
   echo "readiness-timeout: stalling fixture failed to start" | tee -a "$report"
+  exit 1
+fi
+probe_status=7
+for _ in $(seq 1 20); do
+  set +e
+  curl --silent --connect-timeout 0.2 --max-time 0.2 \
+    http://127.0.0.1:18081/ >/dev/null 2>&1
+  probe_status=$?
+  set -e
+  [[ "$probe_status" -ne 7 ]] && break
+  sleep 0.1
+done
+if [[ "$probe_status" -eq 7 ]]; then
+  echo "readiness-timeout: stalling fixture is not listening" | tee -a "$report"
   exit 1
 fi
 expect_failure_with_diagnostic readiness-timeout 'timed out|Operation timed out|\(28\)' \
