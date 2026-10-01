@@ -73,12 +73,21 @@ restore_server_options() {
 wait_for_collector() {
   local health_url="${1:-$collector_health_url}"
   local timeout_seconds="${2:-60}"
-  for _ in $(seq 1 "$timeout_seconds"); do
-    if curl --fail --silent --show-error --max-time 2 "$health_url" >/dev/null 2>&1; then
+  local deadline now remaining request_timeout
+  deadline=$(($(date +%s) + timeout_seconds))
+  while true; do
+    now=$(date +%s)
+    ((now < deadline)) || break
+    remaining=$((deadline - now))
+    request_timeout=2
+    ((remaining < request_timeout)) && request_timeout=$remaining
+    if curl --fail --silent --show-error --max-time "$request_timeout" \
+      "$health_url" >/dev/null 2>&1; then
       printf 'collector health check passed: %s\n' "$health_url"
       return 0
     fi
-    sleep 1
+    now=$(date +%s)
+    ((now < deadline)) && sleep 1
   done
   echo "collector unavailable: health check did not pass at $health_url within ${timeout_seconds}s" >&2
   return 1
