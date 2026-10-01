@@ -8,19 +8,23 @@ shift || true
 
 find_server_pids() {
   local server_dir="$1"
-  local jar proc process_args argument
+  local jar proc executable index
+  local -a process_args
   jar="$(realpath -m "$server_dir/../../../bin/tools/ws-server.jar")"
   for proc in /proc/[0-9]*; do
-    [[ -r "$proc/cmdline" ]] || continue
-    process_args=""
-    while IFS= read -r -d '' argument; do
-      process_args+="$argument "
-    done < "$proc/cmdline" 2>/dev/null || true
-    if [[ "$process_args" == *"$jar"* \
-      && "$process_args" == *defaultServer* \
-      && "$process_args" == *java* ]]; then
-      printf '%s\n' "${proc##*/}"
-    fi
+    [[ -r "$proc/cmdline" && -e "$proc/exe" ]] || continue
+    executable="$(readlink -f "$proc/exe" 2>/dev/null)" || continue
+    [[ "${executable##*/}" == java ]] || continue
+    process_args=()
+    mapfile -d '' -t process_args < "$proc/cmdline" 2>/dev/null || true
+    for ((index = 0; index + 2 < ${#process_args[@]}; index++)); do
+      if [[ "${process_args[index]}" == -jar \
+        && "${process_args[index + 1]}" == "$jar" \
+        && "${process_args[index + 2]}" == defaultServer ]]; then
+        printf '%s\n' "${proc##*/}"
+        break
+      fi
+    done
   done
 }
 
@@ -138,7 +142,13 @@ PY
     printf 'elapsed_ms\tpid\trss_kb\tcpu_ticks\n' > "$output"
     start_ns="$(date +%s%N)"
     while [[ ! -e "$stop_file" ]]; do
-      pid="$(find_server_pids "$server_dir" | head -1)"
+      mapfile -t pids < <(find_server_pids "$server_dir")
+      if (( ${#pids[@]} > 1 )); then
+        printf 'expected one Liberty JVM for %s, found %s\n' \
+          "$server_dir" "${#pids[@]}" >&2
+        exit 1
+      fi
+      pid="${pids[0]:-}"
       if [[ -n "$pid" && -r "/proc/$pid/status" && -r "/proc/$pid/stat" ]]; then
         printf '%s\n' "$pid" > "$server_pid_file"
         rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
