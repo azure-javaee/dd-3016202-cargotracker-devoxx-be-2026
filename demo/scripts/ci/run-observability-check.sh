@@ -31,6 +31,13 @@ record_command() {
   printf '%s\n' "$*" >> "$otel_out/commands.txt"
 }
 
+record_argv() {
+  printf '%q' "$1" >> "$otel_out/commands.txt"
+  shift
+  printf ' %q' "$@" >> "$otel_out/commands.txt"
+  printf '\n' >> "$otel_out/commands.txt"
+}
+
 stage_server_options() {
   if [[ -f "$server_dir/server.env" ]]; then
     cp -p "$server_dir/server.env" "$tmp/server.env"
@@ -186,17 +193,18 @@ if ! docker image inspect "$collector_image" > "$otel_out/collector-image.json" 
   exit 1
 fi
 chmod 0777 "$otel_out"
-record_command "docker run --detach --publish 127.0.0.1:4318:4318 --publish 127.0.0.1:13133:13133 --volume observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro --volume ci-artifacts/otel-telemetry:/otel-output:rw $collector_image"
-docker run --detach \
+collector_command=(docker run --detach \
   --name "$collector_name" \
   --publish 127.0.0.1:4318:4318 \
   --publish 127.0.0.1:13133:13133 \
   --volume "$root/observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro" \
   --volume "$otel_out:/otel-output:rw" \
   "$collector_image" \
-  --config=/etc/otelcol-contrib/config.yaml \
-  > "$otel_out/collector-container-id.txt" 2> "$otel_out/collector-launch.log"
+  --config=/etc/otelcol-contrib/config.yaml)
+record_argv "${collector_command[@]}"
 collector_started=true
+"${collector_command[@]}" \
+  > "$otel_out/collector-container-id.txt" 2> "$otel_out/collector-launch.log"
 if ! wait_for_collector > "$otel_out/collector-health.log" 2>&1; then
   cat "$otel_out/collector-health.log" >&2
   exit 1
@@ -210,20 +218,17 @@ fi
 stage_server_options
 printf '%s\n' "Collector healthy; starting the existing Open Liberty acceptance lifecycle." \
   > "$otel_out/status.txt"
-record_command "./scripts/ci/run-openliberty-acceptance.sh"
-record_command "./mvnw liberty:deploy (inside run-openliberty-acceptance.sh)"
-record_command "./mvnw -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start (inside run-openliberty-acceptance.sh)"
-record_command "GET http://localhost:8080/cargo-tracker/rest/cargo with fixed request ID and success traceparent"
-record_command "GET http://localhost:8080/cargo-tracker/rest/does-not-exist with fixed request ID and invalid traceparent"
-record_command "./mvnw liberty:stop (inside run-openliberty-acceptance.sh EXIT cleanup)"
+acceptance_command=(env \
+  "OBSERVABILITY_REQUEST_ID=$request_id" \
+  "OBSERVABILITY_SERVER_ENV=$tmp/instrumented-server.env" \
+  "OBSERVABILITY_TRACE_ID_SUCCESS=$trace_id_success" \
+  "OBSERVABILITY_TRACE_ID_INVALID=$trace_id_invalid" \
+  "OBSERVABILITY_TRANSCRIPT=$otel_out/request-transcript.jsonl" \
+  "LIBERTY_LOG_OUTPUT_DIR=$liberty_out" \
+  ./scripts/ci/run-openliberty-acceptance.sh)
+record_argv "${acceptance_command[@]}"
 acceptance_started=true
-if ! OBSERVABILITY_REQUEST_ID="$request_id" \
-OBSERVABILITY_SERVER_ENV="$tmp/instrumented-server.env" \
-OBSERVABILITY_TRACE_ID_SUCCESS="$trace_id_success" \
-OBSERVABILITY_TRACE_ID_INVALID="$trace_id_invalid" \
-OBSERVABILITY_TRANSCRIPT="$otel_out/request-transcript.jsonl" \
-LIBERTY_LOG_OUTPUT_DIR="$liberty_out" \
-./scripts/ci/run-openliberty-acceptance.sh; then
+if ! "${acceptance_command[@]}"; then
   if grep -Eiq 'java\.lang\.instrument|agent.*(failed|error)|error opening zip' \
     "$root/ci-artifacts/compatibility-contract/liberty-start.log" 2>/dev/null; then
     echo "incompatible instrumentation: Open Liberty rejected the pinned Java agent" >&2
