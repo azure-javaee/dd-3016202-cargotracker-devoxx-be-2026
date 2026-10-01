@@ -273,13 +273,6 @@
 				</dependencies>
 				<executions>
 					<execution>
-						<id>spotbugs-analysis</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>spotbugs</goal>
-						</goals>
-					</execution>
-					<execution>
 						<id>spotbugs-gate</id>
 						<phase>verify</phase>
 						<goals>

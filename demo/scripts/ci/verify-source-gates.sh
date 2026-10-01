@@ -89,7 +89,9 @@ if "./mvnw" '-P!openliberty' -DskipTests clean verify > "$evidence/analyzer-nega
   echo "analyzer fixture unexpectedly passed" >&2
   exit 1
 fi
-grep -E "AnalyzerFailureFixture|NP_ALWAYS_NULL|SpotBugs" "$evidence/analyzer-negative.log"
+grep -F "AnalyzerFailureFixture" "$evidence/analyzer-negative.log"
+grep -F "NP_ALWAYS_NULL" "$evidence/analyzer-negative.log"
+grep -E "(High|Medium|Low):.*NP_ALWAYS_NULL" "$evidence/analyzer-negative.log"
 rm -rf "$production_fixture"
 rm -rf "$root/target/classes/org/eclipse/cargotracker/analysis"
 
@@ -117,8 +119,11 @@ metadata = {
     "event": os.environ["GITHUB_EVENT_NAME"],
     "pr": os.environ.get("CI_PR_NUMBER", "not-applicable"),
     "runner": {"os": os.environ["RUNNER_OS"], "architecture": os.environ["RUNNER_ARCH"]},
-    "tools": {"java": os.popen("java -version 2>&1").read().splitlines()[0],
-              "maven": os.popen("./mvnw -version").read().splitlines()[0]},
+    "tools": {
+        "java": os.popen("java -version 2>&1").read().splitlines()[0],
+        "maven": os.popen("./mvnw -version").read().splitlines()[0],
+        "spotbugs": {"engine": "4.10.4", "mavenPlugin": "4.10.4.1"},
+    },
     "startedAt": sys.argv[2],
     "endedAt": sys.argv[3],
     "commands": [
