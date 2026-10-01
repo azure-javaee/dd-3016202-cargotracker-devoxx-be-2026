@@ -96,14 +96,22 @@ start_fixture() {
   local expected_count
   mapfile -t existing_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
   expected_count=$((${#existing_fixture_pids[@]} + 1))
-  if [[ "$mode" == direct ]]; then
-    "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
-      > "$scratch/$mode.log" 2>&1 &
-  else
-    python3 -c 'import ctypes, subprocess, sys; ctypes.CDLL(None).prctl(15, ctypes.c_char_p(b"jaz"), 0, 0, 0); raise SystemExit(subprocess.call(sys.argv[1:]))' \
+  case "$mode" in
+    direct)
       "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
-      > "$scratch/$mode.log" 2>&1 &
-  fi
+        > "$scratch/$mode.log" 2>&1 &
+      ;;
+    bypass)
+      PERF_JAZ_MODE=bypass launch_jaz_fixture "$mode" &
+      ;;
+    tuned)
+      PERF_JAZ_MODE=tuned launch_jaz_fixture "$mode" &
+      ;;
+    *)
+      echo "unsupported fixture mode: $mode" >&2
+      return 2
+      ;;
+  esac
   fixture_launcher_pid=$!
   fixture_java_pids=()
   for _ in $(seq 1 50); do
@@ -115,6 +123,14 @@ start_fixture() {
   done
   echo "failed to start one $mode-shaped Liberty JVM fixture" >&2
   return 1
+}
+
+launch_jaz_fixture() {
+  local mode="$1"
+  # Both jaz modes intentionally share the same jaz-to-Java ancestry.
+  python3 -c 'import ctypes, subprocess, sys; ctypes.CDLL(None).prctl(15, ctypes.c_char_p(b"jaz"), 0, 0, 0); raise SystemExit(subprocess.call(sys.argv[1:]))' \
+    "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
+    > "$scratch/$mode.log" 2>&1
 }
 
 stop_fixture() {
@@ -165,7 +181,6 @@ fixture_launcher_pid=""
 printf 'expected non-server Java helper ignored\n'
 
 start_fixture direct
-first_fixture_pid="${fixture_java_pids[0]}"
 start_fixture bypass
 mapfile -t fixture_java_pids < <("$helper" list-server-pids "$fixture_server_dir")
 if [[ "${#fixture_java_pids[@]}" -ne 2 ]]; then
@@ -189,6 +204,5 @@ if grep -Fq 'Broken pipe' "$scratch/sampler.err"; then
   echo "sampler emitted a broken-pipe error during duplicate discovery" >&2
   exit 1
 fi
-fixture_java_pids=("$first_fixture_pid" "${fixture_java_pids[@]}")
 printf 'expected duplicate Liberty JVMs rejected without SIGPIPE\n'
 stop_fixture
