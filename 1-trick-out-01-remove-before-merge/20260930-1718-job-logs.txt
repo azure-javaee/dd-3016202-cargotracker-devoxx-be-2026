@@ -1,0 +1,3 @@
+[shepherd-task] Logging create-issues run to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/prompts/shepherd-task-20-20260930-1717
+Session exported to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/prompts/shepherd-task-20-20260930-1717/create-issues-session-20260930-1717.md
+[shepherd-task] Create-issues session complete.
