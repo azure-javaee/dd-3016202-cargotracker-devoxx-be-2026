@@ -178,6 +178,75 @@ jobs:
         run: |
           ./scripts/ci/run-negative-controls.sh
           ./scripts/ci/run-safety-net-negative-controls.sh
+      - name: Verify performance launcher rejects user tuning
+        run: ./performance/run-negative-controls.sh
+      - name: Run bounded Java and jaz performance comparison
+        id: performance
+        timeout-minutes: 70
+        run: ./performance/run-workload.sh
+      - name: Verify performance artifact redaction
+        id: performance-redaction
+        if: always() && steps.performance.outcome != 'skipped'
+        run: |
+          ./scripts/ci/redact-artifacts.sh --check-only \
+            ci-artifacts/performance-java \
+            ci-artifacts/performance-jaz-bypassed \
+            ci-artifacts/performance-jaz-tuned \
+            ci-artifacts/performance-comparison \
+            > ci-artifacts/performance-comparison/redaction-check.txt 2>&1
+      - name: Write performance artifact metadata
+        id: performance-metadata
+        if: always() && steps.performance.outcome != 'skipped'
+        env:
+          CI_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: ./performance/collect-process-metadata.sh summarize write-artifact-metadata
+      - name: Upload direct Java performance evidence
+        id: upload-performance-java
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-java
+          path: demo/ci-artifacts/performance-java
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload bypassed jaz performance evidence
+        id: upload-performance-jaz-bypassed
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-jaz-bypassed
+          path: demo/ci-artifacts/performance-jaz-bypassed
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload tuned jaz performance evidence
+        id: upload-performance-jaz-tuned
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-jaz-tuned
+          path: demo/ci-artifacts/performance-jaz-tuned
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload performance comparison
+        id: upload-performance-comparison
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-comparison
+          path: demo/ci-artifacts/performance-comparison
+          retention-days: 90
+          if-no-files-found: error
+      - name: Record performance artifact evidence
+        if: always() && steps.performance-metadata.outcome == 'success'
+        run: |
+          {
+            echo "### JVM performance evidence"
+            echo "- Tested SHA: \`${GITHUB_SHA}\`"
+            echo "- performance-java: id \`${{ steps.upload-performance-java.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-performance-java.outputs.artifact-id }}, digest \`${{ steps.upload-performance-java.outputs.artifact-digest }}\`"
+            echo "- performance-jaz-bypassed: id \`${{ steps.upload-performance-jaz-bypassed.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-performance-jaz-bypassed.outputs.artifact-id }}, digest \`${{ steps.upload-performance-jaz-bypassed.outputs.artifact-digest }}\`"
+            echo "- performance-jaz-tuned: id \`${{ steps.upload-performance-jaz-tuned.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-performance-jaz-tuned.outputs.artifact-id }}, digest \`${{ steps.upload-performance-jaz-tuned.outputs.artifact-digest }}\`"
+            echo "- performance-comparison: id \`${{ steps.upload-performance-comparison.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-performance-comparison.outputs.artifact-id }}, digest \`${{ steps.upload-performance-comparison.outputs.artifact-digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
       - name: Capture evidence end
