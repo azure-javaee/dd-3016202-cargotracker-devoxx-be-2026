@@ -117,12 +117,13 @@ jobs:
             echo 'echo "CI_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
             echo "./mvnw '-P!openliberty' -DskipTests clean compile"
             echo "./scripts/ci/run-dependency-security-gate.sh"
-            echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test"
+            echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest,LayeringTest,BookingFacadeDtoTest clean test"
             echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
             echo 'PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"; mkdir -p "$(dirname "$PACKAGE_LOG")"; ./mvnw -Popenliberty -DskipTests clean package 2>&1 | tee "$PACKAGE_LOG"'
             echo "./scripts/ci/verify-compatibility-contract.sh"
             echo "./scripts/ci/run-openliberty-acceptance.sh"
             echo "./scripts/ci/run-negative-controls.sh"
+            echo "./scripts/ci/run-safety-net-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
             echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
             echo "./scripts/ci/write-build-metadata.sh --artifact-metadata"
@@ -137,10 +138,29 @@ jobs:
       - name: Run focused unit tests
         run: >
           ./mvnw '-P!openliberty'
-          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest
+          -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest,LayeringTest,BookingFacadeDtoTest
           clean test
+      - name: Write test inventory
+        run: ./scripts/ci/write-test-inventory.sh
+      - name: Preserve unit test reports
+        run: cp -R target/surefire-reports ci-artifacts/test-reports-unit/surefire-reports
+      - name: Assert unit test count
+        run: |
+          count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          skipped=$(grep -ho 'skipped="[0-9]*"' target/surefire-reports/TEST-*.xml | cut -d'"' -f2 | awk '{ total += $1 } END { print total + 0 }')
+          test "$count" -eq 27
+          test "$skipped" -eq 0
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
+      # clean intentionally removes the unit reports before the separate integration count.
+      - name: Assert Arquillian test count
+        run: |
+          count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          skipped=$(grep -ho 'skipped="[0-9]*"' target/surefire-reports/TEST-*.xml | cut -d'"' -f2 | awk '{ total += $1 } END { print total + 0 }')
+          test "$count" -eq 4
+          test "$skipped" -eq 0
+      - name: Preserve Liberty test reports
+        run: mkdir -p ci-artifacts/test-reports-liberty && cp -R target/surefire-reports ci-artifacts/test-reports-liberty/surefire-reports
       - name: Build canonical WAR
         run: |
           PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"
@@ -152,7 +172,9 @@ jobs:
         timeout-minutes: 5
         run: ./scripts/ci/run-openliberty-acceptance.sh
       - name: Run negative controls
-        run: ./scripts/ci/run-negative-controls.sh
+        run: |
+          ./scripts/ci/run-negative-controls.sh
+          ./scripts/ci/run-safety-net-negative-controls.sh
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
       - name: Capture evidence end
@@ -161,6 +183,31 @@ jobs:
         run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
       - name: Verify build contract
         run: ./scripts/ci/verify-build-contract.sh
+      - name: Upload unit test reports
+        id: upload-test-reports-unit
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-unit
+          path: demo/ci-artifacts/test-reports-unit
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload Liberty test reports
+        id: upload-test-reports-liberty
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-liberty
+          path: demo/ci-artifacts/test-reports-liberty
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload Liberty logs
+        id: upload-liberty-logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: liberty-logs
+          path: demo/ci-artifacts/liberty-logs
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload build contract
         id: upload-build-contract
         uses: actions/upload-artifact@v4
@@ -194,4 +241,7 @@ jobs:
             echo "- build-contract: id \`${{ steps.upload-build-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-build-contract.outputs.artifact-id }}, digest \`${{ steps.upload-build-contract.outputs.artifact-digest }}\`"
             echo "- dependency-reports: id \`${{ steps.upload-dependency-reports.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-dependency-reports.outputs.artifact-id }}, digest \`${{ steps.upload-dependency-reports.outputs.artifact-digest }}\`"
             echo "- compatibility-contract: id \`${{ steps.upload-compatibility-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-compatibility-contract.outputs.artifact-id }}, digest \`${{ steps.upload-compatibility-contract.outputs.artifact-digest }}\`"
+            echo "- test-reports-unit: id \`${{ steps.upload-test-reports-unit.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-unit.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-unit.outputs.artifact-digest }}\`"
+            echo "- test-reports-liberty: id \`${{ steps.upload-test-reports-liberty.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-liberty.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-liberty.outputs.artifact-digest }}\`"
+            echo "- liberty-logs: id \`${{ steps.upload-liberty-logs.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-liberty-logs.outputs.artifact-id }}, digest \`${{ steps.upload-liberty-logs.outputs.artifact-digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
