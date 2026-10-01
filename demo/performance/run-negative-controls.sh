@@ -289,6 +289,34 @@ printf '1\n' > "$changed_pid_file"
   > "$scratch/changed-pid.out" 2> "$scratch/changed-pid.err" &
 fixture_sampler_pid=$!
 fixture_sampler_stop="$scratch/changed-pid.stop"
+sampler_exited=false
+for ((attempt = 0; attempt < 50; attempt++)); do
+  sampler_state="$(ps -o stat= -p "$fixture_sampler_pid" 2>/dev/null || true)"
+  if [[ -z "$sampler_state" || "$sampler_state" == Z* ]]; then
+    sampler_exited=true
+    break
+  fi
+  sleep 0.1
+done
+if [[ "$sampler_exited" != true ]]; then
+  touch "$fixture_sampler_stop"
+  for ((attempt = 0; attempt < 20; attempt++)); do
+    sampler_state="$(ps -o stat= -p "$fixture_sampler_pid" 2>/dev/null || true)"
+    if [[ -z "$sampler_state" || "$sampler_state" == Z* ]]; then
+      sampler_exited=true
+      break
+    fi
+    sleep 0.1
+  done
+fi
+if [[ "$sampler_exited" != true ]]; then
+  kill "$fixture_sampler_pid" 2>/dev/null || true
+  wait "$fixture_sampler_pid" 2>/dev/null || true
+  fixture_sampler_pid=""
+  fixture_sampler_stop=""
+  echo "sampler did not reject the changed Liberty PID within five seconds" >&2
+  exit 1
+fi
 if wait "$fixture_sampler_pid"; then
   echo "sampler accepted a different post-readiness Liberty PID" >&2
   exit 1
