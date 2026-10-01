@@ -5,7 +5,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 scratch="$(mktemp -d "${RUNNER_TEMP:-/tmp}/cargo-tracker-performance-controls.XXXXXX")"
 helper="$root/performance/collect-process-metadata.sh"
 fixture_server_dir="$scratch/liberty/usr/servers/defaultServer"
-fixture_launcher_pid=""
+fixture_launcher_pids=()
 fixture_java_pids=()
 cleanup() {
   local pid
@@ -19,10 +19,10 @@ cleanup() {
   for pid in "${fixture_java_pids[@]}"; do
     kill "$pid" 2>/dev/null || true
   done
-  if [[ -n "$fixture_launcher_pid" ]]; then
-    kill "$fixture_launcher_pid" 2>/dev/null || true
-    wait "$fixture_launcher_pid" 2>/dev/null || true
-  fi
+  for pid in "${fixture_launcher_pids[@]}"; do
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  done
   rm -rf "$scratch"
 }
 trap cleanup EXIT
@@ -115,7 +115,7 @@ start_fixture() {
       return 2
       ;;
   esac
-  fixture_launcher_pid=$!
+  fixture_launcher_pids+=("$!")
   for _ in $(seq 1 50); do
     mapfile -t discovered_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
     if [[ "${#discovered_fixture_pids[@]}" -eq "$expected_count" ]]; then
@@ -131,6 +131,7 @@ start_fixture() {
 launch_jaz_fixture() {
   local mode="$1"
   # Both jaz modes intentionally share the same jaz-to-Java ancestry.
+  [[ "${PERF_JAZ_MODE:-}" == "$mode" ]] || return 1
   python3 -c 'import ctypes, subprocess, sys; ctypes.CDLL(None).prctl(15, ctypes.c_char_p(b"jaz"), 0, 0, 0); raise SystemExit(subprocess.call(sys.argv[1:]))' \
     "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
     > "$scratch/$mode.log" 2>&1
@@ -141,9 +142,11 @@ stop_fixture() {
   for pid in "${fixture_java_pids[@]}"; do
     kill "$pid" 2>/dev/null || true
   done
-  kill "$fixture_launcher_pid" 2>/dev/null || true
-  wait "$fixture_launcher_pid" 2>/dev/null || true
-  fixture_launcher_pid=""
+  for pid in "${fixture_launcher_pids[@]}"; do
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  done
+  fixture_launcher_pids=()
   fixture_java_pids=()
 }
 
@@ -173,15 +176,16 @@ done
 # These app args deliberately contain Liberty identifiers without its -jar launch form.
 "$JAVA_HOME/bin/java" -cp "$fixture_jar" PerformanceProcessFixture \
   "$fixture_jar" defaultServer > "$scratch/non-server-java.log" 2>&1 &
-fixture_launcher_pid=$!
+fixture_helper_pid=$!
+fixture_launcher_pids+=("$fixture_helper_pid")
 sleep 0.5
 if [[ -n "$("$helper" list-server-pids "$fixture_server_dir")" ]]; then
   echo "non-server Java helper was misidentified as the Liberty JVM" >&2
   exit 1
 fi
-kill "$fixture_launcher_pid" 2>/dev/null || true
-wait "$fixture_launcher_pid" 2>/dev/null || true
-fixture_launcher_pid=""
+kill "$fixture_helper_pid" 2>/dev/null || true
+wait "$fixture_helper_pid" 2>/dev/null || true
+fixture_launcher_pids=()
 printf 'expected non-server Java helper ignored\n'
 
 start_fixture direct
