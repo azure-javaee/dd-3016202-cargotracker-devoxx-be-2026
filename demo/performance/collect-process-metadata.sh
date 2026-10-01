@@ -30,7 +30,7 @@ find_server_pids() {
 
 sample_selected_pid() {
   local server_dir="$1" output="$2" server_pid_file="$3" start_ns="$4"
-  local pid rss_kb stat cpu_ticks elapsed_ms
+  local pid rss_kb stat utime stime cpu_ticks elapsed_ms
   local -a pids stat_fields
   pid="$(cat "$server_pid_file")"
   if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
@@ -55,8 +55,10 @@ sample_selected_pid() {
   rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
   stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
   read -r -a stat_fields <<< "$stat"
-  # After stripping "pid (comm) ", zero-based indexes 11 and 12 are utime/stime.
-  cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
+  # After stripping "pid (comm) ", index 0 is state; raw fields 14/15 are utime/stime.
+  utime="${stat_fields[11]}"
+  stime="${stat_fields[12]}"
+  cpu_ticks="$((utime + stime))"
   elapsed_ms="$((( $(date +%s%N) - start_ns) / 1000000))"
   printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
 }

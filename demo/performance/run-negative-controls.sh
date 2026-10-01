@@ -323,7 +323,15 @@ if [[ "$(wc -l < "$sampler_output")" -le 1 ]] \
   exit 1
 fi
 touch "$sampler_stop"
-wait "$fixture_sampler_pid"
+if wait "$fixture_sampler_pid"; then
+  sampler_status=0
+else
+  sampler_status=$?
+  cat "$scratch/transition.err" >&2
+  printf 'startup-transition sampler exited unexpectedly with status %s\n' \
+    "$sampler_status" >&2
+  exit 1
+fi
 fixture_sampler_pid=""
 fixture_sampler_stop=""
 changed_pid_file="$scratch/changed-pid.txt"
