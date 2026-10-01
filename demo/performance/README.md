@@ -60,7 +60,8 @@ and CPU samples; heap before and after measured work; server-PID-specific GC
 logs; JFR and its parsed summary; effective JVM command and flags; process
 ancestry; start/stop logs; exit status; and cleanup outcome. The JFR profile
 disables JVM information, initial system properties, OS information, initial
-environment variables, and system-process events. Task 2.6 OpenTelemetry and
+environment variables, and system-process events. Every completed recording
+must report zero events of those five types before artifact upload. Task 2.6 OpenTelemetry and
 Liberty artifacts from the same workflow job/runner are retained as
 diagnostic context, not misrepresented as measurements from these individual
 processes.

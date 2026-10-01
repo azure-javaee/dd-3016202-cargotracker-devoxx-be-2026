@@ -145,7 +145,16 @@ events = {
 found = set()
 for event in tree.iter("event"):
     if event.get("name") in events:
-        event.set("enabled", "false")
+        enabled = [
+            setting for setting in event.findall("setting")
+            if setting.get("name") == "enabled"
+        ]
+        if len(enabled) != 1:
+            raise SystemExit(
+                f"JFR event {event.get('name')} has {len(enabled)} enabled settings"
+            )
+        enabled[0].attrib.pop("control", None)
+        enabled[0].text = "false"
         found.add(event.get("name"))
 missing = sorted(events - found)
 if missing:
@@ -176,6 +185,48 @@ PY
         "$expected_option" >&2
       exit 1
     fi
+    ;;
+  verify-jfr-redaction)
+    recording="${1:?JFR recording required}"
+    output="${2:?JFR redaction result required}"
+    python3 - "$JAVA_HOME/bin/jfr" "$recording" "$output" <<'PY'
+import collections
+import json
+import pathlib
+import subprocess
+import sys
+
+jfr, recording, output = sys.argv[1:]
+events = (
+    "jdk.JVMInformation",
+    "jdk.InitialSystemProperty",
+    "jdk.OSInformation",
+    "jdk.InitialEnvironmentVariable",
+    "jdk.SystemProcess",
+)
+result = subprocess.run(
+    [jfr, "print", "--json", "--events", ",".join(events), recording],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+payload = json.loads(result.stdout)
+counts = collections.Counter(
+    event.get("type") for event in payload["recording"]["events"]
+)
+present = {event: counts[event] for event in events if counts[event]}
+if present:
+    raise SystemExit(
+        "JFR recording contains redacted event types: "
+        + ", ".join(f"{event}={count}" for event, count in present.items())
+    )
+path = pathlib.Path(output)
+path.write_text(
+    "event\tcount\n"
+    + "".join(f"{event}\t0\n" for event in events),
+    encoding="utf-8",
+)
+PY
     ;;
   sample-server)
     server_dir="${1:?server directory required}"
@@ -612,7 +663,7 @@ else:
 PY
     ;;
   *)
-    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|sample-server|ancestry|summarize}" >&2
+    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|verify-jfr-redaction|sample-server|ancestry|summarize}" >&2
     exit 2
     ;;
 esac

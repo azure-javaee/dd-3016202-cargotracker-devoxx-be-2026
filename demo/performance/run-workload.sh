@@ -506,12 +506,18 @@ PY
     exit 1
   fi
   grep -q '^ Event Type' "$output/jfr-summary.txt"
+  if ! "$helper" verify-jfr-redaction "$output/recording.jfr" \
+    "$output/jfr-redaction-counts.tsv"; then
+    echo "JFR recording contains sensitive event types" >&2
+    exit 1
+  fi
   gc_log="$output/gc-$server_pid.log"
   if [[ ! -s "$gc_log" ]] || ! grep -Eq '\[info\]\[gc' "$gc_log"; then
     echo "server-PID-specific GC log is missing or unparseable" >&2
     exit 1
   fi
   record_command "$JAVA_HOME/bin/jfr summary $output/recording.jfr"
+  record_command "verify zero sensitive JFR events in $output/recording.jfr"
   exit 0
 fi
 

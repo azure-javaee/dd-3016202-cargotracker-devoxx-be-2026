@@ -146,6 +146,36 @@ JAVA
 fixture_jar="$scratch/liberty/bin/tools/ws-server.jar"
 gc_option="-Xlog:gc*,safepoint:file=$scratch/gc-%p.log:time,uptime,level,tags"
 
+"$helper" jfr-profile "$JAVA_HOME/lib/jfr/profile.jfc" "$scratch/redacted-profile.jfc"
+python3 - "$scratch/redacted-profile.jfc" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+
+events = {
+    "jdk.JVMInformation",
+    "jdk.InitialSystemProperty",
+    "jdk.OSInformation",
+    "jdk.InitialEnvironmentVariable",
+    "jdk.SystemProcess",
+}
+tree = ET.parse(sys.argv[1])
+found = set()
+for event in tree.iter("event"):
+    name = event.get("name")
+    if name not in events:
+        continue
+    enabled = [
+        setting for setting in event.findall("setting")
+        if setting.get("name") == "enabled"
+    ]
+    if len(enabled) != 1 or enabled[0].text != "false" or "control" in enabled[0].attrib:
+        raise SystemExit(f"sensitive JFR event is not unconditionally disabled: {name}")
+    found.add(name)
+if found != events:
+    raise SystemExit("redacted JFR profile is missing sensitive event definitions")
+PY
+printf 'expected sensitive JFR event settings disabled in generated profile\n'
+
 "$JAVA_HOME/bin/java" "$gc_option" -cp "$fixture_jar" PerformanceProcessFixture \
   > "$scratch/gc-option.log" 2>&1 &
 fixture_gc_pid=$!
