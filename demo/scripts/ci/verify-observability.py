@@ -181,9 +181,9 @@ def verify_trace(
         try:
             status = int(status)
         except (TypeError, ValueError):
-            fail(f"invalid request lacks diagnostic signal: {kind} span has no HTTP status")
+            fail(f"{kind} request lacks diagnostic signal: span has no HTTP status")
         if status != request["status"]:
-            fail(f"invalid request lacks diagnostic signal: {kind} span status was {status}")
+            fail(f"{kind} request lacks diagnostic signal: span status was {status}")
         start = span.get("startTimeUnixNano")
         end = span.get("endTimeUnixNano")
         if not span.get("name") or not start or not end:
