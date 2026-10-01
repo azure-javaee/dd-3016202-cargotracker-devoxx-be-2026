@@ -147,14 +147,18 @@ jobs:
       - name: Assert unit test count
         run: |
           count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          skipped=$(grep -ho 'skipped="[0-9]*"' target/surefire-reports/TEST-*.xml | cut -d'"' -f2 | awk '{ total += $1 } END { print total + 0 }')
           test "$count" -eq 27
+          test "$skipped" -eq 0
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
       # clean intentionally removes the unit reports before the separate integration count.
       - name: Assert Arquillian test count
         run: |
           count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
+          skipped=$(grep -ho 'skipped="[0-9]*"' target/surefire-reports/TEST-*.xml | cut -d'"' -f2 | awk '{ total += $1 } END { print total + 0 }')
           test "$count" -eq 4
+          test "$skipped" -eq 0
       - name: Preserve Liberty test reports
         run: mkdir -p ci-artifacts/test-reports-liberty && cp -R target/surefire-reports ci-artifacts/test-reports-liberty/surefire-reports
       - name: Build canonical WAR
@@ -197,6 +201,7 @@ jobs:
           if-no-files-found: error
       - name: Upload Liberty logs
         id: upload-liberty-logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: liberty-logs

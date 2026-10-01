@@ -27,11 +27,16 @@ test -s "$tmp/BookingServiceTest.java"
 test -s "$tmp/web.java"
 http_server_pid=
 readiness_server_pid=
+server_is_running() {
+  local log="$1"
+  ./mvnw liberty:status >"$log" 2>&1 || true
+  grep -Fq 'Server defaultServer is running' "$log"
+}
 cleanup() {
   local status=$?
   [[ -z "$http_server_pid" ]] || kill "$http_server_pid" 2>/dev/null || true
   [[ -z "$readiness_server_pid" ]] || kill "$readiness_server_pid" 2>/dev/null || true
-  if pgrep -f '[w]lp/bin/server run defaultServer' >/dev/null 2>&1; then
+  if server_is_running "$tmp/cleanup-liberty-status.log"; then
     ./mvnw liberty:stop >/dev/null 2>&1 || true
   fi
   cp "$tmp/RouteSpecificationTest.java" "$route_test"
@@ -63,7 +68,7 @@ expect_failure() {
     return 1
   fi
   echo "$name: expected failure" | tee -a "$report"
-  sed -n "1,${log_excerpt_lines}p" "$log" >> "$report"
+  tail -n "$log_excerpt_lines" "$log" >> "$report"
 }
 expect_failure_with_diagnostic() {
   local name="$1" pattern="$2"; shift 2
@@ -145,9 +150,10 @@ if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/
   echo "forced-acceptance-cleanup: UNEXPECTED PASS" | tee -a "$report"
   exit 1
 fi
-if pgrep -f '[w]lp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; then
+./mvnw liberty:status >"$tmp/liberty-status.log" 2>&1 || true
+if ! grep -Fq 'Server defaultServer is not running' "$tmp/liberty-status.log"; then
   echo "forced-acceptance-cleanup: Liberty still running" | tee -a "$report"
-  cat "$tmp/processes" >> "$report"
+  cat "$tmp/liberty-status.log" >> "$report"
   exit 1
 fi
 echo "forced-acceptance-cleanup: expected failure and Liberty stopped" | tee -a "$report"
