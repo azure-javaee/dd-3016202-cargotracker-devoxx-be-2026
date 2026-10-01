@@ -17,11 +17,10 @@ collect_logs() {
   done
   if [[ -d "$server_dir/logs/ffdc" ]]; then
     local ffdc_index=0
-    find "$server_dir/logs/ffdc" -maxdepth 1 -type f -print0 |
-      sort -z | while IFS= read -r -d '' file; do
-        ffdc_index=$((ffdc_index + 1))
-        tail -n 200 "$file" > "$liberty_out/ffdc-${ffdc_index}-$(basename "$file")"
-      done
+    while IFS= read -r -d '' file; do
+      ffdc_index=$((ffdc_index + 1))
+      tail -n 200 "$file" > "$liberty_out/ffdc-${ffdc_index}-$(basename "$file")"
+    done < <(find "$server_dir/logs/ffdc" -maxdepth 1 -type f -print0 | sort -z)
   fi
   if [[ -f "$liberty_out/messages.log" ]]; then
     if [[ -s "$liberty_out/messages.log" ]]; then

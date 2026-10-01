@@ -20,6 +20,9 @@ test -n "$web_source"
 cp "$route_test" "$tmp/RouteSpecificationTest.java"
 cp "$service_test" "$tmp/BookingServiceTest.java"
 cp "$web_source" "$tmp/web.java"
+test -s "$tmp/RouteSpecificationTest.java"
+test -s "$tmp/BookingServiceTest.java"
+test -s "$tmp/web.java"
 cleanup() {
   cp "$tmp/RouteSpecificationTest.java" "$route_test"
   cp "$tmp/BookingServiceTest.java" "$service_test"
@@ -48,13 +51,13 @@ expect_failure() {
 }
 
 sed -i '0,/assertTrue(routeSpecification.isSatisfiedBy(itinerary))/s//assertFalse(routeSpecification.isSatisfiedBy(itinerary))/' "$route_test"
-expect_failure domain-invariant-regression ./mvnw '-P!openliberty' -Dtest=RouteSpecificationTest test
+expect_failure domain-invariant-regression timeout 120s ./mvnw '-P!openliberty' -Dtest=RouteSpecificationTest test
 
 sed -i '0,/assertEquals(RoutingStatus.ROUTED/s//assertEquals(RoutingStatus.MISROUTED/' "$service_test"
 expect_failure application-service-regression timeout 120s ./mvnw -Popenliberty -Dtest=BookingServiceTest test
 
 printf '\nimport org.eclipse.cargotracker.domain.model.cargo.Cargo;\n' >> "$web_source"
-expect_failure package-layer-violation ./mvnw '-P!openliberty' -Dtest=LayeringTest test
+expect_failure package-layer-violation timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
 
 expect_failure liberty-startup-failure ./target/liberty/wlp/bin/server start no-such-server
 expect_failure http-non-200-or-missing-content curl --fail --silent --show-error --max-time 5 http://127.0.0.1:1/missing
