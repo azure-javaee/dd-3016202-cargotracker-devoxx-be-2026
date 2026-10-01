@@ -1,6 +1,0 @@
-
- Index  Count  Time of first Occurrence    Time of last Occurrence     Exception SourceId ProbeId
-------+------+---------------------------+---------------------------+---------------------------
-     0      1    10/1/26, 6:32:23:813 UTC    10/1/26, 6:32:23:813 UTC java.lang.IllegalArgumentException com.ibm.ws.security.token.ltpa.internal.LTPAConfigurationImpl 151
-                                                                            - /home/runner/work/dd-3016202-cargotracker-devoxx-be-2026/dd-3016202-cargotracker-devoxx-be-2026/demo/target/liberty/wlp/usr/servers/defaultServer/logs/ffdc/ffdc_26.10.01_06.32.23.0.log
-------+------+---------------------------+---------------------------+---------------------------

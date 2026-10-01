@@ -1,2 +1,0 @@
-{"timestamp":"2026-10-01T06:35:56Z","kind":"success","request_id":"cargo-tracker-ci-observability","method":"GET","path":"/cargo-tracker/rest/cargo","status":200,"trace_id":"11111111111111111111111111111111","parent_span_id":"aaaaaaaaaaaaaaaa","server_span_id":"c6e071a2c811452e"}
-{"timestamp":"2026-10-01T06:35:56Z","kind":"invalid","request_id":"cargo-tracker-ci-observability","method":"GET","path":"/cargo-tracker/rest/does-not-exist","status":404,"trace_id":"22222222222222222222222222222222","parent_span_id":"bbbbbbbbbbbbbbbb","server_span_id":"91bc78253ddfa0ac"}

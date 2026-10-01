@@ -20,6 +20,20 @@ REQUESTS = {
         "status": 404,
     },
 }
+FORBIDDEN_ATTRIBUTES = {
+    "url.query",
+    "url.full",
+    "http.url",
+    "http.target",
+    "db.statement",
+    "db.connection_string",
+    "db.user",
+    "http.request.body",
+    "http.response.body",
+    "http.request.header.authorization",
+    "http.request.header.cookie",
+    "http.response.header.set_cookie",
+}
 
 
 def fail(message: str) -> None:
@@ -58,6 +72,31 @@ def attributes(data: dict) -> dict:
     return {entry.get("key", ""): value(entry) for entry in data.get("attributes", [])}
 
 
+def verify_redaction(path: pathlib.Path, documents: list[dict]) -> None:
+    if b"ABC123" in path.read_bytes():
+        fail("artifact redaction failed: telemetry contains a seeded cargo identifier")
+
+    def walk(value):
+        if isinstance(value, dict):
+            attribute_key = value.get("key")
+            if isinstance(attribute_key, str) and attribute_key.lower() in FORBIDDEN_ATTRIBUTES:
+                fail(
+                    "artifact redaction failed: telemetry contains forbidden field "
+                    f"{attribute_key}"
+                )
+            for key, child in value.items():
+                if key.lower() in FORBIDDEN_ATTRIBUTES:
+                    fail(f"artifact redaction failed: telemetry contains forbidden field {key}")
+                yield from walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from walk(child)
+
+    for document in documents:
+        for _ in walk(document):
+            pass
+
+
 def resource_spans(document: dict) -> Iterator[tuple[str, str, dict]]:
     for resource_group in document.get("resourceSpans", []):
         resource = attributes(resource_group.get("resource", {}))
@@ -91,24 +130,7 @@ def verify_trace(
     transcript_path: pathlib.Path | None = None,
 ) -> set[str]:
     trace_records = records(path, "trace export")
-    raw_traces = path.read_bytes()
-    forbidden_trace_values = (
-        b"ABC123",
-        b'"url.query"',
-        b'"url.full"',
-        b'"http.url"',
-        b'"http.target"',
-        b'"db.statement"',
-        b'"db.connection_string"',
-        b'"db.user"',
-        b'"http.request.body"',
-        b'"http.response.body"',
-        b'"http.request.header.authorization"',
-        b'"http.request.header.cookie"',
-        b'"http.response.header.set_cookie"',
-    )
-    if any(value in raw_traces for value in forbidden_trace_values):
-        fail("artifact redaction failed: telemetry contains cargo, query, body, or credential data")
+    verify_redaction(path, trace_records)
     spans = [
         (service, instance, span, attributes(span))
         for document in trace_records
@@ -203,6 +225,7 @@ def verify_trace(
 
 def verify_metrics(path: pathlib.Path, server_instances: set[str]) -> None:
     documents = records(path, "runtime metrics export")
+    verify_redaction(path, documents)
     for document in documents:
         for resource_group in document.get("resourceMetrics", []):
             resource = attributes(resource_group.get("resource", {}))
@@ -268,6 +291,50 @@ def self_test() -> None:
             "artifact redaction",
             "artifact redaction failed",
             lambda: verify_trace(unsafe_traces, [], root / "missing-access.log"),
+        )
+        unsafe_exemplars = root / "unsafe-exemplars.json"
+        unsafe_exemplars.write_text(
+            json.dumps(
+                {
+                    "resourceMetrics": [
+                        {
+                            "scopeMetrics": [
+                                {
+                                    "metrics": [
+                                        {
+                                            "name": "jvm.memory.used",
+                                            "histogram": {
+                                                "dataPoints": [
+                                                    {
+                                                        "exemplars": [
+                                                            {
+                                                                "filteredAttributes": [
+                                                                    {
+                                                                        "key": "url.query",
+                                                                        "value": {
+                                                                            "stringValue": "trackingId=<REDACTED>"
+                                                                        },
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            )
+            + "\n"
+        )
+        expect_error(
+            "unsafe exemplar redaction",
+            "artifact redaction failed",
+            lambda: verify_metrics(unsafe_exemplars, set()),
         )
         trace_document = {"resourceSpans": []}
         transcript = []

@@ -1,8 +1,0 @@
-[01/Oct/2026:06:21:04 +0000] "GET /cargo-tracker/rest/cargo HTTP/1.1" 200 cargo-tracker-ci-observability 00-11111111111111111111111111111111-aaaaaaaaaaaaaaaa-01
-[01/Oct/2026:06:21:04 +0000] "GET /cargo-tracker/rest/does-not-exist HTTP/1.1" 404 cargo-tracker-ci-observability 00-22222222222222222222222222222222-bbbbbbbbbbbbbbbb-01
-[01/Oct/2026:06:26:13 +0000] "GET /cargo-tracker/rest/cargo HTTP/1.1" 200 cargo-tracker-ci-observability 00-11111111111111111111111111111111-aaaaaaaaaaaaaaaa-01
-[01/Oct/2026:06:26:13 +0000] "GET /cargo-tracker/rest/does-not-exist HTTP/1.1" 404 cargo-tracker-ci-observability 00-22222222222222222222222222222222-bbbbbbbbbbbbbbbb-01
-[01/Oct/2026:06:33:01 +0000] "GET /cargo-tracker/rest/cargo HTTP/1.1" 200 cargo-tracker-ci-observability 00-11111111111111111111111111111111-aaaaaaaaaaaaaaaa-01
-[01/Oct/2026:06:33:01 +0000] "GET /cargo-tracker/rest/does-not-exist HTTP/1.1" 404 cargo-tracker-ci-observability 00-22222222222222222222222222222222-bbbbbbbbbbbbbbbb-01
-[01/Oct/2026:06:35:56 +0000] "GET /cargo-tracker/rest/cargo HTTP/1.1" 200 cargo-tracker-ci-observability 00-11111111111111111111111111111111-aaaaaaaaaaaaaaaa-01
-[01/Oct/2026:06:35:56 +0000] "GET /cargo-tracker/rest/does-not-exist HTTP/1.1" 404 cargo-tracker-ci-observability 00-22222222222222222222222222222222-bbbbbbbbbbbbbbbb-01

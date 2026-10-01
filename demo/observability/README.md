@@ -31,6 +31,9 @@ request transcript, bounded collector output, and a redaction result. Liberty
 `messages.log` and `console.log` remain in the separate `liberty-logs`
 artifact. The filtered access log contains only the two fixed-ID acceptance
 requests; request/response bodies and environment dumps are not captured by
-the observability harness. The Collector also removes URL queries, database
-statements/credentials, body fields, and authorization/cookie attributes before
-writing traces.
+the observability harness. The Collector removes URL queries, database
+statements/credentials, body fields, and authorization/cookie attributes from
+resource, scope, span/event, datapoint, and exemplar attributes. The verifier
+and final artifact gate reject forbidden fields and the seeded cargo identifier
+across trace, metric, and complete uploaded-artifact files; a failed final scan
+prevents telemetry and Liberty artifact uploads.

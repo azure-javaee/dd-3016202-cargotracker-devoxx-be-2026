@@ -188,6 +188,10 @@ jobs:
         id: observability-metadata
         if: always()
         run: python3 ./scripts/ci/write-observability-metadata.py
+      - name: Verify final observability artifact redaction
+        id: final-artifact-redaction
+        if: always() && steps.observability-metadata.outcome == 'success'
+        run: ./scripts/ci/redact-artifacts.sh --check-only ci-artifacts/otel-telemetry ci-artifacts/liberty-logs
       - name: Verify build contract
         run: ./scripts/ci/verify-build-contract.sh
       - name: Upload unit test reports
@@ -208,7 +212,7 @@ jobs:
           if-no-files-found: error
       - name: Upload Liberty logs
         id: upload-liberty-logs
-        if: always() && steps.observability-metadata.outcome == 'success'
+        if: always() && steps.observability-metadata.outcome == 'success' && steps.final-artifact-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: liberty-logs
@@ -217,7 +221,7 @@ jobs:
           if-no-files-found: error
       - name: Upload OpenTelemetry telemetry
         id: upload-otel-telemetry
-        if: always() && steps.observability-metadata.outcome == 'success'
+        if: always() && steps.observability-metadata.outcome == 'success' && steps.final-artifact-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: otel-telemetry

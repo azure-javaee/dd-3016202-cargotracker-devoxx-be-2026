@@ -48,6 +48,71 @@ echo "collector-cleanup: Collector stopped and removed; Liberty lifecycle was no
 
 python3 scripts/ci/verify-observability.py --self-test >> "$out"
 
+mkdir -p "$tmp/unsafe-telemetry"
+python3 - "$tmp/unsafe-telemetry/metrics.json" <<'PY'
+import json
+import sys
+
+document = {
+    "resourceMetrics": [
+        {
+            "scopeMetrics": [
+                {
+                    "metrics": [
+                        {
+                            "histogram": {
+                                "dataPoints": [
+                                    {
+                                        "exemplars": [
+                                            {
+                                                "filteredAttributes": [
+                                                    {
+                                                        "key": "url.query",
+                                                        "value": {
+                                                            "stringValue": "trackingId=<REDACTED>"
+                                                        },
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+with open(sys.argv[1], "w") as output:
+    json.dump(document, output)
+    output.write("\n")
+PY
+if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/unsafe-telemetry" \
+  > "$tmp/unsafe-telemetry-check.log" 2>&1; then
+  echo "unsafe-exemplar: final artifact redaction unexpectedly passed" >> "$out"
+  exit 1
+fi
+if ! grep -Fq "artifact redaction failed" "$tmp/unsafe-telemetry-check.log"; then
+  echo "unsafe-exemplar: final artifact scanner missed the injected query/cargo identifier" >> "$out"
+  cat "$tmp/unsafe-telemetry-check.log" >&2
+  exit 1
+fi
+echo "unsafe-exemplar: query attribute rejected by final artifact scan" >> "$out"
+printf '%s\n' '{"cargoTrackingId":"ABC123"}' > "$tmp/unsafe-telemetry/metrics.json"
+if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/unsafe-telemetry" \
+  > "$tmp/unsafe-cargo-check.log" 2>&1; then
+  echo "unsafe-cargo-id: final artifact redaction unexpectedly passed" >> "$out"
+  exit 1
+fi
+if ! grep -Fq "seeded cargo identifier" "$tmp/unsafe-cargo-check.log"; then
+  echo "unsafe-cargo-id: final artifact scanner missed the seeded tracking ID" >> "$out"
+  cat "$tmp/unsafe-cargo-check.log" >&2
+  exit 1
+fi
+echo "unsafe-cargo-id: seeded tracking ID rejected by final artifact scan" >> "$out"
+
 mkdir -p "$tmp/secret-fixture"
 printf '%s\n' 'api_key=fixture-secret-never-retained' > "$tmp/secret-fixture/synthetic.txt"
 if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/secret-fixture" \
@@ -74,6 +139,8 @@ for diagnostic in \
   "missing telemetry" \
   "broken correlation" \
   "invalid request lacks diagnostic signal" \
+  "unsafe-exemplar" \
+  "unsafe-cargo-id" \
   "secret-like artifact content"; do
   if ! grep -Fq "$diagnostic" "$out"; then
     echo "missing observability negative-control evidence: $diagnostic" >&2

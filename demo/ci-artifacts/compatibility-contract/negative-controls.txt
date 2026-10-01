@@ -1,7 +1,0 @@
-jakarta-import: rejected with forbidden production Jakarta import
-jakarta-dependency: rejected with forbidden direct dependency
-release: rejected with compiler release must be 17
-jar: rejected with packaging must be war
-renamed-war: rejected with WAR final name must be cargo-tracker
-spring: rejected with forbidden direct dependency
-feature: rejected with javaee-7.0
