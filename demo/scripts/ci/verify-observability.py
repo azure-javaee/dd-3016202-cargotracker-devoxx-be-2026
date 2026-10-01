@@ -311,7 +311,7 @@ def self_test() -> None:
                                                                     {
                                                                         "key": "url.query",
                                                                         "value": {
-                                                                            "stringValue": "trackingId=<REDACTED>"
+                                                                            "stringValue": "trackingId=ABC123"
                                                                         },
                                                                     }
                                                                 ]
