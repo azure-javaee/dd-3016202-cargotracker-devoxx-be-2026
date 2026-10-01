@@ -55,7 +55,7 @@ sample_selected_pid() {
   rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
   stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
   read -r -a stat_fields <<< "$stat"
-  # After stripping "pid (comm) ", index 0 is state; raw fields 14/15 are utime/stime.
+  # After stripping "pid (comm) ", index 0 is field 3; indexes 11/12 are fields 14/15.
   utime="${stat_fields[11]}"
   stime="${stat_fields[12]}"
   cpu_ticks="$((utime + stime))"
