@@ -35,6 +35,15 @@ applyTo:
 
 ## Maven execution
 
+Before invoking Java or Maven locally, configure Java 17 in the same shell:
+
+```sh
+export JAVA_HOME="/usr/lib/jvm/msopenjdk-17-amd64/"
+export ANT_HOME="/usr/share/ant"
+export M2_HOME="/usr/share/maven"
+export PATH="${M2_HOME}/bin:${ANT_HOME}/bin:${JAVA_HOME}/bin:${PATH}"
+```
+
 Whenever invoking `mvn` or `./mvnw`, pipe both streams through `tee` to a
 `YYYYMMDD-HHMM-job-logs.txt` file, inspect that exact file, and do not use
 background `&` plus `tail -f` or guessed log names. In CI, preserve the same

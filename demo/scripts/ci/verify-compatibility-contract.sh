@@ -67,7 +67,7 @@ for dependency in pom.findall("m:dependencies/m:dependency", ns):
         f"compatibility boundary: forbidden direct dependency {coordinate}"
 for path in (root / "src/main").rglob("*.java"):
     for number, line in enumerate(path.read_text().splitlines(), 1):
-        if re.match(r"\s*import\s+jakarta\.", line):
+        if re.match(r"\s*import\s+(?:static\s+)?jakarta\.", line):
             raise AssertionError(
                 f"compatibility boundary: forbidden production Jakarta import "
                 f"{path.relative_to(root)}:{number}")
@@ -153,7 +153,9 @@ if expression == "feature":
     server.write_text(server.read_text().replace("<feature>javaee-7.0</feature>", "<feature>jakartaee-10.0</feature>"))
 if expression == "jakarta-import":
     (root / "src/main/java/example/BadImport.java").write_text(
-        "package example;\nimport jakarta.ws.rs.GET;\nclass BadImport {}\n")
+        "package example;\n"
+        "import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;\n"
+        "class BadImport {}\n")
 PY
   if "$0" --check-only --root "$tmp" > "$tmp/$name.log" 2>&1 ||
      ! grep -q "$diagnostic" "$tmp/$name.log"; then

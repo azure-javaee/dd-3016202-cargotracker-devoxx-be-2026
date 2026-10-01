@@ -21,6 +21,7 @@ test -s ci-artifacts/compatibility-contract/negative-controls.txt
 test -s ci-artifacts/compatibility-contract/liberty-deploy.log
 test -s ci-artifacts/compatibility-contract/liberty-start.log
 test -s ci-artifacts/compatibility-contract/liberty-stop.log
+test -s ci-artifacts/compatibility-contract/liberty-messages-excerpt.txt
 test -s ci-artifacts/compatibility-contract/readiness.json
 test -s ci-artifacts/compatibility-contract/artifact-metadata.json
 python3 - "$root" <<'PY'

@@ -6,6 +6,11 @@ cd "$root"
 out="$root/ci-artifacts/compatibility-contract"
 mkdir -p "$out"
 server_stopped=false
+collect_logs() {
+  find target/liberty/wlp/usr/servers -name messages.log -type f -print -exec tail -n 80 {} \; \
+    > "$out/liberty-messages-excerpt.txt"
+  test -s "$out/liberty-messages-excerpt.txt"
+}
 stop_server() {
   if [[ "$server_stopped" == false ]]; then
     ./mvnw liberty:stop 2>&1 | tee "$out/liberty-stop.log"
@@ -14,6 +19,12 @@ stop_server() {
 }
 cleanup() {
   local status=$?
+  if [[ "$status" -ne 0 ]]; then
+    collect_logs || true
+    if [[ -s "$out/liberty-messages-excerpt.txt" ]]; then
+      cat "$out/liberty-messages-excerpt.txt" >&2
+    fi
+  fi
   if [[ "$server_stopped" == false ]]; then
     stop_server || true
   fi
@@ -28,6 +39,7 @@ trap cleanup EXIT
 ready=false
 for _ in $(seq 1 60); do
   if curl --fail --silent --show-error \
+    --connect-timeout 5 --max-time 10 \
     -H 'Accept: application/json' \
     http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"; then
     if grep -q '"trackingId":"ABC123"' "$out/readiness.json"; then
@@ -42,9 +54,9 @@ if [[ "$ready" != true ]]; then
   exit 1
 fi
 curl --fail --silent --show-error --dump-header "$out/readiness.headers" \
+  --connect-timeout 5 --max-time 10 \
   -H 'Accept: application/json' \
   http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"
 grep -qi '^content-type: application/json' "$out/readiness.headers"
-find target/liberty/wlp/usr/servers -name messages.log -type f -print -exec tail -n 80 {} \; \
-  > "$out/liberty-messages-excerpt.txt"
+collect_logs
 stop_server
