@@ -1,0 +1,1 @@
+Acceptance lifecycle completed; telemetry export captured.

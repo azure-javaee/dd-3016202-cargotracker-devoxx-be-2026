@@ -1,0 +1,9 @@
+compiler release: 17
+Java EE API: javax:javaee-api:7.0 (provided)
+packaging: war; final name: cargo-tracker
+Open Liberty feature: javaee-7.0
+deployment: cargo-tracker.war at /cargo-tracker
+production source scan: no jakarta.* imports
+openjdk version "17.0.20.1" 2026-08-18
+OpenJDK Runtime Environment Temurin-17.0.20.1+1 (build 17.0.20.1+1)
+OpenJDK 64-Bit Server VM Temurin-17.0.20.1+1 (build 17.0.20.1+1, mixed mode, sharing)

@@ -1,0 +1,19 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< org.eclipse.ee4j:cargo-tracker >-------------------
+[INFO] Building Eclipse Cargo Tracker 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ war ]---------------------------------
+[INFO] 
+[INFO] --- liberty:3.12.1:stop (default-cli) @ cargo-tracker ---
+[INFO] CWWKM2152I: Stopping server defaultServer.
+[INFO] CWWKM2001I: Invoke command is [/home/runner/work/dd-3016202-cargotracker-devoxx-be-2026/dd-3016202-cargotracker-devoxx-be-2026/demo/target/liberty/wlp/bin/server, stop, defaultServer].
+[INFO] 
+[INFO] Stopping server defaultServer.
+[INFO] Server defaultServer stopped.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.037 s
+[INFO] Finished at: 2026-10-01T06:35:59Z
+[INFO] ------------------------------------------------------------------------

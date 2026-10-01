@@ -1,0 +1,10 @@
+collector-unavailable: explicit bounded health diagnostic
+collector-cleanup: Collector stopped and removed; Liberty lifecycle was not entered
+incompatible instrumentation: explicit diagnostic verified
+missing telemetry: explicit diagnostic verified
+broken correlation: explicit diagnostic verified
+invalid request lacks diagnostic signal: explicit diagnostic verified
+observability negative-control self-test passed
+redaction check passed: 1 files scanned, 1 values redacted
+secret-pattern check passed: 1 files scanned
+secret-like artifact content: rejected, redacted, and rechecked

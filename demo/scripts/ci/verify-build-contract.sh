@@ -31,9 +31,19 @@ for path in \
   ci-artifacts/compatibility-contract/readiness.json \
   ci-artifacts/compatibility-contract/artifact-metadata.json \
   ci-artifacts/compatibility-contract/safety-net-negative-controls.txt \
+  ci-artifacts/compatibility-contract/observability-negative-controls.txt \
   ci-artifacts/test-reports-unit/artifact-metadata.json \
   ci-artifacts/test-reports-liberty/artifact-metadata.json \
-  ci-artifacts/liberty-logs/artifact-metadata.json; do
+  ci-artifacts/liberty-logs/observability-access.log \
+  ci-artifacts/liberty-logs/artifact-metadata.json \
+  ci-artifacts/otel-telemetry/traces.json \
+  ci-artifacts/otel-telemetry/metrics.json \
+  ci-artifacts/otel-telemetry/collector.log \
+  ci-artifacts/otel-telemetry/request-transcript.jsonl \
+  ci-artifacts/otel-telemetry/redaction-check.txt \
+  ci-artifacts/otel-telemetry/otel-collector-config.yaml \
+  ci-artifacts/otel-telemetry/versions.properties \
+  ci-artifacts/otel-telemetry/artifact-metadata.json; do
   require_file "$path"
 done
 if ! sha256sum --check ci-artifacts/build-contract/war.sha256; then
@@ -59,6 +69,7 @@ for path in (
     root / "ci-artifacts/test-reports-unit/artifact-metadata.json",
     root / "ci-artifacts/test-reports-liberty/artifact-metadata.json",
     root / "ci-artifacts/liberty-logs/artifact-metadata.json",
+    root / "ci-artifacts/otel-telemetry/artifact-metadata.json",
 ):
     data = json.loads(path.read_text())
     def require(condition, message):
@@ -67,6 +78,27 @@ for path in (
     require(data.get("schema") == 1, "schema must be 1")
     require(required <= data.keys(), "metadata keys are incomplete")
     require(data["commands"] and data["files"], "commands/files inventory is empty")
+    if path.parent.name == "otel-telemetry":
+        pins = dict(
+            line.split("=", 1)
+            for line in (root / "observability/versions.properties").read_text().splitlines()
+        )
+        require(data.get("redactionResult") == "passed", "redaction did not pass")
+        require(
+            data["tools"].get("openTelemetryJavaAgent")
+            == pins.get("otel.javaagent.version"),
+            "OpenTelemetry Java agent version is not pinned",
+        )
+        require(
+            data["tools"].get("openTelemetryJavaAgentSha256")
+            == pins.get("otel.javaagent.sha256"),
+            "OpenTelemetry Java agent checksum is not pinned",
+        )
+        require(
+            data["tools"].get("openTelemetryCollectorImage")
+            == pins.get("otel.collector.image"),
+            "OpenTelemetry Collector image is not pinned",
+        )
     for entry in data["files"]:
         file_path = path.parent / entry["path"]
         require(file_path.is_file(), f"missing inventoried file: {file_path}")

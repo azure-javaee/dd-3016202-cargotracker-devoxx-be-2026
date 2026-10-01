@@ -1,0 +1,2 @@
+OpenTelemetry Java agent 2.31.1
+Collector image otel/opentelemetry-collector-contrib:0.162.0-amd64
