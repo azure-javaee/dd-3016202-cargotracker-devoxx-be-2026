@@ -200,9 +200,18 @@ jobs:
         env:
           CI_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: ./performance/collect-process-metadata.sh summarize write-artifact-metadata
+      - name: Verify final performance artifact redaction
+        id: performance-final-redaction
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        run: |
+          ./scripts/ci/redact-artifacts.sh --check-only \
+            ci-artifacts/performance-java \
+            ci-artifacts/performance-jaz-bypassed \
+            ci-artifacts/performance-jaz-tuned \
+            ci-artifacts/performance-comparison
       - name: Upload direct Java performance evidence
         id: upload-performance-java
-        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-final-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: performance-java
@@ -211,7 +220,7 @@ jobs:
           if-no-files-found: error
       - name: Upload bypassed jaz performance evidence
         id: upload-performance-jaz-bypassed
-        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-final-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: performance-jaz-bypassed
@@ -220,7 +229,7 @@ jobs:
           if-no-files-found: error
       - name: Upload tuned jaz performance evidence
         id: upload-performance-jaz-tuned
-        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-final-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: performance-jaz-tuned
@@ -229,7 +238,7 @@ jobs:
           if-no-files-found: error
       - name: Upload performance comparison
         id: upload-performance-comparison
-        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-final-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: performance-comparison

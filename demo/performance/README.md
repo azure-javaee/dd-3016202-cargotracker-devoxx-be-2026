@@ -90,4 +90,5 @@ The four 90-day artifacts are `performance-java`,
 `performance-jaz-bypassed`, `performance-jaz-tuned`, and
 `performance-comparison`. They contain run summaries and checksummed metadata,
 not the WAR, Liberty installation, package binary, response bodies, raw
-environment dumps, or caches.
+environment dumps, or caches. Upload is gated by a final redaction scan after
+the checksummed metadata has been generated.

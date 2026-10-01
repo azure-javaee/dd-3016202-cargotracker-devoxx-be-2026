@@ -421,6 +421,7 @@ if kind == "summarize-run":
             errors.append(f"peak RSS exceeded 2 GiB: {summary['peakRssKb']} KiB")
         if errors:
             summary["status"] = "FAIL"
+            summary["exitStatus"] = 1
             summary["gateErrors"] = errors
         else:
             summary["status"] = "PASS"

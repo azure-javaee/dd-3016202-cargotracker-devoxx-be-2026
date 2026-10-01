@@ -132,6 +132,41 @@ expect_rejection external-exit-without-flush \
   'JAZ launcher variables must be controlled by the harness' \
   JAZ_EXIT_WITHOUT_FLUSH=1
 
+gate_failure="$scratch/post-run-gate"
+mkdir -p "$gate_failure"
+cat > "$gate_failure/run-state.json" <<'JSON'
+{"status":"PASS","exitStatus":0,"cleanupStatus":0,"startupMs":1,"totalMs":120001}
+JSON
+printf 'timestamp\tpid\trss_kb\tcpu_ticks\n1\t1\t1\t1\n2\t1\t1\t2\n' \
+  > "$gate_failure/process-samples.tsv"
+printf 'request\tstatus\tduration_ms\n' > "$gate_failure/requests.tsv"
+for request in $(seq 1 30); do
+  printf '%s\t200\t1\n' "$request" >> "$gate_failure/requests.tsv"
+done
+printf 'request\tstatus\tduration_ms\n' > "$gate_failure/warmup.tsv"
+for request in $(seq 1 5); do
+  printf '%s\t200\t1\n' "$request" >> "$gate_failure/warmup.tsv"
+done
+printf 'garbage-first heap used 1K\n' > "$gate_failure/heap-before.txt"
+printf 'garbage-first heap used 1K\n' > "$gate_failure/heap-after.txt"
+printf '[info][gc] Pause Young 1.0ms\n' > "$gate_failure/gc-1.log"
+printf 'recording fixture\n' > "$gate_failure/recording.jfr"
+if "$helper" summarize summarize-run "$gate_failure" \
+  > "$scratch/post-run-gate.out" 2> "$scratch/post-run-gate.err"; then
+  echo "summarizer accepted a repetition over the duration bound" >&2
+  exit 1
+fi
+python3 - "$gate_failure/run-summary.json" <<'PY'
+import json
+import pathlib
+import sys
+
+summary = json.loads(pathlib.Path(sys.argv[1]).read_text())
+if summary.get("status") != "FAIL" or summary.get("exitStatus") != 1:
+    raise SystemExit("post-run gate failure retained successful status evidence")
+PY
+printf 'expected post-run gate failure records a nonzero exit status\n'
+
 mkdir -p "$fixture_server_dir" "$scratch/liberty/bin/tools" "$scratch/classes"
 cat > "$scratch/PerformanceProcessFixture.java" <<'JAVA'
 public class PerformanceProcessFixture {
