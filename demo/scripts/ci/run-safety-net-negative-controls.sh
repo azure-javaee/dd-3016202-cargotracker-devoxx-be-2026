@@ -115,11 +115,15 @@ for _ in $(seq 1 20); do
     http://127.0.0.1:18081/ >/dev/null 2>&1
   probe_status=$?
   set -e
-  [[ "$probe_status" -ne 7 ]] && break
+  [[ "$probe_status" -eq 28 ]] && break
+  if [[ "$probe_status" -ne 7 ]]; then
+    echo "readiness-timeout: fixture probe returned curl status $probe_status" | tee -a "$report"
+    exit 1
+  fi
   sleep 0.1
 done
-if [[ "$probe_status" -eq 7 ]]; then
-  echo "readiness-timeout: stalling fixture is not listening" | tee -a "$report"
+if [[ "$probe_status" -ne 28 ]]; then
+  echo "readiness-timeout: stalling fixture did not produce a timeout" | tee -a "$report"
   exit 1
 fi
 expect_failure_with_diagnostic readiness-timeout 'timed out|Operation timed out|\(28\)' \
