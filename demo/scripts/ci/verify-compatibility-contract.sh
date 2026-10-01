@@ -37,20 +37,28 @@ assert text("m:packaging") == "war", \
 assert text("m:build/m:finalName") == "cargo-tracker", \
     "compatibility boundary: WAR final name must be cargo-tracker"
 
-server = (root / "src/main/liberty/config/server.xml").read_text()
-assert "<feature>javaee-7.0</feature>" in server, \
+server = ET.parse(root / "src/main/liberty/config/server.xml").getroot()
+features = [
+    feature.text.strip()
+    for feature in server.findall("./featureManager/feature")
+    if feature.text
+]
+assert "javaee-7.0" in features, \
     "compatibility boundary: Open Liberty must provide javaee-7.0"
-assert 'location="cargo-tracker.war"' in server, \
-    "compatibility boundary: Liberty WAR location must be cargo-tracker.war"
-assert 'contextRoot="/cargo-tracker"' in server, \
-    "compatibility boundary: Liberty context root must be /cargo-tracker"
+web_apps = [
+    element for element in server.findall("./webApplication")
+    if element.get("location") == "cargo-tracker.war"
+    and element.get("contextRoot") == "/cargo-tracker"
+]
+assert len(web_apps) == 1, \
+    "compatibility boundary: Liberty must deploy cargo-tracker.war at /cargo-tracker"
 
 banned = ("jakarta", "org.springframework", "fish.payara", "org.wildfly",
           "org.jboss.as", "org.apache.tomcat")
 def banned_group(group):
     return any(group == prefix or group.startswith(prefix + ".")
                for prefix in banned)
-for dependency in pom.findall(".//m:dependency", ns):
+for dependency in pom.findall("m:dependencies/m:dependency", ns):
     group = dependency.findtext("m:groupId", namespaces=ns)
     artifact = dependency.findtext("m:artifactId", namespaces=ns)
     assert group and artifact, "compatibility boundary: dependency coordinates are incomplete"
@@ -99,7 +107,10 @@ run_negative() {
   cp src/main/liberty/config/server.xml "$tmp/src/main/liberty/config/server.xml"
   rm -f "$tmp/src/main/java/example/BadImport.java"
   python3 - "$tmp" "$expression" <<'PY'
-import pathlib, sys
+import pathlib
+import sys
+import xml.etree.ElementTree as ET
+
 root = pathlib.Path(sys.argv[1])
 expression = sys.argv[2]
 pom = root / "pom.xml"
@@ -109,17 +120,34 @@ def replace_once(old, new):
     if text.count(old) != 1:
         raise SystemExit(f"fixture boundary not found exactly once: {old}")
     text = text.replace(old, new, 1)
-if expression == "jakarta-dependency":
-    text = text.replace("</dependencies>", "<dependency><groupId>jakarta.platform</groupId><artifactId>jakarta.jakartaee-api</artifactId><version>10.0.0</version></dependency></dependencies>", 1)
+if expression in ("jakarta-dependency", "spring"):
+    namespace = "http://maven.apache.org/POM/4.0.0"
+    ET.register_namespace("", namespace)
+    tree = ET.parse(pom)
+    dependencies = tree.getroot().find(f"{{{namespace}}}dependencies")
+    if dependencies is None:
+        raise SystemExit("fixture boundary not found: project dependencies")
+    dependency = ET.SubElement(dependencies, f"{{{namespace}}}dependency")
+    group_id = ET.SubElement(dependency, f"{{{namespace}}}groupId")
+    artifact_id = ET.SubElement(dependency, f"{{{namespace}}}artifactId")
+    version = ET.SubElement(dependency, f"{{{namespace}}}version")
+    if expression == "jakarta-dependency":
+        group_id.text = "jakarta.platform"
+        artifact_id.text = "jakarta.jakartaee-api"
+        version.text = "10.0.0"
+    else:
+        group_id.text = "org.springframework"
+        artifact_id.text = "spring-core"
+        version.text = "6.0.0"
+    tree.write(pom, encoding="unicode")
 elif expression == "release":
     replace_once("<maven.compiler.release>17</maven.compiler.release>", "<maven.compiler.release>21</maven.compiler.release>")
 elif expression == "jar":
     replace_once("<packaging>war</packaging>", "<packaging>jar</packaging>")
 elif expression == "renamed-war":
     replace_once("<finalName>cargo-tracker</finalName>", "<finalName>other-name</finalName>")
-elif expression == "spring":
-    text = text.replace("</dependencies>", "<dependency><groupId>org.springframework</groupId><artifactId>spring-core</artifactId><version>6.0.0</version></dependency></dependencies>", 1)
-pom.write_text(text)
+if expression not in ("jakarta-dependency", "spring"):
+    pom.write_text(text)
 server = root / "src/main/liberty/config/server.xml"
 if expression == "feature":
     server.write_text(server.read_text().replace("<feature>javaee-7.0</feature>", "<feature>jakartaee-10.0</feature>"))

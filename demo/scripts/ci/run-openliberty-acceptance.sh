@@ -8,11 +8,18 @@ mkdir -p "$out"
 server_stopped=false
 stop_server() {
   if [[ "$server_stopped" == false ]]; then
-    ./mvnw liberty:stop 2>&1 | tee "$out/liberty-stop.log" || true
+    ./mvnw liberty:stop 2>&1 | tee "$out/liberty-stop.log"
     server_stopped=true
   fi
 }
-trap stop_server EXIT
+cleanup() {
+  local status=$?
+  if [[ "$server_stopped" == false ]]; then
+    stop_server || true
+  fi
+  return "$status"
+}
+trap cleanup EXIT
 
 ./mvnw liberty:deploy 2>&1 | tee "$out/liberty-deploy.log"
 ./mvnw -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start \

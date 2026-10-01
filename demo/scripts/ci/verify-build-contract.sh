@@ -38,6 +38,7 @@ required = {
 for path in (
     root / "ci-artifacts/build-contract/artifact-metadata.json",
     root / "ci-artifacts/dependency-reports/artifact-metadata.json",
+    root / "ci-artifacts/compatibility-contract/artifact-metadata.json",
 ):
     data = json.loads(path.read_text())
     assert data.get("schema") == 1
