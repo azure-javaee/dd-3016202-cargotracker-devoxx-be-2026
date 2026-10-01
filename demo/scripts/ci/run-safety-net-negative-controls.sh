@@ -16,10 +16,12 @@ command -v timeout >/dev/null || {
 route_test=src/test/java/org/eclipse/cargotracker/domain/model/cargo/RouteSpecificationTest.java
 service_test=src/test/java/org/eclipse/cargotracker/application/BookingServiceTest.java
 web_source="$(find src/main -path '*interfaces/booking/web*' -type f -name '*.java' | head -1)"
+legacy_domain_source=src/main/java/org/eclipse/cargotracker/domain/model/cargo/BookingBackingBean.java
 test -n "$web_source"
 cp "$route_test" "$tmp/RouteSpecificationTest.java"
 cp "$service_test" "$tmp/BookingServiceTest.java"
 cp "$web_source" "$tmp/web.java"
+cp "$legacy_domain_source" "$tmp/BookingBackingBean.java"
 test -s "$tmp/RouteSpecificationTest.java"
 test -s "$tmp/BookingServiceTest.java"
 test -s "$tmp/web.java"
@@ -35,6 +37,7 @@ cleanup() {
   cp "$tmp/RouteSpecificationTest.java" "$route_test"
   cp "$tmp/BookingServiceTest.java" "$service_test"
   cp "$tmp/web.java" "$web_source"
+  cp "$tmp/BookingBackingBean.java" "$legacy_domain_source"
   rm -rf "$tmp"
   return "$status"
 }
@@ -81,9 +84,17 @@ sed -i '0,/assertEquals(RoutingStatus.ROUTED/s//assertEquals(RoutingStatus.MISRO
 expect_failure application-service-regression timeout 120s ./mvnw -Popenliberty -Dtest=BookingServiceTest test
 cp "$tmp/BookingServiceTest.java" "$service_test"
 
-sed -i '/^package /a import org.eclipse.cargotracker.domain.model.cargo.Cargo;' "$web_source"
-expect_failure_with_diagnostic package-layer-violation 'LayeringTest|domain\.' \
+sed -i '$i\\  private org.eclipse.cargotracker.domain.model.cargo.Cargo architectureBoundaryProbe;' \
+  "$web_source"
+expect_failure_with_diagnostic fully-qualified-package-layer-violation 'LayeringTest|domain\.' \
   timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
+cp "$tmp/web.java" "$web_source"
+
+sed -i '$i\\  private org.eclipse.cargotracker.application.BookingService architectureBoundaryProbe;' \
+  "$legacy_domain_source"
+expect_failure_with_diagnostic exact-legacy-baseline-violation 'LayeringTest|application\.' \
+  timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
+cp "$tmp/BookingBackingBean.java" "$legacy_domain_source"
 
 expect_failure liberty-startup-failure ./target/liberty/wlp/bin/server start no-such-server
 python3 -m http.server 18080 --bind 127.0.0.1 --directory "$tmp" >"$tmp/http-server.log" 2>&1 &

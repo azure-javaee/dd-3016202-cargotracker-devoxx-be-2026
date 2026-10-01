@@ -1,8 +1,8 @@
 package org.eclipse.cargotracker.interfaces.booking.facade;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import org.eclipse.cargotracker.domain.model.cargo.Cargo;
@@ -22,7 +22,7 @@ class BookingFacadeDtoTest {
 
   @Test
   void cargoRoutePreservesDeadlineAndRouteShape() {
-    Date deadline = new Date();
+    Date deadline = new Date(1_700_000_000_000L);
     Cargo cargo =
         new Cargo(
             new TrackingId("ABC123"),
@@ -41,7 +41,8 @@ class BookingFacadeDtoTest {
     CargoRoute route = new CargoRouteDtoAssembler().toDto(cargo);
 
     assertEquals("ABC123", route.getTrackingId());
-    assertFalse(route.getArrivalDeadline().isEmpty());
+    assertEquals(
+        new SimpleDateFormat("MM/dd/yyyy hh:mm a z").format(deadline), route.getArrivalDeadline());
     assertEquals(1, route.getLegs().size());
     assertEquals("V100", route.getLegs().get(0).getVoyageNumber());
   }

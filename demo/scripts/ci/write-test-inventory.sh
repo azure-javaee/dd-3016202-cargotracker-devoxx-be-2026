@@ -5,13 +5,6 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 out="$root/ci-artifacts/test-reports-unit"
 mkdir -p "$out"
-# Keep this count synchronized with the inventory below; undispositioned test classes must fail CI.
-test_count="$(find src/test/java -name '*Test.java' | wc -l)"
-test "$test_count" -eq 11 || {
-  echo "Expected 11 test classes listed below, found $test_count" >&2
-  exit 1
-}
-
 {
   printf 'class\tclassification\treason\n'
   printf 'org.eclipse.cargotracker.application.BookingServiceTest\tactive\tArquillian managed Open Liberty\n'
@@ -26,6 +19,18 @@ test "$test_count" -eq 11 || {
   printf 'org.eclipse.cargotracker.architecture.LayeringTest\tactive\tJUnit 5 architecture baseline\n'
   printf 'org.eclipse.cargotracker.interfaces.booking.facade.BookingFacadeDtoTest\tactive\tJUnit 5 facade and DTO boundary\n'
 } > "$out/test-inventory.tsv"
+
+discovered="$(mktemp)"
+declared="$(mktemp)"
+trap 'rm -f "$discovered" "$declared"' EXIT
+find src/test/java -name '*Test.java' -print \
+  | sed -E 's#^src/test/java/##; s#\.java$##; s#/#.#g' \
+  | sort > "$discovered"
+tail -n +2 "$out/test-inventory.tsv" | cut -f1 | sort > "$declared"
+if ! diff -u "$declared" "$discovered"; then
+  echo "Test inventory does not match discovered *Test.java classes" >&2
+  exit 1
+fi
 
 test "$(grep -c $'\tactive\t' "$out/test-inventory.tsv")" -eq 8
 test "$(grep -c $'\tdormant\t' "$out/test-inventory.tsv")" -eq 3
