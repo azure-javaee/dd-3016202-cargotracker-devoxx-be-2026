@@ -108,7 +108,10 @@ s.listen(1)
 time.sleep(3600)
 ' >"$tmp/readiness-server.log" 2>&1 &
 readiness_server_pid=$!
-sleep 0.2
+for _ in $(seq 1 20); do
+  kill -0 "$readiness_server_pid" 2>/dev/null && break
+  sleep 0.1
+done
 if ! kill -0 "$readiness_server_pid" 2>/dev/null; then
   echo "readiness-timeout: stalling fixture failed to start" | tee -a "$report"
   exit 1
