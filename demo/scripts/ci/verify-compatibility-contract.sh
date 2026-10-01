@@ -45,7 +45,7 @@ assert 'location="cargo-tracker.war"' in server, \
 assert 'contextRoot="/cargo-tracker"' in server, \
     "compatibility boundary: Liberty context root must be /cargo-tracker"
 
-banned = ("jakarta.", "org.springframework", "fish.payara", "org.wildfly",
+banned = ("jakarta", "org.springframework", "fish.payara", "org.wildfly",
           "org.jboss.as", "org.apache.tomcat")
 for dependency in pom.findall(".//m:dependency", ns):
     group = dependency.findtext("m:groupId", namespaces=ns)
