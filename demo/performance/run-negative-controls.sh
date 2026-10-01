@@ -134,6 +134,9 @@ expect_rejection batch-compilation \
 expect_rejection compile-threshold \
   'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
   JAVA_TOOL_OPTIONS=-XX:CompileThreshold=1
+expect_rejection string-deduplication \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-XX:+UseStringDeduplication
 expect_rejection ignore-user-tuning \
   'JAZ_IGNORE_USER_TUNING must not be set for the comparison' \
   JAZ_IGNORE_USER_TUNING=1
@@ -155,6 +158,7 @@ mkdir -p "$file_tuning_pristine" "$file_tuning_output"
 cat > "$file_tuning_pristine/server.env" <<'EOF'
 JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount=1"
 JVM_ARGS='-XX:TieredStopAtLevel=1'
+JDK_JAVA_OPTIONS="-XX:-UseStringDeduplication"
 EOF
 file_tuning_hash="$(tar --sort=name --mtime='UTC 1970-01-01' \
   --owner=0 --group=0 --numeric-owner -C "$file_tuning_pristine" -cf - . |
@@ -377,6 +381,13 @@ stop_fixture() {
 for mode in direct bypass tuned; do
   start_fixture "$mode"
   fixture_pid="$("$helper" find-server-pid "$fixture_server_dir")"
+  if "$helper" verify-server-stopped "$fixture_server_dir" \
+    > "$scratch/$mode-active.out" 2>&1; then
+    echo "$mode fixture was accepted by the stopped-server preflight" >&2
+    exit 1
+  fi
+  grep -Fq 'active Liberty process must be stopped before performance capture' \
+    "$scratch/$mode-active.out"
   if [[ "$fixture_pid" != "$last_fixture_pid" ]]; then
     echo "$mode-shaped discovery returned the wrong Java PID" >&2
     exit 1

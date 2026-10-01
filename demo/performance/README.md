@@ -84,8 +84,9 @@ heap, GC, processor-count, compiler-count, or startup-recording options are
 rejected, as are interpreter-only and forced-compilation modes. The same
 validation applies to quoted option assignments in `server.env` without
 sourcing that file; batch, tiered, background, and threshold compiler controls
-are prohibited. Positive initial- and maximum-heap values are required for every
-direct and bypass run and must remain identical between those modes.
+and String Deduplication are prohibited. Positive initial- and maximum-heap
+values are required for every direct and bypass run and must remain identical
+between those modes.
 
 CI fails for startup beyond 90 seconds, failed readiness or workload requests,
 crash/OOM, repetition beyond 120 seconds, peak sampled RSS above 2 GiB, missing

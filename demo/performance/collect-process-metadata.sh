@@ -186,6 +186,14 @@ PY
   list-server-pids)
     find_server_pids "${1:?server directory required}"
     ;;
+  verify-server-stopped)
+    mapfile -t pids < <(find_server_pids "${1:?server directory required}")
+    if (( ${#pids[@]} > 0 )); then
+      printf 'active Liberty process must be stopped before performance capture: %s\n' \
+        "${pids[*]}" >&2
+      exit 1
+    fi
+    ;;
   verify-jvm-option)
     command_file="${1:?JVM command-line file required}"
     expected_option="${2:?expected JVM option required}"
@@ -731,7 +739,7 @@ else:
 PY
     ;;
   *)
-    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|verify-jfr-redaction|verify-artifact-jfr|sample-server|ancestry|summarize}" >&2
+    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-server-stopped|verify-jvm-option|verify-jfr-redaction|verify-artifact-jfr|sample-server|ancestry|summarize}" >&2
     exit 2
     ;;
 esac

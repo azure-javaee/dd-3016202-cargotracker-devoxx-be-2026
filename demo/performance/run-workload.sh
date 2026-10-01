@@ -75,7 +75,7 @@ if [[ "${1:-}" == "--one" ]]; then
     normalized="${value//=/ }"
     normalized="${normalized//\"/ }"
     normalized="${normalized//\'/ }"
-    [[ "$normalized" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
+    [[ "$normalized" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|StringDeduplication|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
   }
 
   validate_no_user_tuning() {
@@ -589,29 +589,6 @@ export PERFORMANCE_STARTED_AT="$comparison_started"
 if [[ -n "${GITHUB_ENV:-}" ]]; then
   printf 'PERFORMANCE_STARTED_AT=%s\n' "$comparison_started" >> "$GITHUB_ENV"
 fi
-workspace="${RUNNER_TEMP:-/tmp}/cargo-tracker-performance-$$"
-mkdir -p "$workspace"
-database_dir="$root/target/cargo-tracker-data"
-database_backup="$workspace/original-cargo-tracker-data"
-database_baseline="$workspace/database-baseline"
-database_had_original=false
-if [[ -e "$database_dir" ]]; then
-  cp -a "$database_dir" "$database_backup"
-  database_had_original=true
-fi
-rm -rf "$database_dir"
-mkdir -p "$database_baseline" "$database_dir"
-cleanup_workspace() {
-  local code=$?
-  rm -rf "$database_dir"
-  if [[ "$database_had_original" == true ]]; then
-    cp -a "$database_backup" "$database_dir"
-  fi
-  rm -rf "$workspace"
-  exit "$code"
-}
-trap cleanup_workspace EXIT
-trap 'exit 143' HUP INT TERM
 comparison_command() {
   printf '%s\n' "$*" >> "$comparison/commands.txt"
 }
@@ -631,7 +608,7 @@ if [[ "$(uname -m)" != x86_64 ]]; then
 fi
 for name in JAVA_TOOL_OPTIONS _JAVA_OPTIONS JDK_JAVA_OPTIONS JAVA_OPTS JVM_ARGS MAVEN_OPTS; do
   value="${!name:-}"
-  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
+  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp|batch)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|Tiered|BackgroundCompilation|CompileThreshold|StringDeduplication|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
     echo "user-provided JVM tuning is not allowed ($name)" >&2
     exit 1
   fi
@@ -658,6 +635,31 @@ if ! grep -q 'javaee-7.0' "$server_config" || ! grep -q 'cargo-tracker.war' "$se
   echo "performance runtime does not match the Open Liberty application contract" >&2
   exit 1
 fi
+"$helper" verify-server-stopped "$server_dir"
+
+workspace="${RUNNER_TEMP:-/tmp}/cargo-tracker-performance-$$"
+mkdir -p "$workspace"
+database_dir="$root/target/cargo-tracker-data"
+database_backup="$workspace/original-cargo-tracker-data"
+database_baseline="$workspace/database-baseline"
+database_had_original=false
+if [[ -e "$database_dir" ]]; then
+  cp -a "$database_dir" "$database_backup"
+  database_had_original=true
+fi
+rm -rf "$database_dir"
+mkdir -p "$database_baseline" "$database_dir"
+cleanup_workspace() {
+  local code=$?
+  rm -rf "$database_dir"
+  if [[ "$database_had_original" == true ]]; then
+    cp -a "$database_backup" "$database_dir"
+  fi
+  rm -rf "$workspace"
+  exit "$code"
+}
+trap cleanup_workspace EXIT
+trap 'exit 143' HUP INT TERM
 
 jaz_url="https://packages.microsoft.com/ubuntu/24.04/prod/pool/main/j/jaz/jaz_1.0.4_amd64.deb"
 jaz_sha256="3d479f11ff2a037790505746a44568e1408f2f79aac62300ea4c651c4969a710"
