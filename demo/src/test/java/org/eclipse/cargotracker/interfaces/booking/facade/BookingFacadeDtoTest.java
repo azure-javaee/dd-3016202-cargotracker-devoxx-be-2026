@@ -1,6 +1,7 @@
 package org.eclipse.cargotracker.interfaces.booking.facade;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -42,7 +43,7 @@ class BookingFacadeDtoTest {
     CargoRoute route = new CargoRouteDtoAssembler().toDto(cargo);
 
     assertEquals("ABC123", route.getTrackingId());
-    assertTrue(!route.getArrivalDeadline().isEmpty());
+    assertFalse(route.getArrivalDeadline().isEmpty());
     assertEquals(1, route.getLegs().size());
     assertEquals("V100", route.getLegs().get(0).getVoyageNumber());
   }

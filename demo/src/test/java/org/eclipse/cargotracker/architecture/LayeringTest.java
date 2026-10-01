@@ -35,13 +35,11 @@ class LayeringTest {
 
     Set<String> knownLegacyFiles =
         Set.of("domain/model/voyage/SampleVoyages.java");
-    Set<String> allKnownLegacyFiles =
-        knownLegacyFiles.stream().collect(Collectors.toSet());
     assertEquals(
         Set.of(),
         violations.stream()
             .map(violation -> violation.substring(0, violation.indexOf(" -> ")))
-            .filter(path -> !allKnownLegacyFiles.contains(path))
+            .filter(path -> !knownLegacyFiles.contains(path))
             .collect(Collectors.toSet()));
   }
 
