@@ -70,7 +70,7 @@ document = {
                                                     {
                                                         "key": "url.query",
                                                         "value": {
-                                                            "stringValue": "trackingId=<REDACTED>"
+                                                            "stringValue": "trackingId=ABC123"
                                                         },
                                                     }
                                                 ]
@@ -102,7 +102,7 @@ if ! grep -Fq "artifact redaction failed" "$tmp/unsafe-telemetry-check.log"; the
   cat "$tmp/unsafe-telemetry-check.log" >&2
   exit 1
 fi
-echo "unsafe-exemplar: query attribute rejected by final artifact scan" >> "$out"
+echo "unsafe-exemplar: raw query attribute and seeded cargo ID rejected by final artifact scan" >> "$out"
 mkdir -p "$tmp/unsafe-cargo"
 printf '%s\n' '{"cargoTrackingId":"ABC123"}' > "$tmp/unsafe-cargo/metrics.json"
 if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/unsafe-cargo" \
