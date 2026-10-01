@@ -45,7 +45,7 @@ if [[ "${1:-}" == "--one" ]]; then
     fi
     mkdir -p "$log_dir"
     log_file="$log_dir/$(date -u +%Y%m%d-%H%M)-job-logs.txt"
-    record_command "$* (tee: ${log_file#"$output"/})"
+    record_command "timeout --signal=TERM --kill-after=$kill_after $timeout_seconds $* (tee: ${log_file#"$output"/})"
     if timeout --signal=TERM --kill-after="$kill_after" "$timeout_seconds" "$@" 2>&1 \
       | sed 's/ABC123/<SEEDED-CARGO-REDACTED>/g' | tee "$log_file"; then
       status_code=0
@@ -282,7 +282,6 @@ PY
   printf 'request\tstatus\tduration_ms\n' > "$output/warmup.tsv"
   printf 'request\tstatus\tduration_ms\n' > "$output/requests.tsv"
   record_command "restore pristine defaultServer and apply mode-specific server.env plus diagnostic-only GC logging"
-  record_command "timeout 90 ./mvnw -Popenliberty -Dliberty.jvm.performanceGc=$gc_option -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start"
   "$helper" sample-server "$server_dir" "$output/process-samples.tsv" \
     "$sampler_stop" 0.2 "$selected_server_pid_file" &
   sampler_pid=$!
