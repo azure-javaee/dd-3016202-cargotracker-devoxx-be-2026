@@ -96,7 +96,8 @@ metadata = {
     "commands": commands,
 }
 for directory, name in ((root / "ci-artifacts/build-contract", "build-contract"),
-                        (root / "ci-artifacts/dependency-reports", "dependency-reports")):
+                        (root / "ci-artifacts/dependency-reports", "dependency-reports"),
+                        (root / "ci-artifacts/compatibility-contract", "compatibility-contract")):
     metadata["name"] = name
     files = []
     for file in sorted(directory.rglob("*")):

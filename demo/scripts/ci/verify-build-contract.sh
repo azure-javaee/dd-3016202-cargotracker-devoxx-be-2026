@@ -16,6 +16,13 @@ test -s ci-artifacts/dependency-reports/baseline-vulnerability-report.json
 test -s ci-artifacts/build-contract/enforcer-negative-controls.txt
 test -s ci-artifacts/build-contract/artifact-metadata.json
 test -s ci-artifacts/dependency-reports/artifact-metadata.json
+test -s ci-artifacts/compatibility-contract/compatibility-report.txt
+test -s ci-artifacts/compatibility-contract/negative-controls.txt
+test -s ci-artifacts/compatibility-contract/liberty-deploy.log
+test -s ci-artifacts/compatibility-contract/liberty-start.log
+test -s ci-artifacts/compatibility-contract/liberty-stop.log
+test -s ci-artifacts/compatibility-contract/readiness.json
+test -s ci-artifacts/compatibility-contract/artifact-metadata.json
 python3 - "$root" <<'PY'
 import hashlib
 import json
