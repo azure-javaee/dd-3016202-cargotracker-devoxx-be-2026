@@ -184,6 +184,15 @@ jobs:
         id: performance
         timeout-minutes: 70
         run: ./performance/run-workload.sh
+      - name: Verify every retained performance JFR
+        id: performance-jfr-verification
+        if: always() && steps.performance.outcome != 'skipped'
+        run: |
+          ./performance/collect-process-metadata.sh verify-artifact-jfr \
+            "$RUNNER_TEMP/performance-jfr-verification.txt" \
+            ci-artifacts/performance-java \
+            ci-artifacts/performance-jaz-bypassed \
+            ci-artifacts/performance-jaz-tuned
       - name: Verify performance artifact redaction
         id: performance-redaction
         if: always() && steps.performance.outcome != 'skipped'
@@ -202,7 +211,7 @@ jobs:
         run: ./performance/collect-process-metadata.sh summarize write-artifact-metadata
       - name: Verify final performance artifact redaction
         id: performance-final-redaction
-        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success'
+        if: always() && steps.performance-metadata.outcome == 'success' && steps.performance-redaction.outcome == 'success' && steps.performance-jfr-verification.outcome == 'success'
         run: |
           ./scripts/ci/redact-artifacts.sh --check-only \
             ci-artifacts/performance-java \

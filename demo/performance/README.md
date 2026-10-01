@@ -78,11 +78,16 @@ Tuned `jaz` must report its selected heap and G1 policy in both the captured
 `JAZ_DRY_RUN=1` output and effective JVM flags. Direct and bypass modes must
 retain the same default heap/G1 policy; bypass still records `jaz` diagnostics,
 including native-memory tracking and its error-file setting. User-supplied
-heap, GC, processor-count, or startup-recording options are rejected.
+heap, GC, processor-count, compiler-count, or startup-recording options are
+rejected. Positive initial- and maximum-heap values are required for every
+direct and bypass run and must remain identical between those modes.
 
 CI fails for startup beyond 90 seconds, failed readiness or workload requests,
 crash/OOM, repetition beyond 120 seconds, peak sampled RSS above 2 GiB, missing
 or unparseable required diagnostics, artifact mismatch, or cleanup failure.
+Each repetition has a 105-second watchdog that reserves 15 seconds for
+signal-driven cleanup, and the immutable WAR, runtime, server template,
+workload, and JFR profile are rehashed immediately before every launch.
 Ordinary differences in startup, request latency, CPU, heap, RSS, or GC are
 reported but are not performance thresholds or winner criteria.
 
@@ -91,4 +96,5 @@ The four 90-day artifacts are `performance-java`,
 `performance-comparison`. They contain run summaries and checksummed metadata,
 not the WAR, Liberty installation, package binary, response bodies, raw
 environment dumps, or caches. Upload is gated by a final redaction scan after
-the checksummed metadata has been generated.
+the checksummed metadata has been generated and by zero-sensitive-event
+verification of every retained JFR, including recordings from failed runs.

@@ -119,6 +119,9 @@ expect_rejection() {
 expect_rejection heap-tuning \
   'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
   JAVA_TOOL_OPTIONS=-Xmx256m
+expect_rejection compiler-count-tuning \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-XX:CICompilerCount=2
 expect_rejection ignore-user-tuning \
   'JAZ_IGNORE_USER_TUNING must not be set for the comparison' \
   JAZ_IGNORE_USER_TUNING=1
@@ -149,6 +152,8 @@ for request in $(seq 1 5); do
 done
 printf 'garbage-first heap used 1K\n' > "$gate_failure/heap-before.txt"
 printf 'garbage-first heap used 1K\n' > "$gate_failure/heap-after.txt"
+printf '1\n' > "$gate_failure/server.pid"
+printf '[info][gc] Pause Young 99.0ms\n' > "$gate_failure/gc-0.log"
 printf '[info][gc] Pause Young 1.0ms\n' > "$gate_failure/gc-1.log"
 printf 'recording fixture\n' > "$gate_failure/recording.jfr"
 if "$helper" summarize summarize-run "$gate_failure" \
@@ -164,8 +169,27 @@ import sys
 summary = json.loads(pathlib.Path(sys.argv[1]).read_text())
 if summary.get("status") != "FAIL" or summary.get("exitStatus") != 1:
     raise SystemExit("post-run gate failure retained successful status evidence")
+if summary.get("gcPauseCount") != 1 or summary.get("gcPauseTotalMs") != 1.0:
+    raise SystemExit("summarizer did not select the server-PID-specific GC log")
 PY
-printf 'expected post-run gate failure records a nonzero exit status\n'
+printf 'expected server GC log selected and gate failure records nonzero exit\n'
+
+jfr_artifact="$scratch/retained-jfr-artifact"
+mkdir -p "$jfr_artifact"
+printf 'not a JFR recording\n' > "$jfr_artifact/recording.jfr"
+if "$helper" verify-artifact-jfr "$scratch/retained-jfr-report.txt" \
+  "$jfr_artifact" > "$scratch/retained-jfr.out" 2>&1; then
+  echo "artifact verifier accepted an unparseable retained JFR" >&2
+  exit 1
+fi
+grep -Fq $'rejected\t' "$scratch/retained-jfr-report.txt"
+if "$helper" verify-artifact-jfr "$jfr_artifact/report.txt" "$jfr_artifact" \
+  > "$scratch/inside-report.out" 2>&1; then
+  echo "artifact verifier wrote its report inside the checked artifact" >&2
+  exit 1
+fi
+grep -Fq 'must be outside artifact directories' "$scratch/inside-report.out"
+printf 'expected retained JFR verification rejects unsafe recordings and reports\n'
 
 mkdir -p "$fixture_server_dir" "$scratch/liberty/bin/tools" "$scratch/classes"
 cat > "$scratch/PerformanceProcessFixture.java" <<'JAVA'

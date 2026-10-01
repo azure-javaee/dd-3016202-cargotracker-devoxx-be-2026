@@ -37,7 +37,7 @@ if [[ "${1:-}" == "--one" ]]; then
     local log_dir="$output/maven/$stage"
     local log_file status_code timeout_seconds=90 kill_after=10 remaining_ms
     if [[ "$stage" == stop ]]; then
-      remaining_ms="$((120000 - (($(date +%s%N) - start_ns) / 1000000) - 7000))"
+      remaining_ms="$((120000 - (($(date +%s%N) - start_ns) / 1000000) - 12000))"
       if (( remaining_ms < 1000 )); then
         remaining_ms=1000
       fi
@@ -66,9 +66,13 @@ if [[ "${1:-}" == "--one" ]]; then
     return "$status_code"
   }
 
+  run_jcmd() {
+    timeout --signal=TERM --kill-after=2 10 "$JAVA_HOME/bin/jcmd" "$@"
+  }
+
   has_user_tuning() {
     local value="$1"
-    [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
+    [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
   }
 
   validate_no_user_tuning() {
@@ -243,6 +247,7 @@ PY
     exit "$original_status"
   }
   trap cleanup EXIT
+  trap 'exit 124' HUP INT TERM
 
   case "$mode" in
     direct)
@@ -365,7 +370,7 @@ PY
     echo "Liberty server JVM changed between startup and readiness" >&2
     exit 1
   fi
-  if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.command_line \
+  if ! run_jcmd "$server_pid" VM.command_line \
     > "$output/jvm-command-line.txt" 2>&1; then
     echo "jcmd VM.command_line failed" >&2
     exit 1
@@ -374,7 +379,7 @@ PY
     echo "Liberty JVM did not start with the required diagnostic GC logging option" >&2
     exit 1
   fi
-  if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.flags -all \
+  if ! run_jcmd "$server_pid" VM.flags -all \
     > "$output/jvm-flags.txt" 2>&1; then
     echo "jcmd VM.flags -all failed" >&2
     exit 1
@@ -394,8 +399,8 @@ PY
   printf 'command-line\t%s\njvm-flags\t%s\nprocess-ancestry\t%s\n' \
     "jvm-command-line.txt" "jvm-flags.txt" "process-ancestry.tsv" \
     > "$output/effective-jvm-evidence.txt"
-  record_command "jcmd $server_pid VM.command_line"
-  record_command "jcmd $server_pid VM.flags -all"
+  record_command "timeout --signal=TERM --kill-after=2 10 jcmd $server_pid VM.command_line"
+  record_command "timeout --signal=TERM --kill-after=2 10 jcmd $server_pid VM.flags -all"
 
   selected_flag() {
     local flag="$1"
@@ -499,10 +504,13 @@ PY
     printf '%s\n' "$result" >> "$output/warmup.tsv"
   done
   record_command "five sequential HTTP 200 seeded-cargo warm-up requests"
-  "$JAVA_HOME/bin/jcmd" "$server_pid" GC.heap_info > "$output/heap-before.txt"
-  record_command "jcmd $server_pid GC.heap_info before measured workload"
+  if ! run_jcmd "$server_pid" GC.heap_info > "$output/heap-before.txt"; then
+    echo "jcmd GC.heap_info before workload failed" >&2
+    exit 1
+  fi
+  record_command "timeout --signal=TERM --kill-after=2 10 jcmd $server_pid GC.heap_info before measured workload"
   jfr_profile="$PERF_JFR_PROFILE"
-  if ! "$JAVA_HOME/bin/jcmd" "$server_pid" JFR.start \
+  if ! run_jcmd "$server_pid" JFR.start \
     name=performance settings="$jfr_profile" duration=10s \
     filename="$output/recording.jfr" dumponexit=true \
     > "$output/jfr-start.txt" 2>&1; then
@@ -510,15 +518,18 @@ PY
     exit 1
   fi
   grep -q 'Started recording' "$output/jfr-start.txt"
-  record_command "jcmd $server_pid JFR.start with redacted profile, dynamic 10-second duration, and no startup recording flags"
+  record_command "timeout --signal=TERM --kill-after=2 10 jcmd $server_pid JFR.start with redacted profile, dynamic 10-second duration, and no startup recording flags"
   for request in $(seq 1 30); do
     result="$(curl_request measured "$request")"
     printf '%s\n' "$result" >> "$output/requests.tsv"
     sleep 0.2
   done
-  "$JAVA_HOME/bin/jcmd" "$server_pid" GC.heap_info > "$output/heap-after.txt"
+  if ! run_jcmd "$server_pid" GC.heap_info > "$output/heap-after.txt"; then
+    echo "jcmd GC.heap_info after workload failed" >&2
+    exit 1
+  fi
   record_command "30 sequential HTTP 200 seeded-cargo requests paced 200 milliseconds apart"
-  record_command "jcmd $server_pid GC.heap_info"
+  record_command "timeout --signal=TERM --kill-after=2 10 jcmd $server_pid GC.heap_info"
   if ! kill -0 "$server_pid" 2>/dev/null; then
     echo "Liberty JVM exited before the workload completed" >&2
     exit 1
@@ -602,7 +613,7 @@ if [[ "$(uname -m)" != x86_64 ]]; then
 fi
 for name in JAVA_TOOL_OPTIONS _JAVA_OPTIONS JDK_JAVA_OPTIONS JAVA_OPTS JVM_ARGS MAVEN_OPTS; do
   value="${!name:-}"
-  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
+  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
     echo "user-provided JVM tuning is not allowed ($name)" >&2
     exit 1
   fi
@@ -756,6 +767,37 @@ workload_and_configuration_sha256=$workload_sha256
 redacted_jfr_profile_sha256=$jfr_sha256
 runner_environment_sha256=$host_sha256
 EOF
+write_current_artifact_identity() {
+  local output_file="$1"
+  local current_war current_runtime current_server current_workload current_jfr
+  current_war="$(sha256sum "$war" | awk '{ print $1 }')"
+  current_runtime="$(
+    cd "$liberty_root"
+    find . -type f ! -path './usr/servers/*' -print0 |
+      sort -z | xargs -0 sha256sum | sha256sum | awk '{ print $1 }'
+  )"
+  current_server="$(tar --sort=name --mtime='UTC 1970-01-01' \
+    --owner=0 --group=0 --numeric-owner -C "$pristine_server" -cf - . |
+    sha256sum | awk '{ print $1 }')"
+  current_workload="$(
+    sha256sum "$root/performance/run-workload.sh" \
+      "$root/performance/run-liberty-java.sh" \
+      "$root/performance/run-liberty-jaz.sh" \
+      "$root/performance/collect-process-metadata.sh" \
+      "$server_config" | sha256sum | awk '{ print $1 }'
+  )"
+  current_jfr="$(
+    sha256sum "$comparison/profile-without-environment.jfc" | awk '{ print $1 }'
+  )"
+  cat > "$output_file" <<EOF
+war_sha256=$current_war
+open_liberty_runtime_sha256=$current_runtime
+pristine_default_server_sha256=$current_server
+workload_and_configuration_sha256=$current_workload
+redacted_jfr_profile_sha256=$current_jfr
+runner_environment_sha256=$host_sha256
+EOF
+}
 printf 'WAR SHA-256\t%s\nLiberty runtime SHA-256\t%s\n' \
   "$war_sha256" "$runtime_sha256" > "$comparison/artifact-checksums.txt"
 printf 'cycle\tposition\tmode\trun_name\n' > "$comparison/run-order.tsv"
@@ -808,6 +850,7 @@ while IFS=$'\t' read -r cycle position mode run_name; do
     args=("$mode" "$cycle" "$position" "$run_name" "$run_output" "$pristine_server" "$server_dir")
   fi
   {
+    printf 'timeout --signal=TERM --kill-after=15 105 '
     printf '%q' "$wrapper"
     printf ' %q' "${args[@]}"
     printf '\n'
@@ -815,12 +858,39 @@ while IFS=$'\t' read -r cycle position mode run_name; do
   {
     printf 'mode\t%s\ncycle\t%s\nposition\t%s\nrun\t%s\n' \
       "$mode" "$cycle" "$position" "$run_name"
-    cat "$comparison/artifact-identity.txt"
+    write_current_artifact_identity "$run_output/input-identity.txt"
+    if ! diff -u "$comparison/artifact-identity.txt" \
+      "$run_output/input-identity.txt"; then
+      echo "performance inputs changed before launch: $run_name" >&2
+      exit 1
+    fi
+    cat "$run_output/input-identity.txt"
   } > "$run_output/run-identity.txt"
   printf '%s\n' "performance launch attempt recorded" > "$run_output/status.txt"
   printf '%s\n' "run wrapper command is recorded in comparison/commands.txt" \
     > "$run_output/commands.txt"
-  "$wrapper" "${args[@]}" || overall_status=1
+  if timeout --signal=TERM --kill-after=15 105 "$wrapper" "${args[@]}"; then
+    wrapper_status=0
+  else
+    wrapper_status=$?
+    overall_status=1
+    printf 'FAIL: wrapper exit status %s; 105-second watchdog reserves cleanup time\n' \
+      "$wrapper_status" > "$run_output/status.txt"
+  fi
+  mapfile -t post_run_server_pids < <("$helper" list-server-pids "$server_dir")
+  if (( ${#post_run_server_pids[@]} > 0 )); then
+    printf 'Liberty JVMs remained after wrapper exit: %s\n' \
+      "${post_run_server_pids[*]}" >> "$run_output/status.txt"
+    for pid in "${post_run_server_pids[@]}"; do
+      kill "$pid" 2>/dev/null || true
+    done
+    sleep 1
+    mapfile -t post_run_server_pids < <("$helper" list-server-pids "$server_dir")
+    for pid in "${post_run_server_pids[@]}"; do
+      kill -KILL "$pid" 2>/dev/null || true
+    done
+    overall_status=1
+  fi
   cat "$run_output/commands.txt" >> "$artifact/commands.txt"
   cat "$run_output/commands.txt" >> "$comparison/commands.txt"
   if [[ -f "$run_output/run-identity.txt" ]] && \

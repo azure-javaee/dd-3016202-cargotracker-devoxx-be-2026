@@ -237,6 +237,45 @@ path.write_text(
 )
 PY
     ;;
+  verify-artifact-jfr)
+    report="${1:?verification report required}"
+    shift
+    if [[ "$#" -eq 0 ]]; then
+      echo "at least one artifact directory is required" >&2
+      exit 2
+    fi
+    report="$(realpath -m "$report")"
+    artifact_directories=()
+    for directory in "$@"; do
+      directory="$(realpath -m "$directory")"
+      if [[ ! -d "$directory" ]]; then
+        echo "JFR artifact directory is missing: $directory" >&2
+        exit 2
+      fi
+      if [[ "$report" == "$directory" || "$report" == "$directory/"* ]]; then
+        echo "JFR verification report must be outside artifact directories" >&2
+        exit 2
+      fi
+      artifact_directories+=("$directory")
+    done
+    verification_scratch="$(mktemp -d)"
+    trap 'rm -rf "$verification_scratch"' EXIT
+    : > "$report"
+    recording_count=0
+    verification_status=0
+    while IFS= read -r -d '' recording; do
+      recording_count=$((recording_count + 1))
+      if "$0" verify-jfr-redaction "$recording" \
+        "$verification_scratch/counts-$recording_count.tsv"; then
+        printf 'verified\t%s\n' "$recording" >> "$report"
+      else
+        printf 'rejected\t%s\n' "$recording" >> "$report"
+        verification_status=1
+      fi
+    done < <(find "${artifact_directories[@]}" -type f -name recording.jfr -print0 | sort -z)
+    printf 'recordings\t%s\n' "$recording_count" >> "$report"
+    exit "$verification_status"
+    ;;
   sample-server)
     server_dir="${1:?server directory required}"
     output="${2:?sample output required}"
@@ -366,7 +405,9 @@ if kind == "summarize-run":
         for row in requests
         if row.get("duration_ms") and row.get("status") == "200"
     ]
-    gc_log = next(iter(sorted(directory.glob("gc-*.log"))), None)
+    server_pid_file = directory / "server.pid"
+    server_pid = server_pid_file.read_text().strip() if server_pid_file.is_file() else ""
+    gc_log = directory / f"gc-{server_pid}.log" if server_pid.isdigit() else None
     gc_count, gc_total_ms = parse_gc(gc_log) if gc_log else (0, 0.0)
     recording = directory / "recording.jfr"
     gc_bytes = gc_log.stat().st_size if gc_log and gc_log.is_file() else 0
@@ -477,23 +518,40 @@ elif kind == "summarize-all":
                         )
                 if values.get("G1UseTimeBasedHeapSizing") == "true":
                     raise SystemExit(f"{mode} unexpectedly enabled tuned G1 sizing")
-    direct_heaps = [
-        values["MaxHeapSize"]
-        for (mode, _), values in flag_values.items()
-        if mode == "direct"
-    ]
-    bypass_heaps = [
-        values["MaxHeapSize"]
-        for (mode, _), values in flag_values.items()
-        if mode == "bypass"
-    ]
+    def required_heap_values(mode, flag):
+        heaps = [
+            values.get(flag)
+            for (value_mode, _), values in flag_values.items()
+            if value_mode == mode
+        ]
+        if len(heaps) != 5 or any(
+            value is None or not value.isdigit() or int(value) <= 0
+            for value in heaps
+        ):
+            raise SystemExit(f"{mode} has missing or invalid {flag} evidence")
+        return heaps
+
+    direct_initial_heaps = required_heap_values("direct", "InitialHeapSize")
+    bypass_initial_heaps = required_heap_values("bypass", "InitialHeapSize")
+    direct_heaps = required_heap_values("direct", "MaxHeapSize")
+    bypass_heaps = required_heap_values("bypass", "MaxHeapSize")
     tuned_heaps = [
-        values["MaxHeapSize"]
+        values.get("MaxHeapSize")
         for (mode, _), values in flag_values.items()
         if mode == "tuned"
     ]
+    if len(set(direct_initial_heaps)) != 1 \
+      or direct_initial_heaps != bypass_initial_heaps:
+        raise SystemExit(
+            "direct and bypassed runs did not retain identical initial heap policy"
+        )
     if len(set(direct_heaps)) != 1 or direct_heaps != bypass_heaps:
         raise SystemExit("direct and bypassed runs did not retain identical default heap policy")
+    if any(
+        heap is None or not heap.isdigit() or int(heap) <= 0
+        for heap in tuned_heaps
+    ):
+        raise SystemExit("tuned jaz has missing or invalid MaxHeapSize evidence")
     if any(heap == direct_heaps[0] for heap in tuned_heaps):
         raise SystemExit("tuned jaz did not select a distinct maximum heap")
 
@@ -673,7 +731,7 @@ else:
 PY
     ;;
   *)
-    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|verify-jfr-redaction|sample-server|ancestry|summarize}" >&2
+    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|verify-jfr-redaction|verify-artifact-jfr|sample-server|ancestry|summarize}" >&2
     exit 2
     ;;
 esac
