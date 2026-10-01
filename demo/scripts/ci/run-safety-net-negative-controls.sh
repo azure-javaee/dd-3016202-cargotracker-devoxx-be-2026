@@ -6,6 +6,7 @@ cd "$root"
 out="$root/ci-artifacts/compatibility-contract"
 mkdir -p "$out"
 report="$out/safety-net-negative-controls.txt"
+log_excerpt_lines=12
 : > "$report"
 tmp="$(mktemp -d)"
 route_test=src/test/java/org/eclipse/cargotracker/domain/model/cargo/RouteSpecificationTest.java
@@ -26,12 +27,16 @@ trap cleanup EXIT
 expect_failure() {
   local name="$1"; shift
   local log="$tmp/$name.log"
-  if "$@" >"$log" 2>&1; then
+  set +e
+  "$@" >"$log" 2>&1
+  local status=$?
+  set -e
+  if [[ "$status" -eq 0 || "$status" -eq 124 ]]; then
     echo "$name: UNEXPECTED PASS" | tee -a "$report"
     return 1
   fi
   echo "$name: expected failure" | tee -a "$report"
-  sed -n '1,12p' "$log" >> "$report"
+  sed -n "1,${log_excerpt_lines}p" "$log" >> "$report"
 }
 
 sed -i '0,/assertTrue(routeSpecification.isSatisfiedBy(itinerary))/s//assertFalse(routeSpecification.isSatisfiedBy(itinerary))/' "$route_test"
@@ -58,4 +63,4 @@ if pgrep -f 'wlp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; th
   exit 1
 fi
 echo "forced-acceptance-cleanup: expected failure and Liberty stopped" | tee -a "$report"
-sed -n '1,12p' "$tmp/forced-acceptance.log" >> "$report"
+sed -n "1,${log_excerpt_lines}p" "$tmp/forced-acceptance.log" >> "$report"
