@@ -78,7 +78,7 @@ jobs:
             echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test"
             echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
             echo "./scripts/ci/verify-compatibility-contract.sh"
-            echo "./mvnw -Popenliberty -Dskip=true -DskipTests clean package"
+            echo "./mvnw -Popenliberty -DskipTests clean package"
             echo "./scripts/ci/run-openliberty-acceptance.sh"
             echo "./scripts/ci/run-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
@@ -100,7 +100,7 @@ jobs:
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
       - name: Build canonical WAR
-        run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+        run: ./mvnw -Popenliberty -DskipTests clean package
       - name: Verify Java 17 and Java EE 7 contract
         run: ./scripts/ci/verify-compatibility-contract.sh
       - name: Run deployed Open Liberty acceptance
