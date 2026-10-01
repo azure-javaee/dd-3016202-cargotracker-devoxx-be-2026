@@ -245,9 +245,9 @@ if [[ "${#fixture_java_pids[@]}" -ne 2 ]]; then
 fi
 sampler_output="$scratch/transition-samples.tsv"
 sampler_stop="$scratch/transition.stop"
-sampler_pid_file="$scratch/transition.pid"
+selected_server_pid_file="$scratch/transition.pid"
 "$helper" sample-server "$fixture_server_dir" "$sampler_output" \
-  "$sampler_stop" 0.02 "$sampler_pid_file" \
+  "$sampler_stop" 0.02 "$selected_server_pid_file" \
   > "$scratch/transition.out" 2> "$scratch/transition.err" &
 fixture_sampler_pid=$!
 fixture_sampler_stop="$sampler_stop"
@@ -268,7 +268,7 @@ if [[ "${#transition_pids[@]}" -ne 1 ]]; then
   exit 1
 fi
 selected_fixture_pid="$("$helper" find-server-pid "$fixture_server_dir")"
-printf '%s\n' "$selected_fixture_pid" > "$sampler_pid_file"
+printf '%s\n' "$selected_fixture_pid" > "$selected_server_pid_file"
 for ((attempt = 0; attempt < 50; attempt++)); do
   [[ "$(wc -l < "$sampler_output")" -gt 1 ]] && break
   sleep 0.1

@@ -22,7 +22,7 @@ if [[ "${1:-}" == "--one" ]]; then
   cleanup_status=0
   sampler_pid=""
   sampler_stop="$output/sampler.stop"
-  sampler_pid_file="$output/server.pid"
+  selected_server_pid_file="$output/server.pid"
   server_pid=""
   scratch="$(mktemp -d)"
 
@@ -284,7 +284,7 @@ PY
   record_command "restore pristine defaultServer and apply mode-specific server.env plus diagnostic-only GC logging"
   record_command "timeout 90 ./mvnw -Popenliberty -Dliberty.jvm.performanceGc=$gc_option -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start"
   "$helper" sample-server "$server_dir" "$output/process-samples.tsv" \
-    "$sampler_stop" 0.2 "$sampler_pid_file" &
+    "$sampler_stop" 0.2 "$selected_server_pid_file" &
   sampler_pid=$!
   server_started=true
   launch_start_ns="$(date +%s%N)"
@@ -332,8 +332,8 @@ PY
   record_command "GET /cargo-tracker/rest/cargo readiness; validate HTTP 200, JSON, and seeded-cargo presence without retaining the body"
 
   server_pid="$("$helper" find-server-pid "$server_dir")"
-  printf '%s\n' "$server_pid" > "$sampler_pid_file.tmp"
-  mv "$sampler_pid_file.tmp" "$sampler_pid_file"
+  printf '%s\n' "$server_pid" > "$selected_server_pid_file.tmp"
+  mv "$selected_server_pid_file.tmp" "$selected_server_pid_file"
   if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.command_line \
     > "$output/jvm-command-line.txt" 2>&1; then
     echo "jcmd VM.command_line failed" >&2
