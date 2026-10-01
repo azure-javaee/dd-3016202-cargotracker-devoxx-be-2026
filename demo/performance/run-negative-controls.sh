@@ -7,6 +7,7 @@ helper="$root/performance/collect-process-metadata.sh"
 fixture_server_dir="$scratch/liberty/usr/servers/defaultServer"
 fixture_launcher_pids=()
 fixture_java_pids=()
+last_fixture_pid=""
 cleanup() {
   local pid
   local -a cleanup_java_pids
@@ -95,6 +96,7 @@ fixture_jar="$scratch/liberty/bin/tools/ws-server.jar"
 start_fixture() {
   local mode="$1"
   local expected_count
+  local pid existing_pid found
   local -a existing_fixture_pids discovered_fixture_pids
   mapfile -t existing_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
   expected_count=$((${#existing_fixture_pids[@]} + 1))
@@ -120,6 +122,20 @@ start_fixture() {
     mapfile -t discovered_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
     if [[ "${#discovered_fixture_pids[@]}" -eq "$expected_count" ]]; then
       fixture_java_pids=("${discovered_fixture_pids[@]}")
+      last_fixture_pid=""
+      for pid in "${discovered_fixture_pids[@]}"; do
+        found=false
+        for existing_pid in "${existing_fixture_pids[@]}"; do
+          if [[ "$pid" == "$existing_pid" ]]; then
+            found=true
+            break
+          fi
+        done
+        if [[ "$found" == false ]]; then
+          last_fixture_pid="$pid"
+          break
+        fi
+      done
       return 0
     fi
     sleep 0.1
@@ -156,7 +172,7 @@ stop_fixture() {
 for mode in direct bypass tuned; do
   start_fixture "$mode"
   fixture_pid="$("$helper" find-server-pid "$fixture_server_dir")"
-  if [[ "$fixture_pid" != "${fixture_java_pids[0]}" ]]; then
+  if [[ "$fixture_pid" != "$last_fixture_pid" ]]; then
     echo "$mode-shaped discovery returned the wrong Java PID" >&2
     exit 1
   fi
@@ -182,7 +198,8 @@ done
 fixture_non_server_pid=$!
 fixture_launcher_pids+=("$fixture_non_server_pid")
 sleep 0.5
-if [[ -n "$("$helper" list-server-pids "$fixture_server_dir")" ]]; then
+mapfile -t false_positive_pids < <("$helper" list-server-pids "$fixture_server_dir")
+if (( ${#false_positive_pids[@]} > 0 )); then
   echo "non-server Java helper was misidentified as the Liberty JVM" >&2
   exit 1
 fi
