@@ -38,7 +38,7 @@ sed -i '0,/assertTrue(routeSpecification.isSatisfiedBy(itinerary))/s//assertFals
 expect_failure domain-invariant-regression ./mvnw '-P!openliberty' -Dtest=RouteSpecificationTest test
 
 sed -i '0,/assertEquals(RoutingStatus.ROUTED/s//assertEquals(RoutingStatus.MISROUTED/' "$service_test"
-expect_failure application-service-regression ./mvnw -Popenliberty -Dtest=BookingServiceTest test
+expect_failure application-service-regression timeout 120s ./mvnw -Popenliberty -Dtest=BookingServiceTest test
 
 printf '\nimport org.eclipse.cargotracker.domain.model.cargo.Cargo;\n' >> "$web_source"
 expect_failure package-layer-violation ./mvnw '-P!openliberty' -Dtest=LayeringTest test
@@ -52,7 +52,7 @@ if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/
   echo "forced-acceptance-cleanup: UNEXPECTED PASS" | tee -a "$report"
   exit 1
 fi
-if pgrep -af 'wlp/bin/server run defaultServer' >"$tmp/processes"; then
+if pgrep -f 'wlp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; then
   echo "forced-acceptance-cleanup: Liberty still running" | tee -a "$report"
   cat "$tmp/processes" >> "$report"
   exit 1

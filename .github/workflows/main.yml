@@ -171,9 +171,6 @@ jobs:
         run: |
           ./scripts/ci/run-negative-controls.sh
           ./scripts/ci/run-safety-net-negative-controls.sh
-          mkdir -p ci-artifacts/liberty-logs
-          cp -R ci-artifacts/compatibility-contract/liberty ci-artifacts/liberty-logs/ || true
-          cp ci-artifacts/compatibility-contract/liberty-*.log ci-artifacts/liberty-logs/ || true
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
       - name: Capture evidence end

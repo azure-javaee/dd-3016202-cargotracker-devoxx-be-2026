@@ -4,24 +4,25 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 out="$root/ci-artifacts/compatibility-contract"
+liberty_out="$root/ci-artifacts/liberty-logs"
 mkdir -p "$out"
 server_stopped=false
 collect_logs() {
   local server_dir=target/liberty/wlp/usr/servers/defaultServer
-  mkdir -p "$out/liberty"
+  mkdir -p "$liberty_out"
   for name in messages.log console.log; do
     if [[ -f "$server_dir/logs/$name" ]]; then
-      tail -n 200 "$server_dir/logs/$name" > "$out/liberty/$name"
+      tail -n 200 "$server_dir/logs/$name" > "$liberty_out/$name"
     fi
   done
   if [[ -d "$server_dir/logs/ffdc" ]]; then
     find "$server_dir/logs/ffdc" -maxdepth 1 -type f -print0 |
       sort -z | while IFS= read -r -d '' file; do
-        tail -n 200 "$file" > "$out/liberty/$(basename "$file")"
+        tail -n 200 "$file" > "$liberty_out/$(basename "$file")"
       done
   fi
-  if [[ -f "$out/liberty/messages.log" ]]; then
-    cp "$out/liberty/messages.log" "$out/liberty-messages-excerpt.txt"
+  if [[ -f "$liberty_out/messages.log" ]]; then
+    cp "$liberty_out/messages.log" "$out/liberty-messages-excerpt.txt"
   else
     printf '%s\n' "No Liberty messages.log was produced." > "$out/liberty-messages-excerpt.txt"
   fi
