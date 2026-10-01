@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "shepherdTaskVersion": "1.0.4",
+  "campaignCreatedWithVersion": "1.0.4",
+  "stageOutcomeProtocolVersion": 1,
+  "campaignId": "474aebe4-23f7-45cf-a841-e214bdcdd132",
+  "campaignMetadataDirectory": "1-trick-out-01-remove-before-merge",
+  "repository": "edburns/dd-3016202-cargotracker-devoxx-be-2026",
+  "baseBranch": "edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment",
+  "lessonPropagation": "off",
+  "taskIssues": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "startedAt": "2026-09-30T17:36:03Z",
+  "completedAt": "2026-09-30T20:32:21Z",
+  "exitCode": 1,
+  "status": "failed"
+}
