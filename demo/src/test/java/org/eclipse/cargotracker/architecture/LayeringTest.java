@@ -27,6 +27,7 @@ class LayeringTest {
         if (relative.startsWith("domain/") && !relative.equals("domain/model/cargo/BookingBackingBean.java")) {
           addImports(violations, relative, source, "application.", "interfaces.");
         }
+        // Booking web beans must use the facade; older REST/tracking paths are the accepted legacy baseline.
         if (relative.startsWith("interfaces/booking/web/")) {
           addImports(violations, relative, source, "domain.", "application.");
         }

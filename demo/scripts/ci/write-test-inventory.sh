@@ -6,7 +6,11 @@ cd "$root"
 out="$root/ci-artifacts/test-reports-unit"
 mkdir -p "$out"
 # Keep this count synchronized with the inventory below; undispositioned test classes must fail CI.
-test "$(find src/test/java -name '*Test.java' | wc -l)" -eq 11
+test_count="$(find src/test/java -name '*Test.java' | wc -l)"
+test "$test_count" -eq 11 || {
+  echo "Expected 11 test classes listed below, found $test_count" >&2
+  exit 1
+}
 
 {
   printf 'class\tclassification\treason\n'
