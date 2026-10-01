@@ -25,7 +25,6 @@ test -s "$tmp/BookingServiceTest.java"
 test -s "$tmp/web.java"
 http_server_pid=
 readiness_server_pid=
-control_log=
 cleanup() {
   local status=$?
   [[ -z "$http_server_pid" ]] || kill "$http_server_pid" 2>/dev/null || true
@@ -44,7 +43,6 @@ trap cleanup EXIT
 expect_failure() {
   local name="$1"; shift
   local log="$tmp/$name.log"
-  control_log="$log"
   set +e
   "$@" >"$log" 2>&1
   local status=$?
@@ -63,7 +61,7 @@ expect_failure() {
 expect_failure_with_diagnostic() {
   local name="$1" pattern="$2"; shift 2
   expect_failure "$name" "$@"
-  local log="$control_log"
+  local log="$tmp/$name.log"
   if [[ ! -s "$log" ]] || ! grep -Eiq "$pattern" "$log"; then
     echo "$name: expected diagnostic /$pattern/ not found" | tee -a "$report"
     exit 1
@@ -95,7 +93,7 @@ if ! curl --silent --max-time 1 http://127.0.0.1:18080/ >/dev/null 2>&1; then
 fi
 expect_failure_with_diagnostic http-non-200-or-missing-content '404|curl: \(22\)' \
   curl --fail --silent --show-error --max-time 5 http://127.0.0.1:18080/missing
-python3 -c 'import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(("127.0.0.1",18081)); s.listen(1); time.sleep(10)' >"$tmp/readiness-server.log" 2>&1 &
+python3 -c 'import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(("127.0.0.1",18081)); s.listen(1); time.sleep(3600)' >"$tmp/readiness-server.log" 2>&1 &
 readiness_server_pid=$!
 sleep 0.2
 if ! kill -0 "$readiness_server_pid" 2>/dev/null; then
