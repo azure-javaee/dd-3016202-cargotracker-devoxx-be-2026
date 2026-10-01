@@ -122,6 +122,12 @@ expect_rejection heap-tuning \
 expect_rejection compiler-count-tuning \
   'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
   JAVA_TOOL_OPTIONS=-XX:CICompilerCount=2
+expect_rejection interpreter-only \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-Xint
+expect_rejection forced-compilation \
+  'user-provided JVM tuning is not allowed (JAVA_TOOL_OPTIONS)' \
+  JAVA_TOOL_OPTIONS=-Xcomp
 expect_rejection ignore-user-tuning \
   'JAZ_IGNORE_USER_TUNING must not be set for the comparison' \
   JAZ_IGNORE_USER_TUNING=1
@@ -134,6 +140,35 @@ expect_rejection external-dry-run \
 expect_rejection external-exit-without-flush \
   'JAZ launcher variables must be controlled by the harness' \
   JAZ_EXIT_WITHOUT_FLUSH=1
+
+file_tuning="$scratch/file-tuning"
+file_tuning_pristine="$file_tuning/pristine"
+file_tuning_server="$file_tuning/liberty/usr/servers/defaultServer"
+file_tuning_output="$file_tuning/output"
+mkdir -p "$file_tuning_pristine" "$file_tuning_output"
+printf 'JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount=1"\n' \
+  > "$file_tuning_pristine/server.env"
+file_tuning_hash="$(tar --sort=name --mtime='UTC 1970-01-01' \
+  --owner=0 --group=0 --numeric-owner -C "$file_tuning_pristine" -cf - . |
+  sha256sum | awk '{ print $1 }')"
+if PERF_SERVER_TEMPLATE_SHA256="$file_tuning_hash" \
+  "$root/performance/run-workload.sh" --one direct 1 1 file-tuning \
+    "$file_tuning_output" "$file_tuning_pristine" "$file_tuning_server" \
+    > "$file_tuning/transcript.txt" 2>&1; then
+  echo "performance harness accepted tuning from server.env" >&2
+  exit 1
+fi
+if ! grep -Fq 'user-provided JVM tuning is not allowed' \
+  "$file_tuning/transcript.txt"; then
+  echo "server.env tuning was rejected for an unexpected reason" >&2
+  cat "$file_tuning/transcript.txt" >&2
+  exit 1
+fi
+if find "$file_tuning" -path '*/maven/*' -type f -print -quit | grep -q .; then
+  echo "performance harness invoked Maven before rejecting server.env tuning" >&2
+  exit 1
+fi
+printf 'expected quoted server.env tuning rejected before launch\n'
 
 gate_failure="$scratch/post-run-gate"
 mkdir -p "$gate_failure"

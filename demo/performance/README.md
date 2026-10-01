@@ -79,8 +79,10 @@ Tuned `jaz` must report its selected heap and G1 policy in both the captured
 retain the same default heap/G1 policy; bypass still records `jaz` diagnostics,
 including native-memory tracking and its error-file setting. User-supplied
 heap, GC, processor-count, compiler-count, or startup-recording options are
-rejected. Positive initial- and maximum-heap values are required for every
-direct and bypass run and must remain identical between those modes.
+rejected, as are interpreter-only and forced-compilation modes. The same
+validation applies to quoted option assignments in `server.env` without
+sourcing that file. Positive initial- and maximum-heap values are required for
+every direct and bypass run and must remain identical between those modes.
 
 CI fails for startup beyond 90 seconds, failed readiness or workload requests,
 crash/OOM, repetition beyond 120 seconds, peak sampled RSS above 2 GiB, missing

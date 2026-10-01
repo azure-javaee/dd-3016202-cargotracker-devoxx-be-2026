@@ -71,8 +71,11 @@ if [[ "${1:-}" == "--one" ]]; then
   }
 
   has_user_tuning() {
-    local value="$1"
-    [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
+    local value="$1" normalized
+    normalized="${value//=/ }"
+    normalized="${normalized//\"/ }"
+    normalized="${normalized//\'/ }"
+    [[ "$normalized" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]
   }
 
   validate_no_user_tuning() {
@@ -613,7 +616,7 @@ if [[ "$(uname -m)" != x86_64 ]]; then
 fi
 for name in JAVA_TOOL_OPTIONS _JAVA_OPTIONS JDK_JAVA_OPTIONS JAVA_OPTS JVM_ARGS MAVEN_OPTS; do
   value="${!name:-}"
-  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
+  if [[ "$value" =~ (^|[[:space:]])(-X(ms|mx|mn|ss|oss|int|comp)|-XX:([^[:space:]]*(Heap|GC|ActiveProcessorCount|CICompilerCount|G1|RAM|Threads|Ratio|Metaspace|Survivor|NewSize|ContainerSupport|UseSerialGC|UseParallelGC|UseZGC|UseShenandoah|StartFlightRecording))) ]]; then
     echo "user-provided JVM tuning is not allowed ($name)" >&2
     exit 1
   fi
