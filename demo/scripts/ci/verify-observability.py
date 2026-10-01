@@ -40,18 +40,21 @@ def fail(message: str) -> None:
     raise ValueError(message)
 
 
-def records(path: pathlib.Path, label: str) -> list[dict]:
+def records(
+    path: pathlib.Path, label: str, include_raw: bool = False
+) -> list[dict] | tuple[list[dict], bytes]:
     if not path.is_file() or path.stat().st_size == 0:
         fail(f"missing telemetry: {label} file is absent or empty")
+    raw_content = path.read_bytes()
     result = []
-    for line_number, line in enumerate(path.read_text().splitlines(), 1):
+    for line_number, line in enumerate(raw_content.decode().splitlines(), 1):
         try:
             result.append(json.loads(line))
         except json.JSONDecodeError as error:
             fail(f"missing telemetry: {label} is not JSON at line {line_number}: {error}")
     if not result:
         fail(f"missing telemetry: {label} contains no records")
-    return result
+    return (result, raw_content) if include_raw else result
 
 
 def value(attribute: dict):
@@ -72,8 +75,8 @@ def attributes(data: dict) -> dict:
     return {entry.get("key", ""): value(entry) for entry in data.get("attributes", [])}
 
 
-def verify_redaction(path: pathlib.Path, documents: list[dict]) -> None:
-    if b"ABC123" in path.read_bytes():
+def verify_redaction(raw_content: bytes, documents: list[dict]) -> None:
+    if b"ABC123" in raw_content:
         fail("artifact redaction failed: telemetry contains a seeded cargo identifier")
 
     def walk(value):
@@ -126,8 +129,8 @@ def verify_trace(
     access_log: pathlib.Path,
     transcript_path: pathlib.Path | None = None,
 ) -> set[str]:
-    trace_records = records(path, "trace export")
-    verify_redaction(path, trace_records)
+    trace_records, raw_content = records(path, "trace export", include_raw=True)
+    verify_redaction(raw_content, trace_records)
     spans = [
         (service, instance, span, attributes(span))
         for document in trace_records
@@ -221,8 +224,8 @@ def verify_trace(
 
 
 def verify_metrics(path: pathlib.Path, server_instances: set[str]) -> None:
-    documents = records(path, "runtime metrics export")
-    verify_redaction(path, documents)
+    documents, raw_content = records(path, "runtime metrics export", include_raw=True)
+    verify_redaction(raw_content, documents)
     for document in documents:
         for resource_group in document.get("resourceMetrics", []):
             resource = attributes(resource_group.get("resource", {}))
@@ -299,6 +302,7 @@ def self_test() -> None:
                                 {
                                     "metrics": [
                                         {
+                                            "name": "jvm.memory.used",
                                             "name": "jvm.memory.used",
                                             "histogram": {
                                                 "dataPoints": [

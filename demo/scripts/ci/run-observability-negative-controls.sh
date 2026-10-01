@@ -60,6 +60,7 @@ document = {
                 {
                     "metrics": [
                         {
+                            "name": "jvm.memory.used",
                             "histogram": {
                                 "dataPoints": [
                                     {
