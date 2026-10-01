@@ -147,6 +147,15 @@ if [[ "${1:-}" == "--one" ]]; then
   cleanup() {
     local original_status=$?
     set +e
+    if [[ -n "$sampler_pid" ]]; then
+      touch "$sampler_stop"
+      wait "$sampler_pid"
+      sample_status=$?
+      if [[ "$sample_status" -ne 0 && "$original_status" -eq 0 ]]; then
+        echo "process sampling did not produce valid samples" >&2
+        original_status=1
+      fi
+    fi
     if [[ "$server_started" == true ]]; then
       run_maven stop ./mvnw -Popenliberty liberty:stop
       cleanup_status=$?
@@ -166,15 +175,6 @@ if [[ "${1:-}" == "--one" ]]; then
       fi
       sleep 0.25
     done
-    if [[ -n "$sampler_pid" ]]; then
-      touch "$sampler_stop"
-      wait "$sampler_pid"
-      sample_status=$?
-      if [[ "$sample_status" -ne 0 && "$original_status" -eq 0 ]]; then
-        echo "process sampling did not produce valid samples" >&2
-        original_status=1
-      fi
-    fi
     copy_liberty_logs
     if grep -Eiq 'OutOfMemoryError|Java heap space|GC overhead limit exceeded' \
       "$output"/maven/*/*.txt "$output"/liberty/* 2>/dev/null; then
@@ -266,8 +266,7 @@ PY
   fi
   write_server_environment
   gc_log="$output/gc-%p.log"
-  printf '%s\n' "-Xlog:gc*,safepoint:file=$gc_log:time,uptime,level,tags" \
-    >> "$server_dir/jvm.options"
+  gc_option="-Xlog:gc*,safepoint:file=$gc_log:time,uptime,level,tags"
   printf 'mode\t%s\ncycle\t%s\nposition\t%s\nrun\t%s\n' \
     "$mode" "$cycle" "$position" "$run_name" > "$output/run-identity.txt"
   cat "$PERF_ARTIFACT_IDENTITY" >> "$output/run-identity.txt"
@@ -283,7 +282,7 @@ PY
   printf 'request\tstatus\tduration_ms\n' > "$output/warmup.tsv"
   printf 'request\tstatus\tduration_ms\n' > "$output/requests.tsv"
   record_command "restore pristine defaultServer and apply mode-specific server.env plus diagnostic-only GC logging"
-  record_command "timeout 90 ./mvnw -Popenliberty -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start"
+  record_command "timeout 90 ./mvnw -Popenliberty -Dliberty.jvm.performanceGc=$gc_option -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start"
   "$helper" sample-server "$server_dir" "$output/process-samples.tsv" \
     "$sampler_stop" 0.2 "$sampler_pid_file" &
   sampler_pid=$!
@@ -291,6 +290,7 @@ PY
   launch_start_ns="$(date +%s%N)"
   launch_start_seconds="$(date +%s)"
   run_maven start ./mvnw -Popenliberty \
+    "-Dliberty.jvm.performanceGc=$gc_option" \
     -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start
 
   deadline="$((launch_start_seconds + 90))"
@@ -332,10 +332,15 @@ PY
   record_command "GET /cargo-tracker/rest/cargo readiness; validate HTTP 200, JSON, and seeded-cargo presence without retaining the body"
 
   server_pid="$("$helper" find-server-pid "$server_dir")"
-  printf '%s\n' "$server_pid" > "$output/server.pid"
+  printf '%s\n' "$server_pid" > "$sampler_pid_file.tmp"
+  mv "$sampler_pid_file.tmp" "$sampler_pid_file"
   if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.command_line \
     > "$output/jvm-command-line.txt" 2>&1; then
     echo "jcmd VM.command_line failed" >&2
+    exit 1
+  fi
+  if ! "$helper" verify-jvm-option "$output/jvm-command-line.txt" "$gc_option"; then
+    echo "Liberty JVM did not start with the required diagnostic GC logging option" >&2
     exit 1
   fi
   if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.flags -all \

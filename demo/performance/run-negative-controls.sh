@@ -8,9 +8,17 @@ fixture_server_dir="$scratch/liberty/usr/servers/defaultServer"
 fixture_launcher_pids=()
 fixture_java_pids=()
 last_fixture_pid=""
+fixture_sampler_pid=""
+fixture_sampler_stop=""
 cleanup() {
   local pid
   local -a cleanup_java_pids
+  if [[ -n "$fixture_sampler_stop" ]]; then
+    touch "$fixture_sampler_stop"
+  fi
+  if [[ -n "$fixture_sampler_pid" ]]; then
+    wait "$fixture_sampler_pid" 2>/dev/null || true
+  fi
   if [[ -d "$fixture_server_dir" ]]; then
     mapfile -t cleanup_java_pids < <("$helper" list-server-pids "$fixture_server_dir")
     for pid in "${cleanup_java_pids[@]}"; do
@@ -92,6 +100,27 @@ JAVA
 "$JAVA_HOME/bin/jar" --create --file "$scratch/liberty/bin/tools/ws-server.jar" \
   --main-class PerformanceProcessFixture -C "$scratch/classes" .
 fixture_jar="$scratch/liberty/bin/tools/ws-server.jar"
+gc_option="-Xlog:gc*,safepoint:file=$scratch/gc-%p.log:time,uptime,level,tags"
+
+"$JAVA_HOME/bin/java" "$gc_option" -cp "$fixture_jar" PerformanceProcessFixture \
+  > "$scratch/gc-option.log" 2>&1 &
+fixture_gc_pid=$!
+fixture_java_pids=("$fixture_gc_pid")
+sleep 0.5
+"$JAVA_HOME/bin/jcmd" "$fixture_gc_pid" VM.command_line \
+  > "$scratch/gc-command-line.txt"
+"$helper" verify-jvm-option "$scratch/gc-command-line.txt" "$gc_option"
+if "$helper" verify-jvm-option "$scratch/gc-command-line.txt" \
+  '-Xlog:gc*,safepoint:file=missing-%p.log:time,uptime,level,tags' \
+  > "$scratch/gc-missing.out" 2> "$scratch/gc-missing.err"; then
+  echo "GC option verification accepted a missing effective JVM option" >&2
+  exit 1
+fi
+grep -Fq 'effective JVM command line omitted required option' "$scratch/gc-missing.err"
+kill "$fixture_gc_pid" 2>/dev/null || true
+wait "$fixture_gc_pid" 2>/dev/null || true
+fixture_java_pids=()
+printf 'expected effective GC logging option verified and missing option rejected\n'
 
 start_fixture() {
   local mode="$1"
@@ -214,22 +243,77 @@ if [[ "${#fixture_java_pids[@]}" -ne 2 ]]; then
   echo "duplicate JVM fixture did not produce exactly two server-shaped processes" >&2
   exit 1
 fi
-if "$helper" find-server-pid "$fixture_server_dir" \
-  > "$scratch/duplicate-discovery.out" 2> "$scratch/duplicate-discovery.err"; then
-  echo "PID discovery accepted multiple Liberty JVMs" >&2
+sampler_output="$scratch/transition-samples.tsv"
+sampler_stop="$scratch/transition.stop"
+sampler_pid_file="$scratch/transition.pid"
+"$helper" sample-server "$fixture_server_dir" "$sampler_output" \
+  "$sampler_stop" 0.02 "$sampler_pid_file" \
+  > "$scratch/transition.out" 2> "$scratch/transition.err" &
+fixture_sampler_pid=$!
+fixture_sampler_stop="$sampler_stop"
+sleep 0.2
+if ! kill -0 "$fixture_sampler_pid" 2>/dev/null; then
+  echo "sampler failed before post-readiness PID selection" >&2
+  cat "$scratch/transition.err" >&2
   exit 1
 fi
-grep -Fq 'expected one Liberty JVM' "$scratch/duplicate-discovery.err"
-if "$helper" sample-server "$fixture_server_dir" "$scratch/duplicate-samples.tsv" \
-  "$scratch/sampler.stop" 0.01 "$scratch/sampler.pid" \
-  > "$scratch/sampler.out" 2> "$scratch/sampler.err"; then
-  echo "sampler accepted multiple Liberty JVMs" >&2
+kill "$last_fixture_pid" 2>/dev/null || true
+for ((attempt = 0; attempt < 50; attempt++)); do
+  mapfile -t transition_pids < <("$helper" list-server-pids "$fixture_server_dir")
+  [[ "${#transition_pids[@]}" -eq 1 ]] && break
+  sleep 0.1
+done
+if [[ "${#transition_pids[@]}" -ne 1 ]]; then
+  echo "startup fixture did not transition to one Liberty JVM" >&2
   exit 1
 fi
-grep -Fq 'expected one Liberty JVM' "$scratch/sampler.err"
-if grep -Fq 'Broken pipe' "$scratch/sampler.err"; then
+selected_fixture_pid="$("$helper" find-server-pid "$fixture_server_dir")"
+printf '%s\n' "$selected_fixture_pid" > "$sampler_pid_file"
+for ((attempt = 0; attempt < 50; attempt++)); do
+  [[ "$(wc -l < "$sampler_output")" -gt 1 ]] && break
+  sleep 0.1
+done
+if [[ "$(wc -l < "$sampler_output")" -le 1 ]] \
+  || [[ "$(awk -F '\t' 'NR == 2 { print $2 }' "$sampler_output")" != "$selected_fixture_pid" ]]; then
+  echo "sampler did not transition to the strictly selected Liberty PID" >&2
+  exit 1
+fi
+touch "$sampler_stop"
+wait "$fixture_sampler_pid"
+fixture_sampler_pid=""
+fixture_sampler_stop=""
+changed_pid_file="$scratch/changed-pid.txt"
+printf '1\n' > "$changed_pid_file"
+"$helper" sample-server "$fixture_server_dir" "$scratch/changed-pid-samples.tsv" \
+  "$scratch/changed-pid.stop" 0.02 "$changed_pid_file" \
+  > "$scratch/changed-pid.out" 2> "$scratch/changed-pid.err" &
+fixture_sampler_pid=$!
+fixture_sampler_stop="$scratch/changed-pid.stop"
+if wait "$fixture_sampler_pid"; then
+  echo "sampler accepted a different post-readiness Liberty PID" >&2
+  exit 1
+fi
+fixture_sampler_pid=""
+fixture_sampler_stop=""
+grep -Fq 'Liberty JVM PID changed unexpectedly' "$scratch/changed-pid.err"
+start_fixture bypass
+sampler_output="$scratch/duplicate-samples.tsv"
+sampler_stop="$scratch/duplicate.stop"
+"$helper" sample-server "$fixture_server_dir" "$sampler_output" \
+  "$sampler_stop" 0.02 "$sampler_pid_file" \
+  > "$scratch/duplicate.out" 2> "$scratch/duplicate.err" &
+fixture_sampler_pid=$!
+fixture_sampler_stop="$sampler_stop"
+if wait "$fixture_sampler_pid"; then
+  echo "sampler accepted multiple Liberty JVMs after PID selection" >&2
+  exit 1
+fi
+fixture_sampler_pid=""
+fixture_sampler_stop=""
+grep -Fq 'expected one Liberty JVM' "$scratch/duplicate.err"
+if grep -Fq 'Broken pipe' "$scratch/duplicate.err"; then
   echo "sampler emitted a broken-pipe error during duplicate discovery" >&2
   exit 1
 fi
-printf 'expected duplicate Liberty JVMs rejected without SIGPIPE\n'
+printf 'expected pre-readiness candidates deferred and post-selection duplicates rejected\n'
 stop_fixture

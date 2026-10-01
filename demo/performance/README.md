@@ -65,6 +65,12 @@ Liberty artifacts from the same workflow job/runner are retained as
 diagnostic context, not misrepresented as measurements from these individual
 processes.
 
+The sampler waits for the post-readiness, unique server PID before collecting
+samples, then rejects any subsequent PID change or duplicate. Diagnostic GC
+logging is passed as a `liberty.jvm.*` Maven property so the Liberty Maven
+plugin applies it after refreshing server configuration; the harness confirms
+the exact option in `jcmd VM.command_line` before accepting the GC log.
+
 Tuned `jaz` must report its selected heap and G1 policy in both the captured
 `JAZ_DRY_RUN=1` output and effective JVM flags. Direct and bypass modes must
 retain the same default heap/G1 policy; bypass still records `jaz` diagnostics,

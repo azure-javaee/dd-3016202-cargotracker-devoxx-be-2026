@@ -133,6 +133,15 @@ PY
   list-server-pids)
     find_server_pids "${1:?server directory required}"
     ;;
+  verify-jvm-option)
+    command_file="${1:?JVM command-line file required}"
+    expected_option="${2:?expected JVM option required}"
+    if ! grep -Fq -- "$expected_option" "$command_file"; then
+      printf 'effective JVM command line omitted required option: %s\n' \
+        "$expected_option" >&2
+      exit 1
+    fi
+    ;;
   sample-server)
     server_dir="${1:?server directory required}"
     output="${2:?sample output required}"
@@ -142,36 +151,63 @@ PY
     printf 'elapsed_ms\tpid\trss_kb\tcpu_ticks\n' > "$output"
     start_ns="$(date +%s%N)"
     while [[ ! -e "$stop_file" ]]; do
+      if [[ ! -s "$server_pid_file" ]]; then
+        sleep "$interval"
+        continue
+      fi
+      pid="$(cat "$server_pid_file")"
+      if [[ ! "$pid" =~ ^[0-9]+$ ]]; then
+        echo "selected Liberty PID file is invalid" >&2
+        exit 1
+      fi
       mapfile -t pids < <(find_server_pids "$server_dir")
-      if (( ${#pids[@]} > 1 )); then
+      if (( ${#pids[@]} != 1 )); then
         printf 'expected one Liberty JVM for %s, found %s\n' \
           "$server_dir" "${#pids[@]}" >&2
         exit 1
       fi
-      pid="${pids[0]:-}"
-      if [[ -n "$pid" && -r "/proc/$pid/status" && -r "/proc/$pid/stat" ]]; then
-        printf '%s\n' "$pid" > "$server_pid_file"
-        rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
-        stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
-        read -r -a stat_fields <<< "$stat"
-        cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
-        elapsed_ms="$((($(date +%s%N) - start_ns) / 1000000))"
-        printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
+      if [[ "${pids[0]}" != "$pid" ]]; then
+        printf 'Liberty JVM PID changed unexpectedly: selected %s, found %s\n' \
+          "$pid" "${pids[0]}" >&2
+        exit 1
       fi
+      if [[ ! -r "/proc/$pid/status" || ! -r "/proc/$pid/stat" ]]; then
+        printf 'selected Liberty JVM %s disappeared during sampling\n' "$pid" >&2
+        exit 1
+      fi
+      rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
+      stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
+      read -r -a stat_fields <<< "$stat"
+      cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
+      elapsed_ms="$((( $(date +%s%N) - start_ns) / 1000000))"
+      printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
       sleep "$interval"
     done
     if [[ -s "$server_pid_file" ]]; then
       pid="$(cat "$server_pid_file")"
-      if [[ -r "/proc/$pid/status" && -r "/proc/$pid/stat" ]]; then
-        rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
-        stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
-        read -r -a stat_fields <<< "$stat"
-        cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
-        elapsed_ms="$((($(date +%s%N) - start_ns) / 1000000))"
-        printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
+      mapfile -t pids < <(find_server_pids "$server_dir")
+      if (( ${#pids[@]} != 1 )); then
+        printf 'expected one Liberty JVM for %s, found %s\n' \
+          "$server_dir" "${#pids[@]}" >&2
+        exit 1
       fi
+      if [[ "${pids[0]}" != "$pid" ]]; then
+        printf 'Liberty JVM PID changed unexpectedly: selected %s, found %s\n' \
+          "$pid" "${pids[0]}" >&2
+        exit 1
+      fi
+      if [[ ! -r "/proc/$pid/status" || ! -r "/proc/$pid/stat" ]]; then
+        printf 'selected Liberty JVM %s disappeared during sampling\n' "$pid" >&2
+        exit 1
+      fi
+      rss_kb="$(awk '/^VmRSS:/ { print $2 }' "/proc/$pid/status")"
+      stat="$(sed 's/^[^)]*) //' "/proc/$pid/stat")"
+      read -r -a stat_fields <<< "$stat"
+      cpu_ticks="$((stat_fields[11] + stat_fields[12]))"
+      elapsed_ms="$((($(date +%s%N) - start_ns) / 1000000))"
+      printf '%s\t%s\t%s\t%s\n' "$elapsed_ms" "$pid" "$rss_kb" "$cpu_ticks" >> "$output"
     fi
-    [[ -s "$output" ]]
+    [[ "$(wc -l < "$output")" -gt 1 ]]
     ;;
   ancestry)
     pid="${1:?process id required}"
@@ -587,7 +623,7 @@ else:
 PY
     ;;
   *)
-    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|sample-server|ancestry|summarize}" >&2
+    echo "usage: collect-process-metadata.sh {host|jfr-profile|find-server-pid|verify-jvm-option|sample-server|ancestry|summarize}" >&2
     exit 2
     ;;
 esac
