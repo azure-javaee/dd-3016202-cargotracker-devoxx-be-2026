@@ -95,7 +95,7 @@ fixture_jar="$scratch/liberty/bin/tools/ws-server.jar"
 
 start_fixture() {
   local mode="$1"
-  local expected_count
+  local expected_count attempt
   local pid existing_pid found
   local -a existing_fixture_pids discovered_fixture_pids
   mapfile -t existing_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
@@ -118,7 +118,7 @@ start_fixture() {
       ;;
   esac
   fixture_launcher_pids+=("$!")
-  for _ in $(seq 1 50); do
+  for ((attempt = 0; attempt < 50; attempt++)); do
     mapfile -t discovered_fixture_pids < <("$helper" list-server-pids "$fixture_server_dir")
     if [[ "${#discovered_fixture_pids[@]}" -eq "$expected_count" ]]; then
       fixture_java_pids=("${discovered_fixture_pids[@]}")
