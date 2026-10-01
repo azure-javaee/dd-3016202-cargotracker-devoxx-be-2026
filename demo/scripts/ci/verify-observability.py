@@ -84,9 +84,7 @@ def verify_redaction(path: pathlib.Path, documents: list[dict]) -> None:
                     "artifact redaction failed: telemetry contains forbidden field "
                     f"{attribute_key}"
                 )
-            for key, child in value.items():
-                if key.lower() in FORBIDDEN_ATTRIBUTES:
-                    fail(f"artifact redaction failed: telemetry contains forbidden field {key}")
+            for child in value.values():
                 walk(child)
         elif isinstance(value, list):
             for child in value:

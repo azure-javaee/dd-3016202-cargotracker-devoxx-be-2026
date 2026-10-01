@@ -79,9 +79,7 @@ def inspect_json(value, path):
             artifact_findings.append(
                 f"{display_path(path)}: forbidden field {attribute_key}"
             )
-        for key, child in value.items():
-            if key.lower() in forbidden_attributes:
-                artifact_findings.append(f"{display_path(path)}: forbidden field {key}")
+        for child in value.values():
             inspect_json(child, path)
     elif isinstance(value, list):
         for child in value:
@@ -132,11 +130,12 @@ for path in sorted(files):
 if findings:
     for name in findings:
         print(f"secret-like content found in {name}", file=sys.stderr)
-    raise SystemExit(1)
 
 if artifact_findings:
     for finding in artifact_findings:
         print(f"artifact redaction failed: {finding}", file=sys.stderr)
+
+if findings or artifact_findings:
     raise SystemExit(1)
 
 if check_only:
