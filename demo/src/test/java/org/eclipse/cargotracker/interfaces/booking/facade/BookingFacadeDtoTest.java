@@ -2,7 +2,6 @@ package org.eclipse.cargotracker.interfaces.booking.facade;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
@@ -27,8 +26,7 @@ class BookingFacadeDtoTest {
     Cargo cargo =
         new Cargo(
             new TrackingId("ABC123"),
-            new RouteSpecification(
-                SampleLocations.HONGKONG, SampleLocations.STOCKHOLM, deadline));
+            new RouteSpecification(SampleLocations.HONGKONG, SampleLocations.STOCKHOLM, deadline));
     Itinerary itinerary =
         new Itinerary(
             List.of(

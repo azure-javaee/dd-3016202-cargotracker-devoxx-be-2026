@@ -24,18 +24,19 @@ class LayeringTest {
       for (Path file : files.filter(path -> path.toString().endsWith(".java")).toList()) {
         String source = Files.readString(file);
         String relative = sourceRoot.relativize(file).toString().replace('\\', '/');
-        if (relative.startsWith("domain/") && !relative.equals("domain/model/cargo/BookingBackingBean.java")) {
+        if (relative.startsWith("domain/")
+            && !relative.equals("domain/model/cargo/BookingBackingBean.java")) {
           addImports(violations, relative, source, "application.", "interfaces.");
         }
-        // Booking web beans must use the facade; older REST/tracking paths are the accepted legacy baseline.
+        // Booking web beans must use the facade; older REST/tracking paths are the accepted legacy
+        // baseline.
         if (relative.startsWith("interfaces/booking/web/")) {
           addImports(violations, relative, source, "domain.", "application.");
         }
       }
     }
 
-    Set<String> knownLegacyFiles =
-        Set.of("domain/model/voyage/SampleVoyages.java");
+    Set<String> knownLegacyFiles = Set.of("domain/model/voyage/SampleVoyages.java");
     assertEquals(
         Set.of(),
         violations.stream()
