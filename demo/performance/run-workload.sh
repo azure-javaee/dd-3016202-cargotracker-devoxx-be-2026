@@ -21,6 +21,7 @@ if [[ "${1:-}" == "--one" ]]; then
   server_started=false
   cleanup_status=0
   sampler_pid=""
+  start_maven_pid=""
   sampler_stop="$output/sampler.stop"
   selected_server_pid_file="$output/server.pid"
   server_pid=""
@@ -147,6 +148,10 @@ if [[ "${1:-}" == "--one" ]]; then
   cleanup() {
     local original_status=$?
     set +e
+    if [[ -n "$start_maven_pid" ]]; then
+      wait "$start_maven_pid" || true
+      start_maven_pid=""
+    fi
     if [[ -n "$sampler_pid" ]]; then
       touch "$sampler_stop"
       wait "$sampler_pid"
@@ -290,9 +295,35 @@ PY
   launch_start_seconds="$(date +%s)"
   run_maven start ./mvnw -Popenliberty \
     "-Dliberty.jvm.performanceGc=$gc_option" \
-    -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start
+    -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start &
+  start_maven_pid=$!
 
   deadline="$((launch_start_seconds + 90))"
+  server_pid=""
+  while (( $(date +%s) < deadline )); do
+    mapfile -t startup_pids < <("$helper" list-server-pids "$server_dir")
+    if (( ${#startup_pids[@]} == 1 )); then
+      server_pid="${startup_pids[0]}"
+      printf '%s\n' "$server_pid" > "$selected_server_pid_file.tmp"
+      mv "$selected_server_pid_file.tmp" "$selected_server_pid_file"
+      break
+    fi
+    if ! kill -0 "$start_maven_pid" 2>/dev/null; then
+      break
+    fi
+    sleep 0.1
+  done
+  if [[ -z "$server_pid" ]]; then
+    echo "unique Liberty server JVM did not appear during startup" >&2
+    exit 1
+  fi
+  if ! wait "$start_maven_pid"; then
+    start_maven_pid=""
+    echo "Liberty Maven startup failed" >&2
+    exit 1
+  fi
+  start_maven_pid=""
+
   ready=false
   response_body="$scratch/readiness.json"
   while (( $(date +%s) < deadline )); do
@@ -330,9 +361,10 @@ PY
   rm -f "$response_body"
   record_command "GET /cargo-tracker/rest/cargo readiness; validate HTTP 200, JSON, and seeded-cargo presence without retaining the body"
 
-  server_pid="$("$helper" find-server-pid "$server_dir")"
-  printf '%s\n' "$server_pid" > "$selected_server_pid_file.tmp"
-  mv "$selected_server_pid_file.tmp" "$selected_server_pid_file"
+  if [[ "$("$helper" find-server-pid "$server_dir")" != "$server_pid" ]]; then
+    echo "Liberty server JVM changed between startup and readiness" >&2
+    exit 1
+  fi
   if ! "$JAVA_HOME/bin/jcmd" "$server_pid" VM.command_line \
     > "$output/jvm-command-line.txt" 2>&1; then
     echo "jcmd VM.command_line failed" >&2

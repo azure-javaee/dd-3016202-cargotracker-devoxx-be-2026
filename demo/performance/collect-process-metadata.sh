@@ -8,7 +8,7 @@ shift || true
 
 find_server_pids() {
   local server_dir="$1"
-  local jar proc executable index
+  local jar proc executable index argument helper_process
   local -a process_args
   jar="$(realpath -m "$server_dir/../../../bin/tools/ws-server.jar")"
   for proc in /proc/[0-9]*; do
@@ -17,6 +17,15 @@ find_server_pids() {
     [[ "${executable##*/}" == java ]] || continue
     process_args=()
     mapfile -d '' -t process_args < "$proc/cmdline" 2>/dev/null || true
+    helper_process=false
+    for argument in "${process_args[@]}"; do
+      if [[ "$argument" == --pid=* || "$argument" == --status* \
+        || "$argument" == --stop* ]]; then
+        helper_process=true
+        break
+      fi
+    done
+    [[ "$helper_process" == false ]] || continue
     for ((index = 0; index + 2 < ${#process_args[@]}; index++)); do
       if [[ "${process_args[index]}" == -jar \
         && "${process_args[index + 1]}" == "$jar" \

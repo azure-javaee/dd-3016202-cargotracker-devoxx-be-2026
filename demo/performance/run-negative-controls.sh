@@ -291,6 +291,20 @@ for mode in direct bypass tuned; do
     echo "$mode fixture is missing its jaz-shaped ancestor" >&2
     exit 1
   fi
+  "$JAVA_HOME/bin/java" -jar "$fixture_jar" defaultServer \
+    --pid="$fixture_pid" --status:start > "$scratch/$mode-status-helper.log" 2>&1 &
+  status_helper_pid=$!
+  fixture_launcher_pids+=("$status_helper_pid")
+  sleep 0.2
+  mapfile -t server_pids_with_helper < <("$helper" list-server-pids "$fixture_server_dir")
+  if [[ "${#server_pids_with_helper[@]}" -ne 1 \
+    || "${server_pids_with_helper[0]}" != "$fixture_pid" ]]; then
+    echo "$mode-shaped status helper was misidentified as the Liberty server" >&2
+    exit 1
+  fi
+  kill "$status_helper_pid" 2>/dev/null || true
+  wait "$status_helper_pid" 2>/dev/null || true
+  fixture_launcher_pids=("${fixture_launcher_pids[@]:0:${#fixture_launcher_pids[@]}-1}")
   printf 'expected single Liberty JVM discovered: %s\n' "$mode"
   stop_fixture
 done
@@ -320,6 +334,7 @@ fi
 sampler_output="$scratch/transition-samples.tsv"
 sampler_stop="$scratch/transition.stop"
 selected_server_pid_file="$scratch/transition.pid"
+synthetic_readiness="$scratch/transition.ready"
 "$helper" sample-server "$fixture_server_dir" "$sampler_output" \
   "$sampler_stop" 0.02 "$selected_server_pid_file" \
   > "$scratch/transition.out" 2> "$scratch/transition.err" &
@@ -327,7 +342,7 @@ fixture_sampler_pid=$!
 fixture_sampler_stop="$sampler_stop"
 sleep 0.2
 if ! kill -0 "$fixture_sampler_pid" 2>/dev/null; then
-  echo "sampler failed before post-readiness PID selection" >&2
+  echo "sampler failed before startup PID selection" >&2
   cat "$scratch/transition.err" >&2
   exit 1
 fi
@@ -349,9 +364,14 @@ for ((attempt = 0; attempt < 50; attempt++)); do
 done
 if [[ "$(wc -l < "$sampler_output")" -le 1 ]] \
   || [[ "$(awk -F '\t' 'NR == 2 { print $2 }' "$sampler_output")" != "$selected_fixture_pid" ]]; then
-  echo "sampler did not transition to the strictly selected Liberty PID" >&2
+  echo "sampler did not capture the selected Liberty PID during startup" >&2
   exit 1
 fi
+if [[ -e "$synthetic_readiness" ]]; then
+  echo "synthetic readiness occurred before the startup process sample" >&2
+  exit 1
+fi
+touch "$synthetic_readiness"
 touch "$sampler_stop"
 if wait "$fixture_sampler_pid"; then
   fixture_sampler_status=0
@@ -397,5 +417,5 @@ if grep -Fq 'Broken pipe' "$scratch/duplicate.err"; then
   echo "sampler emitted a broken-pipe error during duplicate discovery" >&2
   exit 1
 fi
-printf 'expected pre-readiness candidates deferred and post-selection duplicates rejected\n'
+printf 'expected startup sample before readiness and post-selection duplicates rejected\n'
 stop_fixture
