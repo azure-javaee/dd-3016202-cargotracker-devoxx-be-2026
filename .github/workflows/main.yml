@@ -77,7 +77,9 @@ jobs:
             echo "./scripts/ci/run-dependency-security-gate.sh"
             echo "./mvnw '-P!openliberty' -Dtest=CargoTest,ItineraryTest,RouteSpecificationTest,HandlingEventTest,HandlingHistoryTest clean test"
             echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
-            echo "./mvnw -Popenliberty -Dskip=true -DskipTests clean package"
+            echo 'PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"; mkdir -p "$(dirname "$PACKAGE_LOG")"; ./mvnw -Popenliberty -DskipTests clean package 2>&1 | tee "$PACKAGE_LOG"'
+            echo "./scripts/ci/verify-compatibility-contract.sh"
+            echo "./scripts/ci/run-openliberty-acceptance.sh"
             echo "./scripts/ci/run-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
             echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
@@ -98,7 +100,15 @@ jobs:
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
       - name: Build canonical WAR
-        run: ./mvnw -Popenliberty -Dskip=true -DskipTests clean package
+        run: |
+          PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"
+          mkdir -p "$(dirname "$PACKAGE_LOG")"
+          ./mvnw -Popenliberty -DskipTests clean package 2>&1 | tee "$PACKAGE_LOG"
+      - name: Verify Java 17 and Java EE 7 contract
+        run: ./scripts/ci/verify-compatibility-contract.sh
+      - name: Run deployed Open Liberty acceptance
+        timeout-minutes: 5
+        run: ./scripts/ci/run-openliberty-acceptance.sh
       - name: Run negative controls
         run: ./scripts/ci/run-negative-controls.sh
       - name: Write build contract reports
@@ -125,6 +135,14 @@ jobs:
           path: demo/ci-artifacts/dependency-reports
           retention-days: 90
           if-no-files-found: error
+      - name: Upload compatibility contract
+        id: upload-compatibility-contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: compatibility-contract
+          path: demo/ci-artifacts/compatibility-contract
+          retention-days: 90
+          if-no-files-found: error
       - name: Record artifact evidence
         if: always()
         run: |
@@ -133,4 +151,5 @@ jobs:
             echo "- Tested SHA: \`${GITHUB_SHA}\`"
             echo "- build-contract: id \`${{ steps.upload-build-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-build-contract.outputs.artifact-id }}, digest \`${{ steps.upload-build-contract.outputs.artifact-digest }}\`"
             echo "- dependency-reports: id \`${{ steps.upload-dependency-reports.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-dependency-reports.outputs.artifact-id }}, digest \`${{ steps.upload-dependency-reports.outputs.artifact-digest }}\`"
+            echo "- compatibility-contract: id \`${{ steps.upload-compatibility-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-compatibility-contract.outputs.artifact-id }}, digest \`${{ steps.upload-compatibility-contract.outputs.artifact-digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

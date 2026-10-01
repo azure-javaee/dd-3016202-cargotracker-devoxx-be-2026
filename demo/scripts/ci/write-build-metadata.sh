@@ -95,9 +95,17 @@ metadata = {
     "endedAt": os.environ.get("CI_ENDED_AT", datetime.now(timezone.utc).isoformat()),
     "commands": commands,
 }
-for directory, name in ((root / "ci-artifacts/build-contract", "build-contract"),
-                        (root / "ci-artifacts/dependency-reports", "dependency-reports")):
+artifacts = (
+    (root / "ci-artifacts/build-contract", "build-contract",
+     "build reproducibility"),
+    (root / "ci-artifacts/dependency-reports", "dependency-reports",
+     "dependency security"),
+    (root / "ci-artifacts/compatibility-contract", "compatibility-contract",
+     "Java 17 and Java EE 7 compatibility"),
+)
+for directory, name, concern in artifacts:
     metadata["name"] = name
+    metadata["concern"] = concern
     files = []
     for file in sorted(directory.rglob("*")):
         if file.is_file() and file.name != "artifact-metadata.json":
