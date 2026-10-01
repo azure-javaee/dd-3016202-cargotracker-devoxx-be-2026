@@ -47,12 +47,15 @@ assert 'contextRoot="/cargo-tracker"' in server, \
 
 banned = ("jakarta", "org.springframework", "fish.payara", "org.wildfly",
           "org.jboss.as", "org.apache.tomcat")
+def banned_group(group):
+    return any(group == prefix or group.startswith(prefix + ".")
+               for prefix in banned)
 for dependency in pom.findall(".//m:dependency", ns):
     group = dependency.findtext("m:groupId", namespaces=ns)
     artifact = dependency.findtext("m:artifactId", namespaces=ns)
     assert group and artifact, "compatibility boundary: dependency coordinates are incomplete"
     coordinate = f"{group}:{artifact}"
-    assert not group.startswith(banned), \
+    assert not banned_group(group), \
         f"compatibility boundary: forbidden direct dependency {coordinate}"
 for path in (root / "src/main").rglob("*.java"):
     for number, line in enumerate(path.read_text().splitlines(), 1):

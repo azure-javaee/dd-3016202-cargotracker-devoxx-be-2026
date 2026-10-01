@@ -19,7 +19,7 @@ trap stop_server EXIT
   2>&1 | tee "$out/liberty-start.log"
 
 ready=false
-for attempt in $(seq 1 60); do
+for _ in $(seq 1 60); do
   if curl --fail --silent --show-error \
     -H 'Accept: application/json' \
     http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"; then
