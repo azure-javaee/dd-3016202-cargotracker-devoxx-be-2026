@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Initial gate scope is correctness, security, and multithreaded correctness.
+         These legacy categories remain out of scope pending separate, focused work. -->
+    <Match><Or>
+        <Bug category="MALICIOUS_CODE"/>
+        <Bug category="BAD_PRACTICE"/>
+        <Bug category="STYLE"/>
+        <Bug category="I18N"/>
+        <Bug category="PERFORMANCE"/>
+    </Or></Match>
+</FindBugsFilter>
