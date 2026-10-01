@@ -94,19 +94,28 @@ for path in sorted(files):
     if b"ABC123" in content:
         artifact_findings.append(f"{display_path(path)}: seeded cargo identifier")
     if path.suffix.lower() == ".json":
-        try:
-            document = json.loads(content)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            document = None
-
-        if document is not None:
-            inspect_json(document, path)
+        line_documents = []
+        all_lines_are_json = True
+        for line in content.splitlines():
+            if not line.strip():
+                continue
+            try:
+                document = json.loads(line)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                all_lines_are_json = False
+                break
+            if not isinstance(document, (dict, list)):
+                all_lines_are_json = False
+                break
+            line_documents.append(document)
+        if line_documents and all_lines_are_json:
+            for document in line_documents:
+                inspect_json(document, path)
         else:
-            for line in content.splitlines():
-                try:
-                    inspect_json(json.loads(line), path)
-                except (UnicodeDecodeError, json.JSONDecodeError):
-                    continue
+            try:
+                inspect_json(json.loads(content), path)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                pass
     changed = content
     for pattern in secret_patterns:
         if check_only:

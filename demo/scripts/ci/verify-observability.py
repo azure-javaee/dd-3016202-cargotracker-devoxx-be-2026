@@ -303,7 +303,6 @@ def self_test() -> None:
                                     "metrics": [
                                         {
                                             "name": "jvm.memory.used",
-                                            "name": "jvm.memory.used",
                                             "histogram": {
                                                 "dataPoints": [
                                                     {

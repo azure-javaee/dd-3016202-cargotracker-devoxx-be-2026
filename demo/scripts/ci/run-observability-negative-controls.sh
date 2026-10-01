@@ -87,6 +87,8 @@ document = {
     ]
 }
 with open(sys.argv[1], "w") as output:
+    json.dump({"resourceMetrics": []}, output)
+    output.write("\n")
     json.dump(document, output)
     output.write("\n")
 PY
@@ -101,8 +103,9 @@ if ! grep -Fq "artifact redaction failed" "$tmp/unsafe-telemetry-check.log"; the
   exit 1
 fi
 echo "unsafe-exemplar: query attribute rejected by final artifact scan" >> "$out"
-printf '%s\n' '{"cargoTrackingId":"ABC123"}' > "$tmp/unsafe-telemetry/metrics.json"
-if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/unsafe-telemetry" \
+mkdir -p "$tmp/unsafe-cargo"
+printf '%s\n' '{"cargoTrackingId":"ABC123"}' > "$tmp/unsafe-cargo/metrics.json"
+if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/unsafe-cargo" \
   > "$tmp/unsafe-cargo-check.log" 2>&1; then
   echo "unsafe-cargo-id: final artifact redaction unexpectedly passed" >> "$out"
   exit 1
