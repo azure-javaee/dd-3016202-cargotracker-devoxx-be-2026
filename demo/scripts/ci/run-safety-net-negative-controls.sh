@@ -9,7 +9,10 @@ report="$out/safety-net-negative-controls.txt"
 log_excerpt_lines=12
 : > "$report"
 tmp="$(mktemp -d)"
-command -v timeout >/dev/null
+command -v timeout >/dev/null || {
+  echo "timeout command not found" >&2
+  exit 1
+}
 route_test=src/test/java/org/eclipse/cargotracker/domain/model/cargo/RouteSpecificationTest.java
 service_test=src/test/java/org/eclipse/cargotracker/application/BookingServiceTest.java
 web_source="$(find src/main -path '*interfaces/booking/web*' -type f -name '*.java' | head -1)"
@@ -32,8 +35,12 @@ expect_failure() {
   "$@" >"$log" 2>&1
   local status=$?
   set -e
-  if [[ "$status" -eq 0 || "$status" -eq 124 ]]; then
+  if [[ "$status" -eq 0 ]]; then
     echo "$name: UNEXPECTED PASS" | tee -a "$report"
+    return 1
+  fi
+  if [[ "$status" -eq 124 ]]; then
+    echo "$name: bounded timeout (control did not complete)" | tee -a "$report"
     return 1
   fi
   echo "$name: expected failure" | tee -a "$report"
@@ -65,3 +72,4 @@ if pgrep -f '[w]lp/bin/server run defaultServer' >"$tmp/processes" 2>/dev/null; 
 fi
 echo "forced-acceptance-cleanup: expected failure and Liberty stopped" | tee -a "$report"
 sed -n "1,${log_excerpt_lines}p" "$tmp/forced-acceptance.log" >> "$report"
+exit 0
