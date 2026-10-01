@@ -149,6 +149,7 @@ jobs:
           test "$count" -eq 27
       - name: Run Open Liberty integration tests
         run: ./mvnw -Popenliberty -Dtest=BookingServiceTest clean test
+      # clean intentionally removes the unit reports before the separate integration count.
       - name: Assert Arquillian test count
         run: |
           count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')

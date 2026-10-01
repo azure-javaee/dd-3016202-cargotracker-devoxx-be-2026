@@ -5,6 +5,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 out="$root/ci-artifacts/test-reports-unit"
 mkdir -p "$out"
+# Keep this count synchronized with the inventory below; undispositioned test classes must fail CI.
 test "$(find src/test/java -name '*Test.java' | wc -l)" -eq 11
 
 {

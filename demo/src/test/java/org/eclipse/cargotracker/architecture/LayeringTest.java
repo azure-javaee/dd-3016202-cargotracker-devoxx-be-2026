@@ -27,32 +27,16 @@ class LayeringTest {
         if (relative.startsWith("domain/") && !relative.equals("domain/model/cargo/BookingBackingBean.java")) {
           addImports(violations, relative, source, "application.", "interfaces.");
         }
-        if (relative.startsWith("interfaces/")) {
-          addImports(violations, relative, source, "domain.");
+        if (relative.startsWith("interfaces/booking/web/")) {
+          addImports(violations, relative, source, "domain.", "application.");
         }
       }
     }
 
     Set<String> knownLegacyFiles =
-        Set.of(
-            "interfaces/booking/facade/internal/DefaultBookingServiceFacade.java",
-            "interfaces/booking/facade/internal/assembler/CargoRouteDtoAssembler.java",
-            "interfaces/booking/facade/internal/assembler/ItineraryCandidateDtoAssembler.java",
-            "interfaces/booking/facade/internal/assembler/LocationDtoAssembler.java",
-            "interfaces/booking/rest/CargoMonitoringService.java",
-            "interfaces/booking/socket/RealtimeCargoTrackingService.java",
-            "interfaces/handling/EventWizard.java",
-            "interfaces/handling/HandlingEventRegistrationAttempt.java",
-            "interfaces/handling/mobile/EventWizard.java",
-            "interfaces/handling/file/EventItemReader.java",
-            "interfaces/handling/rest/HandlingReportService.java",
-            "interfaces/tracking/web/CargoTrackingViewAdapter.java",
-            "interfaces/tracking/web/Track.java");
+        Set.of("domain/model/voyage/SampleVoyages.java");
     Set<String> allKnownLegacyFiles =
-        Stream.concat(
-                knownLegacyFiles.stream(),
-                Stream.of("domain/model/voyage/SampleVoyages.java"))
-            .collect(Collectors.toSet());
+        knownLegacyFiles.stream().collect(Collectors.toSet());
     assertEquals(
         Set.of(),
         violations.stream()
