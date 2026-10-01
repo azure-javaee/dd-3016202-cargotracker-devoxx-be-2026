@@ -23,7 +23,11 @@ cp "$web_source" "$tmp/web.java"
 test -s "$tmp/RouteSpecificationTest.java"
 test -s "$tmp/BookingServiceTest.java"
 test -s "$tmp/web.java"
+http_server_pid=
+readiness_server_pid=
 cleanup() {
+  [[ -z "$http_server_pid" ]] || kill "$http_server_pid" 2>/dev/null || true
+  [[ -z "$readiness_server_pid" ]] || kill "$readiness_server_pid" 2>/dev/null || true
   if pgrep -f '[w]lp/bin/server run defaultServer' >/dev/null 2>&1; then
     ./mvnw liberty:stop >/dev/null 2>&1 || true
   fi
@@ -52,6 +56,14 @@ expect_failure() {
   echo "$name: expected failure" | tee -a "$report"
   sed -n "1,${log_excerpt_lines}p" "$log" >> "$report"
 }
+expect_failure_with_diagnostic() {
+  local name="$1" pattern="$2"; shift 2
+  expect_failure "$name" "$@"
+  if ! grep -Eiq "$pattern" "$tmp/$name.log"; then
+    echo "$name: expected diagnostic /$pattern/ not found" | tee -a "$report"
+    return 1
+  fi
+}
 
 sed -i '0,/assertTrue(routeSpecification.isSatisfiedBy(itinerary))/s//assertFalse(routeSpecification.isSatisfiedBy(itinerary))/' "$route_test"
 expect_failure domain-invariant-regression timeout 120s ./mvnw '-P!openliberty' -Dtest=RouteSpecificationTest test
@@ -61,13 +73,24 @@ sed -i '0,/assertEquals(RoutingStatus.ROUTED/s//assertEquals(RoutingStatus.MISRO
 expect_failure application-service-regression timeout 120s ./mvnw -Popenliberty -Dtest=BookingServiceTest test
 cp "$tmp/BookingServiceTest.java" "$service_test"
 
-printf '\nimport org.eclipse.cargotracker.domain.model.cargo.Cargo;\n' >> "$web_source"
-expect_failure package-layer-violation timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
+sed -i '/^package /a import org.eclipse.cargotracker.domain.model.cargo.Cargo;' "$web_source"
+expect_failure_with_diagnostic package-layer-violation 'LayeringTest|domain\.' \
+  timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
 
 expect_failure liberty-startup-failure ./target/liberty/wlp/bin/server start no-such-server
-expect_failure http-non-200-or-missing-content curl --fail --silent --show-error --max-time 5 http://127.0.0.1:1/missing
-expect_failure readiness-timeout curl --fail --silent --show-error --connect-timeout 1 --max-time 2 \
-  http://127.0.0.1:1/cargo-tracker/rest/cargo
+python3 -m http.server 18080 --bind 127.0.0.1 --directory "$tmp" >"$tmp/http-server.log" 2>&1 &
+http_server_pid=$!
+for _ in $(seq 1 20); do
+  curl --silent --max-time 1 http://127.0.0.1:18080/ >/dev/null 2>&1 && break
+  sleep 0.1
+done
+expect_failure_with_diagnostic http-non-200-or-missing-content '404|curl: \(22\)' \
+  curl --fail --silent --show-error --max-time 5 http://127.0.0.1:18080/missing
+python3 -c 'import socket,time; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(("127.0.0.1",18081)); s.listen(1); s.accept()[0].recv(1); time.sleep(10)' >"$tmp/readiness-server.log" 2>&1 &
+readiness_server_pid=$!
+expect_failure_with_diagnostic readiness-timeout 'timed out|Failed to connect|Could not connect' \
+  timeout 3s curl --fail --silent --show-error --connect-timeout 1 --max-time 2 \
+  http://127.0.0.1:18081/cargo-tracker/rest/cargo
 
 if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/forced-acceptance.log" 2>&1; then
   echo "forced-acceptance-cleanup: UNEXPECTED PASS" | tee -a "$report"
