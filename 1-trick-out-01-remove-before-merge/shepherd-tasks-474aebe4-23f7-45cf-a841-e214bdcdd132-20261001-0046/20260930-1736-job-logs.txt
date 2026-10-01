@@ -1,0 +1,69 @@
+Campaign ID: 474aebe4-23f7-45cf-a841-e214bdcdd132
+Lesson propagation: off
+Shepherd-task version: 1.0.4
+Logging shepherd-task-25-given-list run to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736
+=== Shepherding task issue #2 ===
+[shepherd-task] Phase 1: Launching copilot --yolo for task #2
+[shepherd-task] Phase 1 prompt:
+Invoke skill `shepherd-task-30-from-assignment-to-ready` with these inputs:
+
+- TASK_ISSUE: 2
+- BASE_BRANCH: edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
+- REPO: edburns/dd-3016202-cargotracker-devoxx-be-2026
+- CAMPAIGN_ID: 474aebe4-23f7-45cf-a841-e214bdcdd132
+- CAMPAIGN_METADATA_DIRECTORY: 1-trick-out-01-remove-before-merge
+- LESSON_PROPAGATION: off
+Session exported to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/phase1-task-20260930-173605-2.md
+[shepherd-task] Phase 1: copilot exited. Verifying semantic outcome and state...
+[shepherd-task] Found PR #9
+[shepherd-task] Phase 1 VERIFIED: PR #9 is ready. CI passing, no unresolved comments.
+[shepherd-task] Phase 2: Launching copilot --yolo for PR #9
+[shepherd-task] Phase 2 prompt:
+Invoke skill `shepherd-task-40-from-ready-to-merged-to-base` with these inputs:
+
+- TASK_ISSUE: 2
+- BASE_BRANCH: edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
+- REPO: edburns/dd-3016202-cargotracker-devoxx-be-2026
+- REMOTE: origin
+- CAMPAIGN_ID: 474aebe4-23f7-45cf-a841-e214bdcdd132
+- CAMPAIGN_METADATA_DIRECTORY: 1-trick-out-01-remove-before-merge
+- LESSON_PROPAGATION: off
+- PR_NUMBER: 9
+Session exported to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/phase2-task-20260930-181055-2.md
+[shepherd-task] Phase 2: copilot exited. Verifying semantic outcome and state...
+[shepherd-task] SHEPHERD TASK COMPLETE: Task #2 has been fully shepherded.
+[shepherd-task] PR #9 merged to edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment.
+=== Shepherding task issue #3 ===
+[shepherd-task] Phase 1: Launching copilot --yolo for task #3
+[shepherd-task] Phase 1 prompt:
+Invoke skill `shepherd-task-30-from-assignment-to-ready` with these inputs:
+
+- TASK_ISSUE: 3
+- BASE_BRANCH: edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
+- REPO: edburns/dd-3016202-cargotracker-devoxx-be-2026
+- CAMPAIGN_ID: 474aebe4-23f7-45cf-a841-e214bdcdd132
+- CAMPAIGN_METADATA_DIRECTORY: 1-trick-out-01-remove-before-merge
+- LESSON_PROPAGATION: off
+Session exported to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/phase1-task-20260930-181738-3.md
+[shepherd-task] Phase 1: copilot exited. Verifying semantic outcome and state...
+Stage 30 reported semantic failure: SHEPHERD FAILED: Exhausted 20 iterations on PR #$PR_NUMBER for task #$TASK_ISSUE.
+[shepherd-task] FAILED: Phase 1 reported semantic failure.
+[shepherd-task] Stage 50: Generating campaign post-mortem...
+[shepherd-task] Stage 50 report:  /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/20260930-2032-post-mortem.md
+[shepherd-task] Stage 50 session: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/post-mortem-session-20260930-2032.md
+[shepherd-task] Stage 50 events:  /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/post-mortem-session-20260930-2032.jsonl
+[shepherd-task] Stage 50 prompt: Invoke skill `shepherd-task-50-create-post-mortem` with these inputs:
+
+- SHEPHERD_LOG_DIR: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736
+- SCRIPT_EXIT_CODE: 1
+- TASK_ISSUES: 2,3,4,5,6,7,8
+- BASE_BRANCH: edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment
+- REPO: edburns/dd-3016202-cargotracker-devoxx-be-2026
+- CAMPAIGN_ID: 474aebe4-23f7-45cf-a841-e214bdcdd132
+- CAMPAIGN_METADATA_DIRECTORY: 1-trick-out-01-remove-before-merge
+- LESSON_PROPAGATION: off
+
+Write the report to:
+- OUTPUT_FILE: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/20260930-2032-post-mortem.md
+Session exported to: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/post-mortem-session-20260930-2032.md
+[shepherd-task] Stage 50 COMPLETE: Post-mortem created: /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/shepherd-tasks-474aebe4-23f7-45cf-a841-e214bdcdd132-20260930-1736/20260930-2032-post-mortem.md
