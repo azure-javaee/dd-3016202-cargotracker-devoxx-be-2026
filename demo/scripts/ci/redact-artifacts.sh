@@ -30,6 +30,15 @@ def display_path(path):
         return path.name
 
 
+authorization_credential = re.compile(
+    rb"""(?ix)
+    (?P<prefix>\bauthorization\b["']?\s*[:=]\s*)
+    (?P<quote>["']?)
+    (?!<REDACTED>(?=$|[\s,"'}]))
+    (?:basic|bearer)\s+[A-Za-z0-9._~+/=-]+
+    (?P=quote)
+    """
+)
 credential = re.compile(
     rb"""(?ix)
     (?P<prefix>\b(?:password|passwd|token|secret|authorization|api[_-]?key|
@@ -47,6 +56,7 @@ credential = re.compile(
     """
 )
 secret_patterns = [
+    authorization_credential,
     credential,
     re.compile(rb"\bgh[pousr]_[A-Za-z0-9]{30,}\b"),
     re.compile(rb"\bgithub_pat_[A-Za-z0-9_]{30,}\b"),
@@ -132,7 +142,13 @@ for path in sorted(files):
                 findings.append(display_path(path))
                 break
             continue
-        if pattern is credential:
+        if pattern is authorization_credential:
+            def redact_authorization(match):
+                quote = match.group("quote")
+                return match.group("prefix") + quote + b"<REDACTED>" + quote
+
+            changed, count = pattern.subn(redact_authorization, changed)
+        elif pattern is credential:
             def redact_credential(match):
                 quote = match.group("quote") or b""
                 return match.group("prefix") + quote + b"<REDACTED>" + quote

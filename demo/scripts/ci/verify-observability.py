@@ -176,7 +176,7 @@ def verify_trace(
         status = span_attributes.get(
             "http.response.status_code", span_attributes.get("http.status_code")
         )
-        if method != "GET" or request["path"] not in str(path_value):
+        if method != "GET" or str(path_value) != request["path"]:
             fail(f"broken correlation: {kind} span has no matching HTTP operation")
         try:
             status = int(status)
@@ -203,7 +203,9 @@ def verify_trace(
         matching_access = [
             line
             for line in access.splitlines()
-            if REQUEST_ID in line and traceparent in line and request["path"] in line
+            if REQUEST_ID in line
+            and traceparent in line
+            and re.search(rf'"GET {re.escape(request["path"])} HTTP/', line)
         ]
         if not any(
             re.search(rf"\s{request['status']}\s", line)
@@ -419,6 +421,34 @@ def self_test() -> None:
             "broken correlation",
             lambda: verify_trace(traces_path, [], access_path),
         )
+        success_span = trace_document["resourceSpans"][0]["scopeSpans"][0]["spans"][0]
+        success_path = next(
+            attribute
+            for attribute in success_span["attributes"]
+            if attribute["key"] == "url.path"
+        )
+        success_path["value"]["stringValue"] = REQUESTS["success"]["path"] + "-extra"
+        traces_path.write_text(json.dumps(trace_document) + "\n")
+        expect_error(
+            "exact span path correlation",
+            "broken correlation",
+            lambda: verify_trace(traces_path, transcript, access_path),
+        )
+        success_path["value"]["stringValue"] = REQUESTS["success"]["path"]
+        traces_path.write_text(json.dumps(trace_document) + "\n")
+        original_access = access_path.read_text()
+        access_path.write_text(
+            original_access.replace(
+                f'GET {REQUESTS["success"]["path"]} HTTP/',
+                f'GET {REQUESTS["success"]["path"]}-extra HTTP/',
+            )
+        )
+        expect_error(
+            "exact access-log path correlation",
+            "broken correlation",
+            lambda: verify_trace(traces_path, transcript, access_path),
+        )
+        access_path.write_text(original_access)
         invalid_span = trace_document["resourceSpans"][1]["scopeSpans"][0]["spans"][0]
         invalid_span["attributes"] = [
             attribute

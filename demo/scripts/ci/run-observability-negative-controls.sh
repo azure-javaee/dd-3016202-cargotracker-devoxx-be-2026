@@ -121,6 +121,7 @@ mkdir -p "$tmp/secret-fixture"
 cat > "$tmp/secret-fixture/synthetic.txt" <<'EOF'
 api_key=fixture-secret-never-retained
 {"password": "first second,third"}
+Authorization: Bearer fixture-opaque-token-never-retained
 EOF
 if ./scripts/ci/redact-artifacts.sh --check-only "$tmp/secret-fixture" \
   > "$tmp/secret-check.log" 2>&1; then
@@ -134,13 +135,18 @@ if ! grep -Fq "secret-like content found" "$tmp/secret-check.log"; then
 fi
 ./scripts/ci/redact-artifacts.sh "$tmp/secret-fixture" >> "$out"
 ./scripts/ci/redact-artifacts.sh --check-only "$tmp/secret-fixture" >> "$out"
-if grep -Fq "fixture-secret-never-retained" "$tmp/secret-fixture/synthetic.txt"; then
+if grep -Fq "fixture-secret-never-retained" "$tmp/secret-fixture/synthetic.txt" \
+  || grep -Fq "fixture-opaque-token-never-retained" "$tmp/secret-fixture/synthetic.txt"; then
   echo "secret-pattern: redaction left fixture secret behind" >> "$out"
   exit 1
 fi
 if grep -Fq "first second,third" "$tmp/secret-fixture/synthetic.txt" \
   || ! grep -Fq '"password": "<REDACTED>"' "$tmp/secret-fixture/synthetic.txt"; then
   echo "secret-pattern: redaction left part of a quoted credential value behind" >> "$out"
+  exit 1
+fi
+if ! grep -Fq "Authorization: <REDACTED>" "$tmp/secret-fixture/synthetic.txt"; then
+  echo "secret-pattern: authorization credential was not fully redacted" >> "$out"
   exit 1
 fi
 echo "secret-like artifact content: rejected, redacted, and rechecked" >> "$out"

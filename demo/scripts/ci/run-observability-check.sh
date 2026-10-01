@@ -213,6 +213,7 @@ OBSERVABILITY_SERVER_ENV="$tmp/instrumented-server.env" \
 OBSERVABILITY_TRACE_ID_SUCCESS="$trace_id_success" \
 OBSERVABILITY_TRACE_ID_INVALID="$trace_id_invalid" \
 OBSERVABILITY_TRANSCRIPT="$otel_out/request-transcript.jsonl" \
+LIBERTY_LOG_OUTPUT_DIR="$liberty_out" \
 ./scripts/ci/run-openliberty-acceptance.sh; then
   if grep -Eiq 'java\.lang\.instrument|agent.*(failed|error)|error opening zip' \
     "$root/ci-artifacts/compatibility-contract/liberty-start.log" 2>/dev/null; then

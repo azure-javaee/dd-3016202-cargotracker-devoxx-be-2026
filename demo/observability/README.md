@@ -26,9 +26,11 @@ OpenTelemetry Java agent 2.31.1, runs
 ensures both services are stopped through exit cleanup. No Azure account, key,
 or endpoint is used.
 
-The telemetry artifact contains only JSON traces/metrics, a metadata-only
-request transcript, bounded collector output, and a redaction result. Liberty
-`messages.log` and `console.log` remain in the separate `liberty-logs`
+The telemetry artifact contains JSON traces/metrics, a metadata-only request
+transcript, bounded Collector output, a redaction result, command/status
+metadata, pinned Collector configuration and version metadata, and bounded
+agent download/checksum, image inspection, health, and lifecycle diagnostics.
+Liberty `messages.log` and `console.log` remain in the separate `liberty-logs`
 artifact. The filtered access log contains only the two fixed-ID acceptance
 requests; request/response bodies and environment dumps are not captured by
 the observability harness. The Collector removes URL queries, database
