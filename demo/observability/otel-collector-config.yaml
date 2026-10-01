@@ -1,0 +1,60 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+processors:
+  transform/sanitize:
+    error_mode: ignore
+    trace_statements:
+      - context: resource
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: scope
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: span
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: spanevent
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+    metric_statements:
+      - context: resource
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: scope
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: datapoint
+        statements:
+          - delete_matching_keys(attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+      - context: exemplar
+        statements:
+          - delete_matching_keys(filtered_attributes, "(?i)^(url\\.(query|full)|http\\.(url|target)|db\\.(statement|connection_string|user)|http\\.(request|response)\\.body|http\\.(request\\.header\\.(authorization|cookie)|response\\.header\\.set_cookie))$")
+  batch:
+
+exporters:
+  file/traces:
+    path: /otel-output/traces.json
+    format: json
+  file/metrics:
+    path: /otel-output/metrics.json
+    format: json
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [transform/sanitize, batch]
+      exporters: [file/traces]
+    metrics:
+      receivers: [otlp]
+      processors: [transform/sanitize, batch]
+      exporters: [file/metrics]

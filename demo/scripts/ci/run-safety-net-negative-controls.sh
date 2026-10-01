@@ -146,7 +146,8 @@ expect_failure_with_diagnostic readiness-timeout 'timed out|Operation timed out|
   curl --fail --silent --show-error --connect-timeout 1 --max-time 2 \
   http://127.0.0.1:18081/cargo-tracker/rest/cargo
 
-if SMOKE_TEST_FORCE_FAILURE=1 ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/forced-acceptance.log" 2>&1; then
+if LIBERTY_LOG_OUTPUT_DIR="$tmp/liberty-logs" SMOKE_TEST_FORCE_FAILURE=1 \
+  ./scripts/ci/run-openliberty-acceptance.sh >"$tmp/forced-acceptance.log" 2>&1; then
   echo "forced-acceptance-cleanup: UNEXPECTED PASS" | tee -a "$report"
   exit 1
 fi

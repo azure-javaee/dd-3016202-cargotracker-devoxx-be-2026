@@ -121,7 +121,8 @@ jobs:
             echo "./mvnw -Popenliberty -Dtest=BookingServiceTest clean test"
             echo 'PACKAGE_LOG="ci-artifacts/build-contract/$(date +%Y%m%d-%H%M)-job-logs.txt"; mkdir -p "$(dirname "$PACKAGE_LOG")"; ./mvnw -Popenliberty -DskipTests clean package 2>&1 | tee "$PACKAGE_LOG"'
             echo "./scripts/ci/verify-compatibility-contract.sh"
-            echo "./scripts/ci/run-openliberty-acceptance.sh"
+            echo "./scripts/ci/run-observability-check.sh"
+            echo "./scripts/ci/run-observability-negative-controls.sh"
             echo "./scripts/ci/run-negative-controls.sh"
             echo "./scripts/ci/run-safety-net-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
@@ -168,9 +169,11 @@ jobs:
           ./mvnw -Popenliberty -DskipTests clean package 2>&1 | tee "$PACKAGE_LOG"
       - name: Verify Java 17 and Java EE 7 contract
         run: ./scripts/ci/verify-compatibility-contract.sh
-      - name: Run deployed Open Liberty acceptance
-        timeout-minutes: 5
-        run: ./scripts/ci/run-openliberty-acceptance.sh
+      - name: Run OpenTelemetry observability acceptance
+        timeout-minutes: 10
+        run: ./scripts/ci/run-observability-check.sh
+      - name: Run observability negative controls
+        run: ./scripts/ci/run-observability-negative-controls.sh
       - name: Run negative controls
         run: |
           ./scripts/ci/run-negative-controls.sh
@@ -181,6 +184,14 @@ jobs:
         run: echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - name: Write artifact metadata
         run: ./scripts/ci/write-build-metadata.sh --artifact-metadata
+      - name: Write observability artifact metadata
+        id: observability-metadata
+        if: always()
+        run: python3 ./scripts/ci/write-observability-metadata.py
+      - name: Verify final observability artifact redaction
+        id: final-artifact-redaction
+        if: always() && steps.observability-metadata.outcome == 'success'
+        run: ./scripts/ci/redact-artifacts.sh --check-only ci-artifacts/otel-telemetry ci-artifacts/liberty-logs
       - name: Verify build contract
         run: ./scripts/ci/verify-build-contract.sh
       - name: Upload unit test reports
@@ -201,11 +212,20 @@ jobs:
           if-no-files-found: error
       - name: Upload Liberty logs
         id: upload-liberty-logs
-        if: always()
+        if: always() && steps.observability-metadata.outcome == 'success' && steps.final-artifact-redaction.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: liberty-logs
           path: demo/ci-artifacts/liberty-logs
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload OpenTelemetry telemetry
+        id: upload-otel-telemetry
+        if: always() && steps.observability-metadata.outcome == 'success' && steps.final-artifact-redaction.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: otel-telemetry
+          path: demo/ci-artifacts/otel-telemetry
           retention-days: 90
           if-no-files-found: error
       - name: Upload build contract
@@ -244,4 +264,5 @@ jobs:
             echo "- test-reports-unit: id \`${{ steps.upload-test-reports-unit.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-unit.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-unit.outputs.artifact-digest }}\`"
             echo "- test-reports-liberty: id \`${{ steps.upload-test-reports-liberty.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-liberty.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-liberty.outputs.artifact-digest }}\`"
             echo "- liberty-logs: id \`${{ steps.upload-liberty-logs.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-liberty-logs.outputs.artifact-id }}, digest \`${{ steps.upload-liberty-logs.outputs.artifact-digest }}\`"
+            echo "- otel-telemetry: id \`${{ steps.upload-otel-telemetry.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-otel-telemetry.outputs.artifact-id }}, digest \`${{ steps.upload-otel-telemetry.outputs.artifact-digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

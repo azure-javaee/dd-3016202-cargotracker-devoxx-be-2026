@@ -9,7 +9,10 @@
 	<httpEndpoint id="defaultHttpEndpoint"
 		host="*"
 		httpPort="${default.http.port}"
-		httpsPort="${default.https.port}" />
+		httpsPort="${default.https.port}">
+		<accessLogging filepath="${server.output.dir}/logs/http_access.log"
+			logFormat='%t "%m %U %H" %s %{X-CI-Request-ID}i %{traceparent}i' />
+	</httpEndpoint>
 
 	<quickStartSecurity userName="cargo" userPassword="tracker" />
 

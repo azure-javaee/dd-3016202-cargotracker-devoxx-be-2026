@@ -1,4 +1,8 @@
 target
+/demo/ci-artifacts/
+/demo/*-job-logs.txt
+__pycache__/
+*.py[cod]
 .settings
 .metadata
 /.classpath
