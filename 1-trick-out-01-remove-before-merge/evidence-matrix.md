@@ -90,14 +90,14 @@ meaningful evidence. Keep entries in serial issue order.
 ### Issue #3: Make CI authoritative and establish the Maven/dependency foundation
 
 - **PR:** #10
-- **Implementation commit:** `c98096dce1c4f252f010744173603f6366732def`
+- **Implementation commit:** `c98096d70caad040bd8c3613a630c7c064cc13e2`
 - **Merged commit:** `ff40701729cbfac46e2bcb6cd17fcd14a5dfeff0`
 - **Completed:** 2026-09-30 UTC
 - **Reasons expected to be exercised:** 5, 6
 - **Reasons actually exercised:** 5, 6
 - **Implementation result:** Established serial formatting-first CI, Maven Enforcer governance, reproducible dependency inventories, advisory delta gating, negative controls, and immutable build/dependency artifacts.
 - **Observed events:**
-  - Successful Main Build PR run [36792676155](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36792676155), attempt 1, validated synthetic merge SHA `37099baee55ca89517a83a3a555b436ffe1f4387` for implementation HEAD `c98096dce1c4f252f010744173603f6366732def`.
+  - Successful Main Build PR run [36792676155](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36792676155), attempt 1, validated synthetic merge SHA `37099baee55ca89517a83a3a555b436ffe1f4387` for implementation HEAD `c98096d70caad040bd8c3613a630c7c064cc13e2`.
   - PR `formatting` job/check [110148953240](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36792676155/job/110148953240) and `build` job/check [110149060803](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36792676155/job/110149060803) passed in serial order.
   - PR #10 merged as primary merge SHA `ff40701729cbfac46e2bcb6cd17fcd14a5dfeff0`.
   - Successful Main Build push run [36793581535](https://github.com/edburns/dd-3016202-cargotracker-devoxx-be-2026/actions/runs/36793581535), attempt 1, validated that exact SHA on `edburns/dd-3016202-cargotracker-devoxx-be-2026-experiment`.
