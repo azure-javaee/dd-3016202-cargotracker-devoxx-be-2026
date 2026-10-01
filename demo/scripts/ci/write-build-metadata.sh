@@ -102,6 +102,12 @@ artifacts = (
      "dependency security"),
     (root / "ci-artifacts/compatibility-contract", "compatibility-contract",
      "Java 17 and Java EE 7 compatibility"),
+    (root / "ci-artifacts/test-reports-unit", "test-reports-unit",
+     "unit test evidence"),
+    (root / "ci-artifacts/test-reports-liberty", "test-reports-liberty",
+     "Arquillian test evidence"),
+    (root / "ci-artifacts/liberty-logs", "liberty-logs",
+     "bounded Open Liberty diagnostics"),
 )
 for directory, name, concern in artifacts:
     metadata["name"] = name

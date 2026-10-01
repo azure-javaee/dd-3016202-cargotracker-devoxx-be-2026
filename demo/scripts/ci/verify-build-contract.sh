@@ -24,6 +24,10 @@ test -s ci-artifacts/compatibility-contract/liberty-stop.log
 test -s ci-artifacts/compatibility-contract/liberty-messages-excerpt.txt
 test -s ci-artifacts/compatibility-contract/readiness.json
 test -s ci-artifacts/compatibility-contract/artifact-metadata.json
+test -s ci-artifacts/compatibility-contract/safety-net-negative-controls.txt
+test -s ci-artifacts/test-reports-unit/artifact-metadata.json
+test -s ci-artifacts/test-reports-liberty/artifact-metadata.json
+test -s ci-artifacts/liberty-logs/artifact-metadata.json
 python3 - "$root" <<'PY'
 import hashlib
 import json
@@ -40,6 +44,9 @@ for path in (
     root / "ci-artifacts/build-contract/artifact-metadata.json",
     root / "ci-artifacts/dependency-reports/artifact-metadata.json",
     root / "ci-artifacts/compatibility-contract/artifact-metadata.json",
+    root / "ci-artifacts/test-reports-unit/artifact-metadata.json",
+    root / "ci-artifacts/test-reports-liberty/artifact-metadata.json",
+    root / "ci-artifacts/liberty-logs/artifact-metadata.json",
 ):
     data = json.loads(path.read_text())
     assert data.get("schema") == 1

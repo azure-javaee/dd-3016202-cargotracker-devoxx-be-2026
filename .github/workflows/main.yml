@@ -123,6 +123,7 @@ jobs:
             echo "./scripts/ci/verify-compatibility-contract.sh"
             echo "./scripts/ci/run-openliberty-acceptance.sh"
             echo "./scripts/ci/run-negative-controls.sh"
+            echo "./scripts/ci/run-safety-net-negative-controls.sh"
             echo "./scripts/ci/write-build-metadata.sh"
             echo 'echo "CI_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"'
             echo "./scripts/ci/write-build-metadata.sh --artifact-metadata"
@@ -167,7 +168,12 @@ jobs:
         timeout-minutes: 5
         run: ./scripts/ci/run-openliberty-acceptance.sh
       - name: Run negative controls
-        run: ./scripts/ci/run-negative-controls.sh
+        run: |
+          ./scripts/ci/run-negative-controls.sh
+          ./scripts/ci/run-safety-net-negative-controls.sh
+          mkdir -p ci-artifacts/liberty-logs
+          cp -R ci-artifacts/compatibility-contract/liberty ci-artifacts/liberty-logs/ || true
+          cp ci-artifacts/compatibility-contract/liberty-*.log ci-artifacts/liberty-logs/
       - name: Write build contract reports
         run: ./scripts/ci/write-build-metadata.sh
       - name: Capture evidence end
@@ -181,9 +187,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-unit
-          path: |
-            demo/target/surefire-reports
-            demo/ci-artifacts/test-reports-unit
+          path: demo/ci-artifacts/test-reports-unit
           retention-days: 90
           if-no-files-found: error
       - name: Upload Liberty test reports
@@ -199,7 +203,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: liberty-logs
-          path: demo/ci-artifacts/compatibility-contract/liberty-*.log
+          path: demo/ci-artifacts/liberty-logs
           retention-days: 90
           if-no-files-found: error
       - name: Upload build contract
@@ -235,4 +239,7 @@ jobs:
             echo "- build-contract: id \`${{ steps.upload-build-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-build-contract.outputs.artifact-id }}, digest \`${{ steps.upload-build-contract.outputs.artifact-digest }}\`"
             echo "- dependency-reports: id \`${{ steps.upload-dependency-reports.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-dependency-reports.outputs.artifact-id }}, digest \`${{ steps.upload-dependency-reports.outputs.artifact-digest }}\`"
             echo "- compatibility-contract: id \`${{ steps.upload-compatibility-contract.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-compatibility-contract.outputs.artifact-id }}, digest \`${{ steps.upload-compatibility-contract.outputs.artifact-digest }}\`"
+            echo "- test-reports-unit: id \`${{ steps.upload-test-reports-unit.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-unit.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-unit.outputs.artifact-digest }}\`"
+            echo "- test-reports-liberty: id \`${{ steps.upload-test-reports-liberty.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-test-reports-liberty.outputs.artifact-id }}, digest \`${{ steps.upload-test-reports-liberty.outputs.artifact-digest }}\`"
+            echo "- liberty-logs: id \`${{ steps.upload-liberty-logs.outputs.artifact-id }}\`, URL ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${{ steps.upload-liberty-logs.outputs.artifact-id }}, digest \`${{ steps.upload-liberty-logs.outputs.artifact-digest }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
