@@ -6,7 +6,7 @@ cd "$root"
 out="$root/ci-artifacts/compatibility-contract"
 mkdir -p "$out"
 report="$out/safety-net-negative-controls.txt"
-log_excerpt_lines=12
+log_excerpt_lines="${LOG_EXCERPT_LINES:-40}"
 : > "$report"
 tmp="$(mktemp -d)"
 command -v timeout >/dev/null || {
@@ -24,6 +24,9 @@ test -s "$tmp/RouteSpecificationTest.java"
 test -s "$tmp/BookingServiceTest.java"
 test -s "$tmp/web.java"
 cleanup() {
+  if pgrep -f '[w]lp/bin/server run defaultServer' >/dev/null 2>&1; then
+    ./mvnw liberty:stop >/dev/null 2>&1 || true
+  fi
   cp "$tmp/RouteSpecificationTest.java" "$route_test"
   cp "$tmp/BookingServiceTest.java" "$service_test"
   cp "$tmp/web.java" "$web_source"
@@ -52,9 +55,11 @@ expect_failure() {
 
 sed -i '0,/assertTrue(routeSpecification.isSatisfiedBy(itinerary))/s//assertFalse(routeSpecification.isSatisfiedBy(itinerary))/' "$route_test"
 expect_failure domain-invariant-regression timeout 120s ./mvnw '-P!openliberty' -Dtest=RouteSpecificationTest test
+cp "$tmp/RouteSpecificationTest.java" "$route_test"
 
 sed -i '0,/assertEquals(RoutingStatus.ROUTED/s//assertEquals(RoutingStatus.MISROUTED/' "$service_test"
 expect_failure application-service-regression timeout 120s ./mvnw -Popenliberty -Dtest=BookingServiceTest test
+cp "$tmp/BookingServiceTest.java" "$service_test"
 
 printf '\nimport org.eclipse.cargotracker.domain.model.cargo.Cargo;\n' >> "$web_source"
 expect_failure package-layer-violation timeout 120s ./mvnw '-P!openliberty' -Dtest=LayeringTest test
