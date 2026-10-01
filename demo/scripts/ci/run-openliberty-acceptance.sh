@@ -19,12 +19,11 @@ trap stop_server EXIT
   2>&1 | tee "$out/liberty-start.log"
 
 for attempt in $(seq 1 30); do
-  if curl --fail --silent --show-error \
-      -H 'Accept: application/json' \
-      http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"; then
-    grep -q '"trackingId":"ABC123"' "$out/readiness.json"
-    grep -qi 'application/json' "$out/readiness.headers" 2>/dev/null || true
-    break
+  if   curl --fail --silent --show-error \
+    -H 'Accept: application/json' \
+    http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"; then
+  grep -q '"trackingId":"ABC123"' "$out/readiness.json"
+  break
   fi
   if [[ "$attempt" == 30 ]]; then
     echo "Open Liberty readiness boundary was not reached" >&2

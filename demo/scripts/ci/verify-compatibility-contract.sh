@@ -26,9 +26,10 @@ assert text("m:properties/m:javaee_api.version") == "7.0", \
     "compatibility boundary: Java EE API version must be 7.0"
 javaee = [
     d for d in pom.findall("m:dependencies/m:dependency", ns)
-    if text("m:properties/m:javaee_api.version") and
+    if text("m:properties/m:javaee_api.version") == "7.0" and
     d.findtext("m:groupId", namespaces=ns) == "javax" and
-    d.findtext("m:artifactId", namespaces=ns) == "javaee-api"
+    d.findtext("m:artifactId", namespaces=ns) == "javaee-api" and
+    d.findtext("m:version", namespaces=ns) in ("7.0", "${javaee_api.version}")
 ]
 assert len(javaee) == 1 and javaee[0].findtext("m:scope", namespaces=ns) == "provided", \
     "compatibility boundary: javax:javaee-api:7.0 must be provided"
@@ -63,7 +64,11 @@ PY
 }
 
 if [[ "${1:-}" == "--check-only" ]]; then
-  check_contract "${3:-$root}"
+  [[ "${2:-}" == "--root" && -n "${3:-}" ]] || {
+    echo "usage: $0 --check-only --root PATH" >&2
+    exit 2
+  }
+  check_contract "$3"
   exit 0
 fi
 
@@ -97,14 +102,19 @@ root = pathlib.Path(sys.argv[1])
 expression = sys.argv[2]
 pom = root / "pom.xml"
 text = pom.read_text()
+def replace_once(old, new):
+    global text
+    if text.count(old) != 1:
+        raise SystemExit(f"fixture boundary not found exactly once: {old}")
+    text = text.replace(old, new, 1)
 if expression == "jakarta-dependency":
     text = text.replace("</dependencies>", "<dependency><groupId>jakarta.platform</groupId><artifactId>jakarta.jakartaee-api</artifactId><version>10.0.0</version></dependency></dependencies>", 1)
 elif expression == "release":
-    text = text.replace("<maven.compiler.release>17</maven.compiler.release>", "<maven.compiler.release>21</maven.compiler.release>")
+    replace_once("<maven.compiler.release>17</maven.compiler.release>", "<maven.compiler.release>21</maven.compiler.release>")
 elif expression == "jar":
-    text = text.replace("<packaging>war</packaging>", "<packaging>jar</packaging>")
+    replace_once("<packaging>war</packaging>", "<packaging>jar</packaging>")
 elif expression == "renamed-war":
-    text = text.replace("<finalName>cargo-tracker</finalName>", "<finalName>other-name</finalName>")
+    replace_once("<finalName>cargo-tracker</finalName>", "<finalName>other-name</finalName>")
 elif expression == "spring":
     text = text.replace("</dependencies>", "<dependency><groupId>org.springframework</groupId><artifactId>spring-core</artifactId><version>6.0.0</version></dependency></dependencies>", 1)
 pom.write_text(text)
