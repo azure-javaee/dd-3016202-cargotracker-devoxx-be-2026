@@ -18,20 +18,22 @@ trap stop_server EXIT
 ./mvnw -Dapplications=cargo-tracker -DserverStartTimeout=90 liberty:start \
   2>&1 | tee "$out/liberty-start.log"
 
+ready=false
 for attempt in $(seq 1 30); do
-  if   curl --fail --silent --show-error \
+  if curl --fail --silent --show-error \
     -H 'Accept: application/json' \
     http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"; then
-  if grep -q '"trackingId":"ABC123"' "$out/readiness.json"; then
-    break
-  fi
-  fi
-  if [[ "$attempt" == 30 ]]; then
-    echo "Open Liberty readiness boundary was not reached" >&2
-    exit 1
+    if grep -q '"trackingId":"ABC123"' "$out/readiness.json"; then
+      ready=true
+      break
+    fi
   fi
   sleep 2
 done
+if [[ "$ready" != true ]]; then
+  echo "Open Liberty readiness boundary was not reached" >&2
+  exit 1
+fi
 curl --fail --silent --show-error --dump-header "$out/readiness.headers" \
   -H 'Accept: application/json' \
   http://localhost:8080/cargo-tracker/rest/cargo > "$out/readiness.json"

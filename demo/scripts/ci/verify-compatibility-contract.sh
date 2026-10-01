@@ -52,7 +52,7 @@ for dependency in pom.findall(".//m:dependency", ns):
     artifact = dependency.findtext("m:artifactId", namespaces=ns)
     assert group and artifact, "compatibility boundary: dependency coordinates are incomplete"
     coordinate = f"{group}:{artifact}"
-    assert not coordinate.startswith(banned), \
+    assert not group.startswith(banned), \
         f"compatibility boundary: forbidden direct dependency {coordinate}"
 for path in (root / "src/main").rglob("*.java"):
     for number, line in enumerate(path.read_text().splitlines(), 1):
