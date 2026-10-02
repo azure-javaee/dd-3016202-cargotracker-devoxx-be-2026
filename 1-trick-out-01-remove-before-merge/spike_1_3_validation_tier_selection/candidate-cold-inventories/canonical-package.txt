@@ -1,9 +1,0 @@
-command=./mvnw -Popenliberty -Dskip=true -DskipTests clean package
-exit_status=0
-elapsed_seconds=34
-repository_bytes=66605044
-openliberty_runtime_downloaded=no
-liberty_directory=no
-liberty_started=no
-war_bytes=8233001
-cfa669ef1483f2272d9c46d392d66376938e546ec51ef8ac317212025be226b1  /home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/demo/target/cargo-tracker.war

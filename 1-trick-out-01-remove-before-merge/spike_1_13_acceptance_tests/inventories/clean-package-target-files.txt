@@ -1,9 +1,0 @@
-cargo-tracker.war
-cargo-tracker/index.xhtml
-cargo-tracker/mobile.xhtml
-classes/handling_events.csv
-liberty-plugin-config.xml
-maven-archiver/pom.properties
-test-classes/arquillian.xml
-test-classes/handling_events.csv
-test-classes/test-web.xml

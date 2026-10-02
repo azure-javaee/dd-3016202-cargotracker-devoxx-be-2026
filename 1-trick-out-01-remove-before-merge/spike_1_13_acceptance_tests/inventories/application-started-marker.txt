@@ -1,1 +1,0 @@
-[9/29/26, 18:36:20:283 EDT] 00000027 com.ibm.ws.app.manager.AppMessageHelper                      A CWWKZ0001I: Application cargo-tracker started in 7.869 seconds.

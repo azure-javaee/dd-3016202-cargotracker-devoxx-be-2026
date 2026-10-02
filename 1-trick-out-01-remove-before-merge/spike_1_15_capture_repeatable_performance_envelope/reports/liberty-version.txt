@@ -1,4 +1,0 @@
-Product name: Open Liberty
-Product version: 26.0.0.8
-Product edition: Open
-

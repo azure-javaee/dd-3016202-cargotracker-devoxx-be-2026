@@ -29,9 +29,6 @@ applyTo:
 - Do not make broad dependency upgrades or ban tool-only dependencies without
   understanding their scope.
 - Before proceeding, run the relevant Maven checks and keep required CI green.
-- Update `1-trick-out-01-remove-before-merge/evidence-matrix.md` after
-  implementation and validation, but before the issue is considered complete
-  or the next serial issue begins.
 
 ## Maven execution
 

@@ -1,1 +1,0 @@
-/home/edburns/workareas/dd-3016202-cargotracker-devoxx-be-2026-02/1-trick-out-01-remove-before-merge/spike_1_15_capture_repeatable_performance_envelope/logs/run-03-stop/20260929-2024-job-logs.txt

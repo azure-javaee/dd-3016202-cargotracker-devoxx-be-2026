@@ -1,4 +1,0 @@
-probe	http_status	content_type	time_seconds
-root	200	text/html; charset=UTF-8	0.019551
-cargo-rest	200	application/json	0.379298
-dashboard	200	text/html; charset=UTF-8	0.278619

@@ -1,3 +1,0 @@
-cycle=3
-position=1
-mode=tuned

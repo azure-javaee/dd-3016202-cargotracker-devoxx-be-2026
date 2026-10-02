@@ -1,2 +1,0 @@
-stopped_status_exit=0
-http_stopped=true

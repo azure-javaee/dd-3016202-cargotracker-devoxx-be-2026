@@ -1,9 +1,0 @@
-case	expected	actual	result	evidence
-documented-liberty-run	foreground application run	HTTP ready after 62 seconds	PASS	logs/20260929-1834-liberty-run-job-logs.txt
-status-while-running	running text and zero exit	Server defaultServer is running; exit 0	PASS	logs/20260929-1836-liberty-status-running-job-logs.txt
-status-after-stop	non-running diagnostic	Server defaultServer is not running; exit 0	PASS	logs/20260929-1837-liberty-status-stopped-job-logs.txt
-clean-package-then-start	application readiness failure	CWWKF0011I found; CWWKZ0001I timed out; exit 1	PASS	logs/20260929-1838-clean-package-liberty-start-job-logs.txt
-explicit-deploy	application copied to Liberty	build success	PASS	logs/20260929-1839-liberty-deploy-job-logs.txt
-deployed-start	server and application markers	build success	PASS	logs/20260929-1839-deployed-liberty-start-job-logs.txt
-rest-readiness	HTTP 200 application/json with ABC123	HTTP 200 application/json with ABC123	PASS	inventories/clean-ci-http-readiness.txt
-final-harness	package deploy start HTTP stop	exit 0	PASS	reports/acceptance-20260929-183934/summary.tsv

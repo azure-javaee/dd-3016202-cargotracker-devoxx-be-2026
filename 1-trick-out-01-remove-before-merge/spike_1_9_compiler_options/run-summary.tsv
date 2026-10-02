@@ -1,9 +1,0 @@
-case	lint_arguments	expected_status	actual_status	elapsed_seconds	warning_count	log	inventory
-xlint-all	-Xlint:all	0	0	5	14	logs/20260929-1810-01-xlint-all-job-logs.txt	inventories/xlint-all.txt
-xlint-all-werror	-Xlint:all -Werror	nonzero	1	4	14	logs/20260929-1810-02-xlint-all-werror-job-logs.txt	inventories/xlint-all-werror.txt
-category-rawtypes	-Xlint:rawtypes -Werror	nonzero	1	5	2	logs/20260929-1810-10-category-rawtypes-job-logs.txt	inventories/category-rawtypes.txt
-category-serial	-Xlint:serial -Werror	nonzero	1	5	12	logs/20260929-1810-11-category-serial-job-logs.txt	inventories/category-serial.txt
-xlint-clean-subset	-Xlint:all,-rawtypes,-serial -Werror	0	0	6	0	logs/20260929-1811-90-xlint-clean-subset-job-logs.txt	inventories/xlint-clean-subset.txt
-xlint-all-werror-after-fixes	-Xlint:all -Werror	0	0	4	0	logs/20260929-1811-03-xlint-all-werror-after-fixes-job-logs.txt	proposed-warning-fixes.patch
-test-compile-after-preserved-uid-fixes	-Xlint:all -Werror	0	0	5	0	logs/20260929-1812-06-test-compile-xlint-all-werror-preserved-uids-job-logs.txt	inventories/explicit-serial-version-uids.txt
-type-failure	-Xlint:all	nonzero	1	4	0	logs/20260929-1811-99-type-failure-job-logs.txt	inventories/type-failure.txt

@@ -1,3 +1,0 @@
-cycle=5
-position=1
-mode=bypass
