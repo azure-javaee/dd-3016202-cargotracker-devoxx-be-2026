@@ -156,10 +156,23 @@ jobs:
       # clean intentionally removes the unit reports before the separate integration count.
       - name: Assert Arquillian test count
         run: |
-          count=$(grep -h '<testsuite ' target/surefire-reports/TEST-*.xml | sed -E 's/.*tests="([0-9]+)".*/\1/' | awk '{ total += $1 } END { print total + 0 }')
-          skipped=$(grep -ho 'skipped="[0-9]*"' target/surefire-reports/TEST-*.xml | cut -d'"' -f2 | awk '{ total += $1 } END { print total + 0 }')
-          test "$count" -eq 4
+          report=target/surefire-reports/TEST-org.eclipse.cargotracker.application.BookingServiceTest.xml
+          test -f "$report"
+          count=$(sed -nE 's/.*tests="([0-9]+)".*/\1/p' "$report" | head -n 1)
+          failures=$(sed -nE 's/.*failures="([0-9]+)".*/\1/p' "$report" | head -n 1)
+          errors=$(sed -nE 's/.*errors="([0-9]+)".*/\1/p' "$report" | head -n 1)
+          skipped=$(sed -nE 's/.*skipped="([0-9]+)".*/\1/p' "$report" | head -n 1)
+          test "$count" -ge 4
+          test "$failures" -eq 0
+          test "$errors" -eq 0
           test "$skipped" -eq 0
+          for method in \
+            testRegisterNew \
+            testRouteCandidates \
+            testAssignRoute \
+            testChangeDestination; do
+            grep -Fq "name=\"$method\"" "$report"
+          done
       - name: Preserve Liberty test reports
         run: mkdir -p ci-artifacts/test-reports-liberty && cp -R target/surefire-reports ci-artifacts/test-reports-liberty/surefire-reports
       - name: Build canonical WAR
